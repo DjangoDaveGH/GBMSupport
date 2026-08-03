@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ applies a circular icon mask to the animated splash icon.
+     Insetting the complete crest keeps its outer wings and ribbon visible
+     instead of letting the system mask crop them. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="28dp"
+    android:insetTop="28dp"
+    android:insetRight="28dp"
+    android:insetBottom="28dp">
+    <bitmap
+        android:gravity="fill"
+        android:src="@drawable/splash_logo" />
+</inset>

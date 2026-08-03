@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Bash(firebase --version)",
+      "Bash(flutter create *)",
+      "Bash(git init *)",
+      "Bash(flutter pub *)",
+      "Bash(mkdir -p core/auth core/routing core/theme core/services core/widgets core/utils core/offline)",
+      "Bash(mkdir -p features/auth/data features/auth/domain features/auth/presentation)",
+      "Bash(mkdir -p features/tickets/data features/tickets/domain features/tickets/presentation)",
+      "Bash(mkdir -p features/dashboard/data features/dashboard/domain features/dashboard/presentation)",
+      "Bash(mkdir -p features/notifications/data features/notifications/domain features/notifications/presentation)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter build *)",
+      "Bash(npm --version)",
+      "Bash(dart --version)",
+      "Bash(dart pub *)"
+    ]
+  }
+}
