@@ -1,0 +1,11 @@
+{
+  "name": "hyport-dev-scripts",
+  "private": true,
+  "description": "One-off local admin scripts (not part of the shipped app). See seed.js.",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2"
+  }
+}

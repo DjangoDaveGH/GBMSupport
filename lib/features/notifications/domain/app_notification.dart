@@ -1,0 +1,44 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hyport/core/models/enums.dart';
+
+// Named AppNotification to avoid clashing with Flutter's own Notification widget class.
+class AppNotification {
+  final String id;
+  final String userId;
+  final String? ticketId;
+  final NotificationType type;
+  final String message;
+  final bool read;
+  final DateTime createdAt;
+
+  const AppNotification({
+    required this.id,
+    required this.userId,
+    required this.type,
+    required this.message,
+    required this.read,
+    required this.createdAt,
+    this.ticketId,
+  });
+
+  factory AppNotification.fromMap(String id, Map<String, dynamic> map) {
+    return AppNotification(
+      id: id,
+      userId: map['userId'] as String? ?? '',
+      ticketId: map['ticketId'] as String?,
+      type: NotificationType.fromWire(map['type'] as String? ?? 'pending_action'),
+      message: map['message'] as String? ?? '',
+      read: map['read'] as bool? ?? false,
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'userId': userId,
+        'ticketId': ticketId,
+        'type': type.wireValue,
+        'message': message,
+        'read': read,
+        'createdAt': Timestamp.fromDate(createdAt),
+      };
+}

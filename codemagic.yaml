@@ -1,0 +1,85 @@
+definitions:
+  ios_signing_env: &ios_signing_env
+    XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+    XCODE_SCHEME: "Runner"
+    BUNDLE_ID: "gov.mofep.hyport.hyport"
+    # Firebase's iOS app record for this project — already registered
+    # (`firebase apps:create IOS`), see DECISIONS.md.
+    FIREBASE_IOS_APP_ID: "1:294438939223:ios:0e5539ad4f4c4df8971112"
+
+workflows:
+  # Builds a signed .ipa on Codemagic's cloud Mac runners (no local Mac
+  # needed) and pushes it straight to Firebase App Distribution testers.
+  # This is the "APK equivalent" for iOS: testers install the Firebase App
+  # Tester app once, then get an email/link for every new build — no App
+  # Store review, no TestFlight wait.
+  #
+  # NONE OF THIS RUNS UNTIL SET UP MANUALLY — nothing here can be
+  # automated from outside Codemagic/Apple's own consoles:
+  #   1. Enroll in the Apple Developer Program (developer.apple.com, $99/yr).
+  #   2. Create a Codemagic account (codemagic.io — has a free tier) and
+  #      connect this repository.
+  #   3. In App Store Connect: Users and Access -> Keys -> generate an
+  #      API key (needs Admin role). Download the .p8 file, note the Key
+  #      ID and Issuer ID.
+  #   4. In Codemagic: Team settings -> Code signing identities -> Apple
+  #      Developer Portal integration -> paste the API key/Key ID/Issuer
+  #      ID from step 3. Codemagic then handles certificate/profile
+  #      generation automatically (the `xcode-project use-profiles` /
+  #      `app-store-connect fetch-signing-files` steps below depend on
+  #      this being connected first).
+  #   5. In the Firebase console (console.firebase.google.com, project
+  #      hyport-a1c90) -> Project settings -> Service accounts -> generate
+  #      a new private key (needs the "Firebase App Distribution Admin"
+  #      IAM role). Add its JSON contents as an encrypted environment
+  #      variable named FIREBASE_SERVICE_ACCOUNT_JSON in a Codemagic
+  #      environment variable group (name it `firebase_distribution` to
+  #      match the group referenced below, or rename the reference).
+  #   6. In the Firebase console -> App Distribution -> this iOS app ->
+  #      Testers & groups -> create a group (the `groups:` line below
+  #      assumes it's named `testers`) and add tester email addresses.
+  #   7. Trigger a build manually from the Codemagic dashboard.
+  #
+  # Codemagic's exact YAML schema and step names can change between
+  # versions — treat this as a well-informed starting point to verify
+  # against https://docs.codemagic.io/yaml-quick-start/building-a-flutter-app/
+  # at setup time, not a guaranteed-turnkey file. It has not been run
+  # end-to-end (no Apple/Codemagic account existed to test it against).
+  ios-firebase-distribution:
+    name: iOS - Firebase App Distribution
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - ios_signing            # holds Codemagic's App Store Connect API key reference (set up via step 4 above)
+        - firebase_distribution  # holds FIREBASE_SERVICE_ACCOUNT_JSON (set up via step 5 above)
+      vars:
+        <<: *ios_signing_env
+    triggering:
+      events: [] # manual-only until signing/distribution are configured; enable push/tag triggers once verified
+    scripts:
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_ADHOC --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      firebase:
+        firebase_service_account: $FIREBASE_SERVICE_ACCOUNT_JSON
+        ios:
+          app_id: $FIREBASE_IOS_APP_ID
+          groups:
+            - testers

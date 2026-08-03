@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node seed.js)",
+      "Read(//c/Users/USER/AppData/Local/Temp/claude/c--Users-USER-Desktop-Hyport/46f4d2b3-0978-4971-a86c-2c966c74eb59/scratchpad/pw/**)",
+      "Bash(node click.js 28 28 800 100_back2.png)",
+      "Bash(node click.js 1173 866 800 101_profile4.png)",
+      "Bash(node click.js 640 423 2000 102_signed_out10.png)",
+      "Bash(node login3.js \"technical.lead@hyport.test\" \"Hyport@2026\" \"103_techlead_home.png\")",
+      "Bash(node click.js 400 305 1200 104_techlead_detail.png)",
+      "Bash(node click.js 415 337 1500 105_reescalate_dialog.png)",
+      "Bash(node click.js 640 483 2000 106_escalated_to_vendor.png)"
+    ]
+  }
+}

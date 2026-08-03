@@ -1,0 +1,267 @@
+rules_version = '2';
+
+// Hyperion Support — Firestore security rules v1.
+//
+// This is the real access boundary (Section 3 of the project brief): the
+// app's client-side query scoping (see TicketRepository.scopedQuery) is a
+// UX/cost optimization, not a security control. These rules must hold even
+// if the client is compromised or bypassed entirely.
+//
+// Role and institution are read from Firebase Auth custom claims
+// (`role`, `institutionId`), NOT from the `users/{uid}` Firestore document.
+// Claims are set server-side by the `adminCreateUser` Cloud Function (Admin
+// SDK) at account provisioning time — never from the client. See
+// DECISIONS.md ("Custom claims vs. Firestore doc for role/institution").
+//
+// Roles (must match core/models/enums.dart UserRole.wireValue):
+//   mda_user, focal_person, support_coordinator, functional_lead,
+//   technical_lead, pfm_management, vendor_support
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function institutionId() {
+      return request.auth.token.institutionId;
+    }
+
+    // Coordinator, Functional/Technical Lead, Management — cross-institution
+    // visibility per Section 3. Vendor/specialist is deliberately excluded:
+    // they only ever see tickets explicitly escalated to them.
+    function isSupportSide() {
+      return isSignedIn() && role() in [
+        'support_coordinator', 'functional_lead', 'technical_lead', 'pfm_management'
+      ];
+    }
+
+    function isVendor() {
+      return isSignedIn() && role() == 'vendor_support';
+    }
+
+    function isRequesterSide() {
+      return isSignedIn() && role() in ['mda_user', 'focal_person'];
+    }
+
+    function isFocalPerson() {
+      return isSignedIn() && role() == 'focal_person';
+    }
+
+    function onlyFieldsChanged(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // ----- users -----
+    // Profile fields are admin-managed (Section 5); clients never write
+    // those. The exceptions are inherently self-service: a user registering
+    // their own device's FCM token for push notifications (Section 7), and
+    // a user toggling their own two-factor login preference.
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSupportSide());
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && onlyFieldsChanged(['fcmTokens', 'twoFactorEnabled', 'lastActiveAt', 'profilePhotoUrl']);
+      allow create, delete: if false;
+    }
+
+    // ----- OTP codes (interim two-factor login step) -----
+    // Client-generated and client-displayed for now — see OtpRepository's
+    // doc comment and DECISIONS.md for why (Cloud Functions, needed to
+    // generate+email a code server-side, are blocked on the Blaze plan).
+    // Scoped strictly to the owning user in the meantime; tightens further
+    // once a real backend generates these instead.
+    match /otp_codes/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ----- institutions -----
+    // Was seed-only in the MVP; the Institutions screen (mobile + desktop)
+    // needs to add new ones for real. That screen is reachable only via
+    // `adminOnlyPaths` in app_router.dart (role == pfm_management exactly,
+    // not the broader isSupportSide()) and has no other entry point, so the
+    // rule matches that instead of the wider support-side set — otherwise a
+    // Coordinator or Lead could write institutions directly even though the
+    // app never offers them that action. Deletion stays closed — removing
+    // an institution out from under users referencing it via institutionId
+    // isn't a thing this app models a safe migration for.
+    match /institutions/{institutionId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && role() == 'pfm_management';
+      allow delete: if false;
+    }
+
+    // ----- app config (SLA policy, general settings, etc.) -----
+    // A handful of admin-tunable settings docs (config/sla, config/general)
+    // — readable by anyone signed in since they inform client-side
+    // calculations (Overdue, SLA Compliance) and display (app name, date/
+    // time format). Both writers (SlaManagementScreen, the desktop
+    // Settings screen's General tab) live under `/admin-settings`, which
+    // app_router.dart's adminOnlyPaths restricts to role == pfm_management
+    // exactly (same reasoning as institutions above) — narrower than the
+    // isSupportSide() this used to allow.
+    match /config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && role() == 'pfm_management';
+    }
+
+    // ----- counters (ticket reference sequence) -----
+    // TicketRepository.createTicket runs a client-side transaction against
+    // counters/tickets_{year} to mint the human-readable HYP-YYYY-NNNNNN
+    // reference. Restrict writes to incrementing `count` by exactly 1 so a
+    // client can't forge arbitrary sequence numbers.
+    match /counters/{counterId} {
+      allow read: if isSignedIn();
+      // `resource == null` on the first ticket of the year (counter doc
+      // doesn't exist yet) must short-circuit before touching
+      // resource.data — referencing a field on a null resource is a rules
+      // evaluation error (denies the whole request), not a graceful falsy
+      // value. Learned the hard way: this originally read
+      // `resource.data.count is int ? resource.data.count : 0`, which still
+      // evaluates resource.data.count eagerly and threw on the very first
+      // write of every year.
+      allow write: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['count'])
+        && request.resource.data.count is int
+        && (
+          (resource == null && request.resource.data.count == 1)
+          || (resource != null && request.resource.data.count == resource.data.count + 1)
+        );
+    }
+
+    // ----- tickets -----
+    match /tickets/{ticketId} {
+      // Section 3: a plain User only sees tickets they personally logged; a
+      // Focal Person sees every ticket from their institution.
+      allow read: if isSupportSide()
+        || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2)
+        || (isFocalPerson() && resource.data.institutionId == institutionId())
+        || (isRequesterSide() && resource.data.createdBy == request.auth.uid);
+
+      // Only the requester side creates tickets, and only for their own
+      // institution, as themselves, in the initial unassigned state.
+      allow create: if isRequesterSide()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.institutionId == institutionId()
+        && request.resource.data.status == 'open'
+        && request.resource.data.escalationLevel == 0
+        && request.resource.data.assignedTo == null;
+
+      allow update: if isSupportSide()
+        // Vendor/Specialist's only granted action is resolving a ticket
+        // escalated to them (Section 3: no assign/escalate/close) — the app
+        // UI never offers those to Vendor, but the rule shouldn't rely on
+        // the client to enforce it. escalationLevel == 2 mirrors the read
+        // rule and TicketRepository.scopedQuery below: a ticket merely
+        // assignedTo a vendor without also being at escalation level 2
+        // isn't one they can see in the first place, so resolving it
+        // shouldn't be reachable either.
+        || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2
+            && onlyFieldsChanged(['status', 'updatedAt', 'resolutionNotes', 'resolvedAt'])
+            && request.resource.data.status == 'resolved')
+        || (role() in ['functional_lead', 'technical_lead'] && resource.data.assignedTo == request.auth.uid)
+        // Requester: may only reopen or confirm-close their own ticket —
+        // never touch assignment, escalation, or category/priority fields.
+        || (isRequesterSide()
+            && resource.data.createdBy == request.auth.uid
+            && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy']));
+
+      allow delete: if false; // tickets are closed, never deleted — audit trail must persist
+
+      // ----- ticket activity (audit trail) -----
+      match /activity/{activityId} {
+        allow read: if isSupportSide()
+          || (isVendor() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
+          || (isFocalPerson() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.institutionId == institutionId())
+          || (isRequesterSide()
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.createdBy == request.auth.uid);
+
+        // Every status-changing action must leave an activity record
+        // (Section 8); anyone who can read the ticket can add one, but only
+        // as themselves, and entries are immutable once written.
+        allow create: if (isSupportSide() || isVendor() || isRequesterSide())
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.ticketId == ticketId;
+        allow update, delete: if false;
+      }
+    }
+
+    // ----- notifications -----
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Ticket-lifecycle notifications are written by Cloud Functions via
+      // the Admin SDK, which bypasses these rules entirely. The only
+      // client-side create path is the admin broadcast screen (Section 7:
+      // system downtime / deadline / maintenance notices).
+      allow create: if isSupportSide()
+        && request.resource.data.type in ['system_downtime', 'deadline_reminder', 'maintenance'];
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && onlyFieldsChanged(['read']);
+
+      allow delete: if false;
+    }
+
+    // ----- knowledge base -----
+    match /knowledge_articles/{articleId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isSupportSide();
+      // Any signed-in reader may bump viewCount when they open an article
+      // (real "most viewed" data, not a fabricated number) — every other
+      // field stays editor-only.
+      allow update: if isSupportSide() || (isSignedIn() && onlyFieldsChanged(['viewCount']));
+    }
+
+    // ----- report views (Reports screen "Recent Reports" log) -----
+    // Reports are computed live from ticket data, not exported/stored
+    // files (no Storage yet) — this just logs which report types a given
+    // admin looked at recently, scoped strictly to themselves.
+    match /report_views/{viewId} {
+      allow read: if isSupportSide() && resource.data.viewedBy == request.auth.uid;
+      allow create: if isSupportSide() && request.resource.data.viewedBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ----- access requests (RequestAccessScreen) -----
+    // Deliberately the one collection writable by a signed-OUT client —
+    // this is the pre-auth "request an account" form. It's a request, not
+    // an account: nothing here creates a login. Only PFM-Systems can read
+    // the queue (no review UI built yet — see DECISIONS.md); no client can
+    // update/delete once submitted.
+    match /access_requests/{requestId} {
+      allow create: if request.resource.data.keys().hasOnly(
+        ['fullName', 'email', 'phone', 'institutionType', 'institutionName', 'status', 'submittedAt']
+      ) && request.resource.data.status == 'pending';
+      allow read: if isSupportSide();
+      allow update, delete: if false;
+    }
+
+    // ----- system audit log (admin actions) -----
+    // Written only by Cloud Functions (Admin SDK); readable by management
+    // for oversight.
+    match /audit_logs/{logId} {
+      allow read: if isSupportSide();
+      allow write: if false;
+    }
+
+    // ----- Audit Logs desktop screen (collection-group read) -----
+    // AuditLogRepository.watchRecent() runs a collectionGroup('activity')
+    // query across every ticket's activity subcollection. The per-ticket
+    // `allow read` above only governs direct reads scoped to one ticket's
+    // subcollection — Firestore requires a separate wildcard-path rule for
+    // collection-group queries to be permitted at all. Same isSupportSide()
+    // scoping as the per-ticket rule (excludes Vendor, matches the desktop
+    // nav guard) so this can't be used to widen Vendor's ticket-scoped
+    // access into a full activity feed.
+    match /{path=**}/activity/{activityId} {
+      allow read: if isSupportSide();
+    }
+  }
+}

@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Ticket attachments live at attachments/{uploaderUid}/{filename}. Storage
+// rules can't cheaply cross-reference which ticket an attachment belongs to
+// (no collection queries here, only get()/exists() on known paths), so
+// access is approximated by uid ownership plus support-side custom claims —
+// consistent with firestore.rules, which is the authoritative boundary for
+// who can see a given ticket (and therefore its attachment URLs) at all.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSupportSide() {
+      return isSignedIn() && request.auth.token.role in [
+        'support_coordinator', 'functional_lead', 'technical_lead', 'pfm_management', 'vendor_support'
+      ];
+    }
+
+    match /attachments/{uploaderUid}/{fileName} {
+      allow read: if isSignedIn() && (request.auth.uid == uploaderUid || isSupportSide());
+      allow write: if isSignedIn() && request.auth.uid == uploaderUid
+        && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if false;
+    }
+
+    // Profile photos are readable by signed-in users so avatars can be shown
+    // throughout the support centre. Each user can overwrite only their own
+    // fixed avatar path; deleting is intentionally not exposed yet.
+    match /profile_photos/{userId}/avatar {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if false;
+    }
+  }
+}
