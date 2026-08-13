@@ -6,12 +6,11 @@
 // reads from. Also seeds a couple of institutions so cross-institution
 // scoping can actually be tested.
 //
-// This exists because the real adminCreateUser Cloud Function (which does
-// the same job, permanently, from inside the app's Add User screen) can't
-// be deployed until the project is on the Blaze billing plan — see
-// DECISIONS.md. This script needs no billing plan at all: it talks to
-// Firebase Auth/Firestore directly via a service account, the same way any
-// backend admin tool would.
+// This exists alongside the real adminCreateUser Cloud Function (which does
+// the same job, permanently, from inside the app's Add User screen) as a
+// faster way to (re)seed a full set of test accounts across every role —
+// this script talks to Firebase Auth/Firestore directly via a service
+// account, the same way any backend admin tool would.
 //
 // Usage:
 //   1. Firebase Console -> Project settings -> Service accounts ->
@@ -33,7 +32,7 @@ admin.initializeApp({
 const auth = admin.auth();
 const db = admin.firestore();
 
-const TEST_PASSWORD = 'Hyport@2026';
+const TEST_PASSWORD = '123456';
 
 const institutions = [
   { id: 'ministry-of-health', name: 'Ministry of Health', type: 'MDA', focalPersonIds: [] },
@@ -46,8 +45,8 @@ const institutions = [
 // prevent a user from one institution seeing another institution's tickets").
 const users = [
   {
-    email: 'mda@test.com',
-    legacyEmails: ['mda.user@hyport.test'],
+    email: 'm@m.com',
+    legacyEmails: ['mda@test.com', 'mda.user@hyport.test'],
     name: 'Ama Boateng',
     phone: '+233200000001',
     role: 'mda_user',
@@ -55,8 +54,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'focal@test.com',
-    legacyEmails: ['focal.person@hyport.test'],
+    email: 'f@f.com',
+    legacyEmails: ['focal@test.com', 'focal.person@hyport.test'],
     name: 'Kwame Owusu',
     phone: '+233200000002',
     role: 'focal_person',
@@ -64,8 +63,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'mmda@test.com',
-    legacyEmails: ['mmda.user@hyport.test'],
+    email: 'mm@mm.com',
+    legacyEmails: ['mmda@test.com', 'mmda.user@hyport.test'],
     name: 'Efua Mensah',
     phone: '+233200000003',
     role: 'mda_user',
@@ -73,8 +72,8 @@ const users = [
     institutionType: 'MMDA',
   },
   {
-    email: 'coordinator@test.com',
-    legacyEmails: ['coordinator@hyport.test'],
+    email: 'c@c.com',
+    legacyEmails: ['coordinator@test.com', 'coordinator@hyport.test'],
     name: 'Kojo Asante',
     phone: '+233200000004',
     role: 'support_coordinator',
@@ -82,8 +81,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'functional@test.com',
-    legacyEmails: ['functional.lead@hyport.test'],
+    email: 'fl@fl.com',
+    legacyEmails: ['functional@test.com', 'functional.lead@hyport.test'],
     name: 'Abena Frimpong',
     phone: '+233200000005',
     role: 'functional_lead',
@@ -91,8 +90,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'technical@test.com',
-    legacyEmails: ['technical.lead@hyport.test'],
+    email: 'tl@tl.com',
+    legacyEmails: ['technical@test.com', 'technical.lead@hyport.test'],
     name: 'Yaw Darko',
     phone: '+233200000006',
     role: 'technical_lead',
@@ -100,8 +99,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'vendor@test.com',
-    legacyEmails: ['vendor@hyport.test'],
+    email: 'v@v.com',
+    legacyEmails: ['vendor@test.com', 'vendor@hyport.test'],
     name: 'Vendor Support Rep',
     phone: '+233200000007',
     role: 'vendor_support',
@@ -109,8 +108,8 @@ const users = [
     institutionType: 'MDA',
   },
   {
-    email: 'management@test.com',
-    legacyEmails: ['management@hyport.test'],
+    email: 'p@p.com',
+    legacyEmails: ['management@test.com', 'management@hyport.test'],
     name: 'Nana Adjei',
     phone: '+233200000008',
     role: 'pfm_management',
@@ -140,6 +139,13 @@ async function deleteUserDoc(uid) {
   await db.collection('users').doc(uid).delete();
 }
 
+// emailVerified is forced true here (not just left at Firebase's default
+// `false` for new accounts) because Firebase phone Multi-Factor
+// Authentication refuses to enroll a factor for an unverified email
+// (`auth/unverified-email`) — and this app has no email-verification
+// flow at all, admin-provisioned accounts are trusted as-is. Without
+// this, every seeded account would hit that error the moment mandatory
+// 2FA setup tried to send a code. See DECISIONS.md.
 async function upsertUser(spec) {
   const currentUser = await getUserByEmailOrNull(spec.email);
   const legacyUsers = [];
@@ -155,18 +161,21 @@ async function upsertUser(spec) {
       email: spec.email,
       displayName: spec.name,
       password: TEST_PASSWORD,
+      emailVerified: true,
     });
     userRecord = await auth.getUser(userRecord.uid);
   } else if (currentUser) {
     await auth.updateUser(userRecord.uid, {
       displayName: spec.name,
       password: TEST_PASSWORD,
+      emailVerified: true,
     });
   } else {
     userRecord = await auth.createUser({
       email: spec.email,
       password: TEST_PASSWORD,
       displayName: spec.name,
+      emailVerified: true,
     });
   }
 

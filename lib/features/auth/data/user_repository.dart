@@ -49,13 +49,6 @@ class UserRepository {
         .map((doc) => doc.exists ? AppUser.fromMap(doc.id, doc.data()!) : null);
   }
 
-  /// Users self-toggle their own 2FA preference (see firestore.rules'
-  /// onlyFieldsChanged carve-out) — every other profile field stays
-  /// admin-managed per Section 5.
-  Future<void> setTwoFactorEnabled(String uid, bool enabled) {
-    return _users.doc(uid).update({'twoFactorEnabled': enabled});
-  }
-
   /// Users may update only their own profile photo URL. Storage ownership is
   /// enforced separately by storage.rules.
   Future<void> setProfilePhotoUrl(String uid, String photoUrl) {

@@ -49,7 +49,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const Spacer(flex: 1),
                 const Text(
-                  'ORACLE HYPERION\nSUPPORT CENTRE',
+                  'GBMS\nSUPPORT CENTRE',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppTheme.fontFamily,
@@ -62,7 +62,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your trusted support partner for Oracle Hyperion solutions',
+                  'Your trusted support partner for GBMS solutions',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppTheme.fontFamily,

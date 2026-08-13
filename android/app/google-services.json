@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "294438939223",
-    "project_id": "hyport-a1c90",
-    "storage_bucket": "hyport-a1c90.firebasestorage.app"
+    "project_number": "584460170232",
+    "firebase_url": "https://mofapp-60963-default-rtdb.firebaseio.com",
+    "project_id": "mofapp-60963",
+    "storage_bucket": "mofapp-60963.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:294438939223:android:dae1d22bafc2e558971112",
+        "mobilesdk_app_id": "1:584460170232:android:f41d06f731949f2c845c0d",
         "android_client_info": {
           "package_name": "gov.mofep.hyport.hyport"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCZV-lIVu-xzowX2yotiONqBs21upECPTU"
+          "current_key": "AIzaSyAclbc_2Dab7Hif8VnozTLPW1WiFIB31rc"
         }
       ],
       "services": {

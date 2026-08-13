@@ -10,6 +10,7 @@ import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
+import 'package:hyport/features/dashboard/domain/audit_log_formatting.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
@@ -46,9 +47,13 @@ String _actionLabel(TicketActivityAction action) => switch (action) {
     };
 
 /// Phase 5 mockup screen 40. See AuditLogRepository's doc comment for the
-/// honest scope of what this covers (ticket lifecycle events only, via a
-/// real collectionGroup query — not a full system audit trail, since that
-/// would need Cloud Functions this project can't deploy yet).
+/// honest scope of what this covers: ticket lifecycle events (via a real
+/// collectionGroup query) for every back-office role, plus — for PFM
+/// Management/Administrator only, per FR-SEC-03 ("only Administrators may
+/// view the audit log") — a second tab of user-management actions written
+/// by the adminCreateUser/adminUpdateUser Cloud Functions. Not a full
+/// system audit trail (no login events or settings changes), since that
+/// would need Cloud Functions this project can't deploy yet.
 class DesktopAuditLogsScreen extends ConsumerStatefulWidget {
   const DesktopAuditLogsScreen({super.key});
 
@@ -62,6 +67,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
   String? _userFilter;
   TicketActivityAction? _actionFilter;
   int _page = 0;
+  bool _showAdminActions = false;
   static const _pageSize = 15;
 
   @override
@@ -85,7 +91,34 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
   Widget build(BuildContext context) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
+    final isAdmin = appUser.role == UserRole.pfmManagement;
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isAdmin)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            child: SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: false, label: Text('Ticket Activity')),
+                ButtonSegment(value: true, label: Text('Admin Actions')),
+              ],
+              selected: {_showAdminActions},
+              onSelectionChanged: (s) => setState(() {
+                _showAdminActions = s.first;
+                _page = 0;
+              }),
+            ),
+          ),
+        Expanded(
+          child: (isAdmin && _showAdminActions) ? _buildAdminActionsTab(context) : _buildTicketActivityTab(context, appUser),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTicketActivityTab(BuildContext context, AppUser appUser) {
     final logAsync = ref.watch(auditLogProvider);
     final usersAsync = ref.watch(allUsersProvider);
     final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
@@ -234,6 +267,56 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                 ),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAdminActionsTab(BuildContext context) {
+    final logAsync = ref.watch(adminActionsAuditLogProvider);
+    final usersAsync = ref.watch(allUsersProvider);
+
+    return logAsync.when(
+      loading: () => const BrandedLoaderCenter(),
+      error: (e, _) => Center(child: Text('Could not load admin actions: $e')),
+      data: (entries) {
+        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+            child: entries.isEmpty
+                ? const EmptyState(icon: Icons.admin_panel_settings_outlined, message: 'No admin actions recorded yet.')
+                : SingleChildScrollView(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        headingRowHeight: 44,
+                        columns: const [
+                          DataColumn(label: Text('Date & Time')),
+                          DataColumn(label: Text('Admin')),
+                          DataColumn(label: Text('Action')),
+                          DataColumn(label: Text('Target User')),
+                          DataColumn(label: Text('Details')),
+                        ],
+                        rows: entries.map((a) {
+                          final actor = usersById[a.actorId];
+                          final target = usersById[a.targetId];
+                          final targetName = target?.name ?? a.targetId;
+                          return DataRow(cells: [
+                            DataCell(Text(DateFormat.yMd().add_jms().format(a.timestamp))),
+                            DataCell(Text(actor?.name ?? 'Unknown')),
+                            DataCell(Text(adminActionLabel(a.action))),
+                            DataCell(Text(targetName)),
+                            DataCell(SizedBox(width: 320, child: Text(describeAdminAction(a, targetName), overflow: TextOverflow.ellipsis))),
+                          ]);
+                        }).toList(),
+                      ),
+                    ),
+                  ),
           ),
         );
       },

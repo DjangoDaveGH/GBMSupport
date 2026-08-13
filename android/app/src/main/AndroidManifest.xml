@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required on Android 13+ for local/push notifications to actually
+         display at all (flutter_local_notifications' foreground pop-up,
+         firebase_messaging's background push) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <application
-        android:label="Hyperion Support"
+        android:label="GBMS Support"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

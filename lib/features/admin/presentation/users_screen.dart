@@ -5,6 +5,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/features/admin/presentation/edit_user_dialog.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 
@@ -133,15 +134,18 @@ class _UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final online = user.isRecentlyActive;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: () => showEditUserDialog(context, user),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Row(
         children: [
           Stack(
             children: [
@@ -178,13 +182,14 @@ class _UserTile extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            online ? 'Online' : 'Offline',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
-                ),
-          ),
-        ],
+            Text(
+              online ? 'Online' : 'Offline',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

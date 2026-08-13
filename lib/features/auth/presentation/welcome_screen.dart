@@ -35,7 +35,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    'Welcome to Oracle Hyperion\nSupport Centre',
+                    'Welcome to GBMS\nSupport Centre',
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall,
                   ),

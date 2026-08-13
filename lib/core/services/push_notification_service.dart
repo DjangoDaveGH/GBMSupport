@@ -2,11 +2,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 /// Web push (unlike Android/iOS) needs a VAPID key from Firebase Console ->
-/// Project settings -> Cloud Messaging -> Web Push certificates. Left blank
-/// until that's generated; requestToken() below no-ops on web until it's
-/// filled in rather than throwing, so the rest of the app (mobile push,
-/// in-app notification list) works either way. See DECISIONS.md.
-const String webPushVapidKey = '';
+/// Project settings -> Cloud Messaging -> Web Push certificates. Generated
+/// for mofapp-60963 after the Firebase project migration — see
+/// DECISIONS.md. requestToken() below no-ops on web if this is ever blank
+/// again, so the rest of the app (mobile push, in-app notification list)
+/// keeps working either way.
+const String webPushVapidKey =
+    'BOvF-cQd8_EHYgnyVf1LTx2LZGsRoSviDXPY2h7tHZG-63npaT7sD7c_iskzXKzaMd1EjVnnLATCWZqIpROPboU';
 
 /// Thin wrapper over FirebaseMessaging: permission request + token
 /// retrieval. Token persistence (saving it to the signed-in user's

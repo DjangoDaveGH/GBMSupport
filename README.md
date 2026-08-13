@@ -1,9 +1,10 @@
-# Hyperion Support
+# GBMS Support
 
 Mobile/web support and ticketing app for the Ministry of Finance's
-PFM-Systems Division — lets MDA/MMDA staff log, track, and escalate
-Hyperion budgeting-system issues, and gives support staff a triage
-dashboard. Flutter (single codebase, web + Android) + Firebase.
+PFM-Systems Division — lets MDA/MMDA staff log, track, and escalate Ghana
+Budget Management System (GBMS) issues, and gives support staff a triage
+dashboard. Flutter (single codebase, web + Android) + Firebase. Live at
+https://gbmsupport.web.app.
 
 Back-office roles (Support Coordinator, Functional/Technical Lead,
 PFM-Systems Management) get a full desktop Enterprise Web Dashboard
@@ -21,10 +22,9 @@ extending anything, especially the Firestore security rules.
 
 - **Flutter** + **Riverpod** (state) + **go_router** (routing)
 - **Firebase**: Firestore (data + offline persistence), Auth (custom claims
-  for role/institution), Storage (attachments — not yet active, see
-  DECISIONS.md), Cloud Messaging (push), Cloud Functions (admin user
-  provisioning + lifecycle notifications — written, not yet deployed, see
-  DECISIONS.md)
+  for role/institution), Storage (attachments), Cloud Messaging (push),
+  Cloud Functions (admin user provisioning + lifecycle notifications) — all
+  deployed and live on the Blaze plan, see DECISIONS.md
 - **Hive** for the offline ticket-draft queue
 
 ## Project layout
@@ -46,7 +46,7 @@ firestore.rules   the actual access-control boundary — see Section 3 of
 ## Local setup
 
 1. `flutter pub get`
-2. Firebase project `hyport-a1c90` is already wired up
+2. Firebase project `mofapp-60963` is already wired up
    (`lib/firebase_options.dart`, `android/app/google-services.json`). To
    point at a different project instead, run `flutterfire configure`.
 3. To seed test accounts (one per role): put a service account key at
@@ -55,7 +55,11 @@ firestore.rules   the actual access-control boundary — see Section 3 of
    ```
    cd scripts && npm install && node seed.js
    ```
-   All seeded accounts share the password `Hyport@2026`.
+   All seeded accounts share the password `123456`:
+   `m@m.com` (MDA/MMDA User), `mm@mm.com` (MDA/MMDA User, second institution),
+   `f@f.com` (Focal Person), `c@c.com` (Support Coordinator),
+   `fl@fl.com` (Functional Lead), `tl@tl.com` (Technical Lead),
+   `v@v.com` (Vendor/Specialist Support), `p@p.com` (PFM Management).
 
 ## Running
 
@@ -97,13 +101,9 @@ can work around. Two ways to actually get this in front of an iOS tester:
 
 ## What's not live yet
 
-- **Firebase Storage** (attachments) — blocked on the Blaze billing plan.
-  Attachments are picked in the UI but not uploaded until this is resolved;
-  see DECISIONS.md.
-- **Cloud Functions** (`functions/`) — written and verified to load
-  correctly, but undeployed for the same Blaze-plan reason. Once billing
-  clears: `firebase deploy --only functions`.
-- **Web push (FCM)** — needs a VAPID key generated in the Firebase Console
-  (Cloud Messaging -> Web Push certificates), then set
-  `webPushVapidKey` in `lib/core/services/push_notification_service.dart`.
-  Android push doesn't need this step.
+Nothing — Firestore, Auth (including real SMS-delivered 2FA via Firebase
+phone Multi-Factor Authentication, see PhoneMfaService and DECISIONS.md),
+Storage (attachments, profile photos, the admin-settings application
+logo), Cloud Messaging (including web push), and Cloud Functions
+(`adminCreateUser`/`adminUpdateUser`/ticket-notification triggers) are all
+deployed and live on the Blaze plan.

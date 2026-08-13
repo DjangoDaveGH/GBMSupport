@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,18 +11,13 @@ import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/tickets/data/draft_ticket.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
+import 'package:hyport/features/tickets/domain/impact_priority_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
 import 'package:uuid/uuid.dart';
 
-const _stepHeadlines = [
-  'Select Issue Category',
-  'Describe Your Issue',
-  'Impact & Priority',
-  'Add Attachments (Optional)',
-  'Review & Submit',
-];
+const _stepHeadlines = ['Select Issue Category', 'Describe Your Issue'];
 
 /// The mockup's Step 2 is a single description box — no separate Title
 /// field. `Ticket.title` still exists (ticket-list rows, notifications, etc.
@@ -56,8 +53,6 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   int _step = 0;
   TicketCategory? _category;
-  TicketImpact? _impact;
-  TicketPriority? _priority;
   bool _affectsMultipleUsers = false;
   final List<PlatformFile> _attachments = [];
   bool _submitting = false;
@@ -84,7 +79,6 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   bool get _canAdvance => switch (_step) {
     0 => _category != null,
     1 => _descriptionController.text.trim().isNotEmpty,
-    2 => _impact != null && _priority != null,
     _ => true,
   };
 
@@ -104,11 +98,12 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     if (_step > 0) setState(() => _step--);
   }
 
+  // The optimized flow's Step 1 (mockup) shows an explicit "Next" button
+  // rather than auto-advancing on tap — selecting a category just marks it
+  // selected; _WizardNav's Next button (already gated on _canAdvance) is
+  // what moves to Step 2.
   void _selectCategory(TicketCategory c) {
-    setState(() {
-      _category = c;
-      _step = 1;
-    });
+    setState(() => _category = c);
   }
 
   Future<void> _pickAttachment() async {
@@ -123,7 +118,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   Future<void> _submit() async {
     final appUser = ref.read(currentAppUserProvider).valueOrNull;
-    if (appUser == null || _category == null || _priority == null || _impact == null) {
+    if (appUser == null || _category == null) {
       return;
     }
 
@@ -133,6 +128,11 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     Ticket? createdTicket;
     final description = _descriptionController.text.trim();
     final title = deriveTicketTitle(description);
+    // Impact/Priority are no longer picked by the requester (dropped step
+    // in the optimized flow) — both are auto-assigned from category. See
+    // ImpactPriorityCalculator's doc comment for the derivation rule.
+    final impact = ImpactPriorityCalculator.deriveImpact(_category!);
+    final priority = ImpactPriorityCalculator.derivePriority(impact);
 
     try {
       if (isOnline) {
@@ -156,8 +156,8 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
               title: title,
               description: description,
               attachmentUrls: urls,
-              priority: _priority!,
-              impact: _impact!,
+              priority: priority,
+              impact: impact,
               affectsMultipleUsers: _affectsMultipleUsers,
             );
       } else {
@@ -172,8 +172,8 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           localAttachmentPaths: _attachments
               .map((f) => f.path ?? f.name)
               .toList(),
-          priority: _priority!,
-          impact: _impact!,
+          priority: priority,
+          impact: impact,
           affectsMultipleUsers: _affectsMultipleUsers,
           createdAt: DateTime.now(),
         );
@@ -282,32 +282,16 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                         selectedCategory: _category,
                         onCategorySelected: _selectCategory,
                       ),
-                      1 => _DescriptionStep(
+                      _ => _DetailsStep(
                         formKey: _descriptionFormKey,
                         controller: _descriptionController,
-                      ),
-                      2 => _ImpactPriorityStep(
-                        impact: _impact,
-                        priority: _priority,
-                        affectsMultipleUsers: _affectsMultipleUsers,
-                        onImpactChanged: (v) => setState(() => _impact = v),
-                        onPriorityChanged: (v) => setState(() => _priority = v),
-                        onAffectsChanged: (v) =>
-                            setState(() => _affectsMultipleUsers = v),
-                      ),
-                      3 => _AttachmentsStep(
                         attachments: _attachments,
                         isOnline: isOnline,
                         onPick: _pickAttachment,
                         onRemove: (f) => setState(() => _attachments.remove(f)),
-                      ),
-                      _ => _ReviewStep(
-                        category: _category!,
-                        impact: _impact!,
-                        priority: _priority!,
                         affectsMultipleUsers: _affectsMultipleUsers,
-                        description: _descriptionController.text.trim(),
-                        attachmentCount: _attachments.length,
+                        onAffectsChanged: (v) =>
+                            setState(() => _affectsMultipleUsers = v),
                       ),
                     },
                   ),
@@ -329,10 +313,31 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   }
 }
 
-class _TicketSubmittedScreen extends StatelessWidget {
+class _TicketSubmittedScreen extends StatefulWidget {
   final Ticket ticket;
 
   const _TicketSubmittedScreen({required this.ticket});
+
+  @override
+  State<_TicketSubmittedScreen> createState() => _TicketSubmittedScreenState();
+}
+
+class _TicketSubmittedScreenState extends State<_TicketSubmittedScreen> {
+  Timer? _autoCloseTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _autoCloseTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) context.go('/home');
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoCloseTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -368,63 +373,22 @@ class _TicketSubmittedScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ticket ID',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text(
-                      ticket.ticketReference,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(color: AppTheme.navy),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      'Priority',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text(
-                      ticket.priority.label,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: StatusColors.high,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      'Assigned Queue',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text(
-                      'Technical Support Team',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ],
-                ),
-              ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => context.push('/tickets/${ticket.id}'),
-                  child: const Text('VIEW MY TICKET'),
+                  onPressed: () {
+                    _autoCloseTimer?.cancel();
+                    context.push('/tickets/${widget.ticket.id}');
+                  },
+                  child: const Text('View My Ticket'),
                 ),
               ),
               TextButton(
-                onPressed: () => context.go('/tickets'),
+                onPressed: () {
+                  _autoCloseTimer?.cancel();
+                  context.go('/tickets');
+                },
                 child: const Text('Create Another Ticket'),
               ),
             ],
@@ -522,47 +486,10 @@ class _WizardNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLast = step == totalSteps - 1;
 
-    // Review & Submit (mockup screen 12) stacks full-width buttons —
-    // Submit on top, Back beneath — unlike every other step, which keeps a
-    // side-by-side Back/Next row.
-    if (isLast) {
-      return SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: (canAdvance && !submitting) ? onNext : null,
-                  icon: submitting
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.send_rounded, size: 18),
-                  label: Text(submitting ? 'Submitting…' : 'Submit Ticket'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: submitting ? null : onBack,
-                  child: const Text('Back'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
+    // Two steps total now (mockup): Step 1 is a bare "Next", full-width,
+    // gated on a category being selected. Step 2 sits Back/Submit side by
+    // side, same row shape as Step 1 — no more stacked Review-step layout,
+    // since the review step itself is gone.
     return SafeArea(
       top: false,
       child: Padding(
@@ -581,8 +508,14 @@ class _WizardNav extends StatelessWidget {
               flex: 2,
               child: FilledButton.icon(
                 onPressed: (canAdvance && !submitting) ? onNext : null,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                label: const Text('Next'),
+                icon: submitting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(isLast ? Icons.send_rounded : Icons.arrow_forward_rounded, size: 18),
+                label: Text(isLast ? (submitting ? 'Submitting…' : 'Submit Ticket') : 'Next'),
               ),
             ),
           ],
@@ -658,15 +591,35 @@ class _CategoryStep extends StatelessWidget {
   }
 }
 
-/// Step 2 — single description box (mockup screen 9), no separate Title.
-class _DescriptionStep extends StatelessWidget {
+/// Step 2 — description, attachments, and "Affects" all on one screen
+/// (mockup screens 9-10 collapsed into one): Impact/Priority are no longer
+/// picked here at all — see ImpactPriorityCalculator — and there's no
+/// separate Title field; Ticket.title is derived from the description (see
+/// deriveTicketTitle above).
+class _DetailsStep extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController controller;
+  final List<PlatformFile> attachments;
+  final bool isOnline;
+  final VoidCallback onPick;
+  final ValueChanged<PlatformFile> onRemove;
+  final bool affectsMultipleUsers;
+  final ValueChanged<bool> onAffectsChanged;
 
-  const _DescriptionStep({required this.formKey, required this.controller});
+  const _DetailsStep({
+    required this.formKey,
+    required this.controller,
+    required this.attachments,
+    required this.isOnline,
+    required this.onPick,
+    required this.onRemove,
+    required this.affectsMultipleUsers,
+    required this.onAffectsChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final outline = Theme.of(context).colorScheme.outline;
     return Form(
       key: formKey,
       child: ListView(
@@ -691,77 +644,100 @@ class _DescriptionStep extends StatelessWidget {
             validator: (v) =>
                 (v == null || v.trim().isEmpty) ? 'Describe the issue' : null,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Step 3 — Impact + Priority dropdowns, and who the issue affects (mockup
-/// screen 10).
-class _ImpactPriorityStep extends StatelessWidget {
-  final TicketImpact? impact;
-  final TicketPriority? priority;
-  final bool affectsMultipleUsers;
-  final ValueChanged<TicketImpact?> onImpactChanged;
-  final ValueChanged<TicketPriority?> onPriorityChanged;
-  final ValueChanged<bool> onAffectsChanged;
-
-  const _ImpactPriorityStep({
-    required this.impact,
-    required this.priority,
-    required this.affectsMultipleUsers,
-    required this.onImpactChanged,
-    required this.onPriorityChanged,
-    required this.onAffectsChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      children: [
-        _stepLabel(context, 'Impact'),
-        DropdownButtonFormField<TicketImpact>(
-          initialValue: impact,
-          decoration: const InputDecoration(hintText: 'Select impact level'),
-          items: TicketImpact.values
-              .map((i) => DropdownMenuItem(value: i, child: Text(i.label)))
-              .toList(),
-          onChanged: onImpactChanged,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _stepLabel(context, 'Priority'),
-        DropdownButtonFormField<TicketPriority>(
-          initialValue: priority,
-          decoration: const InputDecoration(hintText: 'Select priority level'),
-          items: TicketPriority.values
-              .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
-              .toList(),
-          onChanged: onPriorityChanged,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _stepLabel(context, 'Affects'),
-        Row(
-          children: [
-            Expanded(
-              child: _AffectsOption(
-                label: 'Only Me',
-                selected: !affectsMultipleUsers,
-                onTap: () => onAffectsChanged(false),
+          const SizedBox(height: AppSpacing.lg),
+          _stepLabel(context, 'Add Attachments (Optional)'),
+          Material(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              onTap: isOnline ? onPick : null,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: outline, width: 1.4, style: BorderStyle.solid),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.cloud_upload_outlined, size: 34, color: AppTheme.accentBlue),
+                    const SizedBox(height: 10),
+                    Text(
+                      isOnline ? 'Tap to upload or drag and drop' : 'Attachments unavailable offline',
+                      style: Theme.of(context).textTheme.titleSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'PDF, PNG, JPG up to 10MB each',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _AffectsOption(
-                label: 'Multiple Users',
-                selected: affectsMultipleUsers,
-                onTap: () => onAffectsChanged(true),
+          ),
+          if (attachments.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            ...attachments.map(
+              (f) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.insert_drive_file_outlined, size: 20, color: AppTheme.accentBlue),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        f.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(_formatFileSize(f.size), style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: () => onRemove(f),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
-        ),
-      ],
+          const SizedBox(height: AppSpacing.lg),
+          _stepLabel(context, 'Affects'),
+          Row(
+            children: [
+              Expanded(
+                child: _AffectsOption(
+                  label: 'Only Me',
+                  selected: !affectsMultipleUsers,
+                  onTap: () => onAffectsChanged(false),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _AffectsOption(
+                  label: 'Multiple Users',
+                  selected: affectsMultipleUsers,
+                  onTap: () => onAffectsChanged(true),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -829,253 +805,3 @@ Widget _stepLabel(BuildContext context, String text) => Padding(
   ),
 );
 
-/// Step 4 — dropzone-style attachment picker (mockup screen 11).
-class _AttachmentsStep extends StatelessWidget {
-  final List<PlatformFile> attachments;
-  final bool isOnline;
-  final VoidCallback onPick;
-  final ValueChanged<PlatformFile> onRemove;
-
-  const _AttachmentsStep({
-    required this.attachments,
-    required this.isOnline,
-    required this.onPick,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final outline = Theme.of(context).colorScheme.outline;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      children: [
-        Text(
-          'Upload any files, screenshots or documents related to the issue.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Material(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            onTap: isOnline ? onPick : null,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: outline,
-                  width: 1.4,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.cloud_upload_outlined, size: 34, color: AppTheme.accentBlue),
-                  const SizedBox(height: 10),
-                  Text(
-                    isOnline
-                        ? 'Tap to upload or drag and drop'
-                        : 'Attachments unavailable offline',
-                    style: Theme.of(context).textTheme.titleSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'PDF, PNG, JPG up to 10MB each',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (attachments.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.md),
-          ...attachments.map(
-            (f) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.insert_drive_file_outlined, size: 20, color: AppTheme.accentBlue),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      f.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(_formatFileSize(f.size), style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    onPressed: () => onRemove(f),
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Step 5 — review card matching the mockup's Category/Impact/Priority/
-/// Affects rows, plus the description text (kept deliberately — see
-/// DECISIONS.md — dropping the actual issue text before final submit would
-/// be a real regression, not just a style simplification).
-class _ReviewStep extends StatelessWidget {
-  final TicketCategory category;
-  final TicketImpact impact;
-  final TicketPriority priority;
-  final bool affectsMultipleUsers;
-  final String description;
-  final int attachmentCount;
-
-  const _ReviewStep({
-    required this.category,
-    required this.impact,
-    required this.priority,
-    required this.affectsMultipleUsers,
-    required this.description,
-    required this.attachmentCount,
-  });
-
-  Color get _priorityColor => switch (priority) {
-    TicketPriority.critical => StatusColors.critical,
-    TicketPriority.high => StatusColors.high,
-    TicketPriority.medium => StatusColors.medium,
-    TicketPriority.low => StatusColors.low,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      children: [
-        Text(
-          'Please review your ticket details before submitting.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ReviewRow(label: 'Category', value: category.label),
-              _ReviewRow(label: 'Impact', value: impact.label),
-              _ReviewRow(
-                label: 'Priority',
-                valueWidget: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _priorityColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    priority.label,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelMedium?.copyWith(color: _priorityColor),
-                  ),
-                ),
-              ),
-              _ReviewRow(
-                label: 'Affects',
-                value: affectsMultipleUsers ? 'Multiple Users' : 'Only Me',
-                showDivider: false,
-              ),
-              const Divider(height: 28),
-              Text('Description', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 6),
-              Text(
-                description,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
-              ),
-              if (attachmentCount > 0) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.attach_file_rounded,
-                      size: 16,
-                      color: Colors.black45,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$attachmentCount attachment${attachmentCount == 1 ? '' : 's'}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ReviewRow extends StatelessWidget {
-  final String label;
-  final String? value;
-  final Widget? valueWidget;
-  final bool showDivider;
-
-  const _ReviewRow({
-    required this.label,
-    this.value,
-    this.valueWidget,
-    this.showDivider = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: showDivider ? 12 : 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const Spacer(),
-          valueWidget ??
-              Text(
-                value ?? '',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-        ],
-      ),
-    );
-  }
-}

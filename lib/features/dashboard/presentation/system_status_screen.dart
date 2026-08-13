@@ -3,7 +3,7 @@ import 'package:hyport/core/theme/app_theme.dart';
 
 /// Static for the MVP — Section 7 scopes "system downtime" as an
 /// admin-triggered broadcast notification, not a live health-check
-/// integration with Oracle Hyperion's actual infrastructure (that would
+/// integration with GBMS's actual infrastructure (that would
 /// need a monitoring feed this app has no access to). This screen shows
 /// the intended layout with all services reporting operational; wiring it
 /// to a real status feed is future work — see DECISIONS.md.
@@ -16,7 +16,7 @@ class SystemStatusScreen extends StatelessWidget {
   const SystemStatusScreen({super.key, this.embedded = false});
 
   static const _services = [
-    'Oracle Hyperion Application',
+    'GBMS Application',
     'Essbase Server',
     'Smart View',
     'Reports & Dashboards',

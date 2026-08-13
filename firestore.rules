@@ -45,6 +45,28 @@ service cloud.firestore {
       return isSignedIn() && role() == 'vendor_support';
     }
 
+    // Functional/Technical Lead no longer get isSupportSide()'s blanket
+    // cross-institution ticket visibility — they only ever see tickets
+    // assigned to them (Technical Lead further narrowed to only the ones
+    // that have actually been escalated, escalationLevel >= 1, mirroring
+    // the functional/technical tier in TicketRepository.scopedQuery's
+    // comment). Support Coordinator and Management keep full visibility —
+    // Coordinator specifically must see unassigned tickets to assign them.
+    function isFunctionalLead() {
+      return isSignedIn() && role() == 'functional_lead';
+    }
+
+    function isTechnicalLead() {
+      return isSignedIn() && role() == 'technical_lead';
+    }
+
+    // The two roles that keep cross-institution visibility over every
+    // ticket regardless of assignment — was isSupportSide() before
+    // Functional/Technical Lead were narrowed out of ticket access.
+    function canViewAllTickets() {
+      return isSignedIn() && role() in ['support_coordinator', 'pfm_management'];
+    }
+
     function isRequesterSide() {
       return isSignedIn() && role() in ['mda_user', 'focal_person'];
     }
@@ -60,24 +82,13 @@ service cloud.firestore {
     // ----- users -----
     // Profile fields are admin-managed (Section 5); clients never write
     // those. The exceptions are inherently self-service: a user registering
-    // their own device's FCM token for push notifications (Section 7), and
-    // a user toggling their own two-factor login preference.
+    // their own device's FCM token for push notifications (Section 7).
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isSupportSide());
       allow update: if isSignedIn()
         && request.auth.uid == userId
-        && onlyFieldsChanged(['fcmTokens', 'twoFactorEnabled', 'lastActiveAt', 'profilePhotoUrl']);
+        && onlyFieldsChanged(['fcmTokens', 'lastActiveAt', 'profilePhotoUrl']);
       allow create, delete: if false;
-    }
-
-    // ----- OTP codes (interim two-factor login step) -----
-    // Client-generated and client-displayed for now — see OtpRepository's
-    // doc comment and DECISIONS.md for why (Cloud Functions, needed to
-    // generate+email a code server-side, are blocked on the Blaze plan).
-    // Scoped strictly to the owning user in the meantime; tightens further
-    // once a real backend generates these instead.
-    match /otp_codes/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     // ----- institutions -----
@@ -137,8 +148,12 @@ service cloud.firestore {
     // ----- tickets -----
     match /tickets/{ticketId} {
       // Section 3: a plain User only sees tickets they personally logged; a
-      // Focal Person sees every ticket from their institution.
-      allow read: if isSupportSide()
+      // Focal Person sees every ticket from their institution. Functional
+      // Lead sees only tickets assigned to them; Technical Lead only the
+      // ones assigned to them that have actually been escalated.
+      allow read: if canViewAllTickets()
+        || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
+        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel >= 1)
         || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2)
         || (isFocalPerson() && resource.data.institutionId == institutionId())
         || (isRequesterSide() && resource.data.createdBy == request.auth.uid);
@@ -152,7 +167,16 @@ service cloud.firestore {
         && request.resource.data.escalationLevel == 0
         && request.resource.data.assignedTo == null;
 
-      allow update: if isSupportSide()
+      allow update: if
+        // Only Support Coordinator gets unrestricted ticket-field access —
+        // assign/escalate/edit-priority/close are all theirs alone (Section
+        // 3). PFM Management/Administrator is deliberately excluded even
+        // though it satisfies the broader isSupportSide(): its only
+        // ticket-detail action in the UI is adding a chat comment (governed
+        // separately, under /activity below), never assign/escalate/close —
+        // see AddUserScreen/DesktopTicketDetailScreen's role checks, which
+        // this mirrors so a raw API call can't do what the UI never offers.
+        role() == 'support_coordinator'
         // Vendor/Specialist's only granted action is resolving a ticket
         // escalated to them (Section 3: no assign/escalate/close) — the app
         // UI never offers those to Vendor, but the rule shouldn't rely on
@@ -164,7 +188,8 @@ service cloud.firestore {
         || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2
             && onlyFieldsChanged(['status', 'updatedAt', 'resolutionNotes', 'resolvedAt'])
             && request.resource.data.status == 'resolved')
-        || (role() in ['functional_lead', 'technical_lead'] && resource.data.assignedTo == request.auth.uid)
+        || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
+        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel >= 1)
         // Requester: may only reopen or confirm-close their own ticket —
         // never touch assignment, escalation, or category/priority fields.
         || (isRequesterSide()
@@ -175,7 +200,10 @@ service cloud.firestore {
 
       // ----- ticket activity (audit trail) -----
       match /activity/{activityId} {
-        allow read: if isSupportSide()
+        allow read: if canViewAllTickets()
+          || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
+          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel >= 1)
           || (isVendor() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || (isFocalPerson() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.institutionId == institutionId())
           || (isRequesterSide()
@@ -183,8 +211,15 @@ service cloud.firestore {
 
         // Every status-changing action must leave an activity record
         // (Section 8); anyone who can read the ticket can add one, but only
-        // as themselves, and entries are immutable once written.
-        allow create: if (isSupportSide() || isVendor() || isRequesterSide())
+        // as themselves, and entries are immutable once written. Functional/
+        // Technical Lead mirror the same assignedTo (+ escalated, for
+        // Technical Lead) condition as the read rule above — they shouldn't
+        // be able to write to a ticket's trail they can't even open.
+        allow create: if (canViewAllTickets()
+          || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
+          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel >= 1)
+          || isVendor() || isRequesterSide())
           && request.resource.data.actorId == request.auth.uid
           && request.resource.data.ticketId == ticketId;
         allow update, delete: if false;

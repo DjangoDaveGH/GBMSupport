@@ -1,19 +1,16 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
-import 'package:hyport/features/auth/data/user_providers.dart';
-import 'package:hyport/features/auth/domain/app_user.dart';
 
 /// Matches the reference Settings screen's section layout, minus Biometric
-/// Login (removed — this app has no working security control behind it) and
-/// with "Change Password" relabeled "Request Password" (it only ever sent a
-/// reset-link email, never an in-app change). Request Password, Logout, and
-/// Two-Factor Authentication are fully functional. Two-Factor Authentication
-/// is real (toggles `users/{uid}.twoFactorEnabled` and gates login via the
-/// router), but its code delivery is interim — see OtpVerifyScreen's doc
-/// comment.
+/// Login (removed — this app has no working security control behind it).
+/// "Change Password" does a real in-app password change (current + new
+/// password, via AuthService.changePassword). The old "Request Password"
+/// reset-link-email tile was removed from here; a forgotten-password user
+/// still has the "Forgot Password?" link on the login screen.
 class SettingsScreen extends ConsumerWidget {
   /// When true, renders just the list content with no Scaffold/AppBar of
   /// its own — for embedding inside DesktopShell. See NotificationsScreen's
@@ -32,24 +29,10 @@ class SettingsScreen extends ConsumerWidget {
           _SectionLabel('Account'),
           _SettingsCard(children: [
             _SettingsTile(
-              icon: Icons.lock_reset_rounded,
-              label: 'Request Password',
-              onTap: appUser == null
-                  ? null
-                  : () async {
-                      await ref.read(authServiceProvider).sendPasswordResetEmail(appUser.email);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Password reset link sent to your email.')),
-                        );
-                      }
-                    },
+              icon: Icons.password_rounded,
+              label: 'Change Password',
+              onTap: appUser == null ? null : () => _showChangePasswordDialog(context, ref),
             ),
-          ]),
-          const SizedBox(height: AppSpacing.lg),
-          _SectionLabel('Security'),
-          _SettingsCard(children: [
-            if (appUser != null) _TwoFactorSwitch(appUser: appUser),
           ]),
           const SizedBox(height: AppSpacing.lg),
           _SectionLabel('Preferences'),
@@ -76,7 +59,7 @@ class SettingsScreen extends ConsumerWidget {
               label: 'About App',
               onTap: () => showAboutDialog(
                 context: context,
-                applicationName: 'Oracle Hyperion Support Centre',
+                applicationName: 'GBMS Support Centre',
                 applicationVersion: '1.0.0',
                 applicationLegalese: 'Ministry of Finance — PFM-Systems Division',
               ),
@@ -104,6 +87,121 @@ class SettingsScreen extends ConsumerWidget {
 
     if (embedded) return body;
     return Scaffold(appBar: AppBar(title: const Text('Settings')), body: body);
+  }
+
+  Future<void> _showChangePasswordDialog(BuildContext context, WidgetRef ref) {
+    return showDialog(context: context, builder: (_) => const _ChangePasswordDialog());
+  }
+}
+
+class _ChangePasswordDialog extends ConsumerStatefulWidget {
+  const _ChangePasswordDialog();
+
+  @override
+  ConsumerState<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authServiceProvider).changePassword(
+            currentPassword: _currentController.text,
+            newPassword: _newController.text,
+          );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password changed.')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = switch (e.code) {
+            'wrong-password' || 'invalid-credential' => 'Current password is incorrect.',
+            'weak-password' => 'New password is too weak.',
+            _ => e.message ?? 'Could not change password (${e.code}).',
+          });
+    } catch (e) {
+      setState(() => _error = 'Could not change password: $e');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Change Password'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _currentController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Current password'),
+                validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _newController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'New password'),
+                validator: (v) => (v == null || v.length < 6) ? 'At least 6 characters' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _confirmController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirm new password'),
+                validator: (v) => v != _newController.text ? 'Passwords do not match' : null,
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 
@@ -163,47 +261,3 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-/// Real, working toggle for `users/{uid}.twoFactorEnabled` — unlike a plain
-/// on/off switch backed by nothing, this is controlled directly by the live
-/// `AppUser` (not local widget state), so it stays correct if the flag
-/// ever changes from elsewhere (e.g. an admin action in a future phase).
-class _TwoFactorSwitch extends ConsumerStatefulWidget {
-  final AppUser appUser;
-
-  const _TwoFactorSwitch({required this.appUser});
-
-  @override
-  ConsumerState<_TwoFactorSwitch> createState() => _TwoFactorSwitchState();
-}
-
-class _TwoFactorSwitchState extends ConsumerState<_TwoFactorSwitch> {
-  bool _saving = false;
-
-  Future<void> _toggle(bool value) async {
-    setState(() => _saving = true);
-    try {
-      await ref.read(userRepositoryProvider).setTwoFactorEnabled(widget.appUser.id, value);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(Icons.verified_user_outlined, size: 20, color: AppTheme.accentBlue),
-      title: Text('Two-Factor Authentication', style: Theme.of(context).textTheme.bodyMedium),
-      subtitle: Text(
-        widget.appUser.twoFactorEnabled
-            ? 'On — codes shown on-screen until email delivery is set up.'
-            : 'Off — turn on to require a verification code at login.',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      isThreeLine: true,
-      trailing: _saving
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-          : Switch(value: widget.appUser.twoFactorEnabled, onChanged: _toggle),
-      shape: const RoundedRectangleBorder(),
-    );
-  }
-}

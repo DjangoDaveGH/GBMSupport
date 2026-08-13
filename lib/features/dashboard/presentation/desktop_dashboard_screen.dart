@@ -3,12 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/audit_log.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
+import 'package:hyport/features/dashboard/domain/audit_log_formatting.dart';
+import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart' show categoryIcon;
@@ -40,6 +46,12 @@ const _priorityPalette = {
 /// Phase 5 mockup screen 30. Desktop-width, support-side counterpart to
 /// HomeScreen's `_SupportHome` — same `ticketListProvider` data, entirely
 /// different presentation (trend chart + table instead of cards + list).
+///
+/// Originally ticket-stats-only; now a real system snapshot — active users,
+/// institutions, and knowledge base article counts alongside ticket
+/// metrics, plus a Recent System Activity panel (admin actions: user
+/// created/updated/role changed) so this reads as "the state of the whole
+/// system" rather than just "the state of tickets."
 class DesktopDashboardScreen extends ConsumerWidget {
   const DesktopDashboardScreen({super.key});
 
@@ -50,13 +62,24 @@ class DesktopDashboardScreen extends ConsumerWidget {
 
     final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
     final usersAsync = ref.watch(allUsersProvider);
+    final institutionsAsync = ref.watch(institutionListProvider);
+    final articlesAsync = ref.watch(articleListProvider(null));
+    final adminActionsAsync = ref.watch(adminActionsAuditLogProvider);
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load dashboard data: $e')),
       data: (tickets) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
-        return _DashboardBody(tickets: tickets, usersById: usersById);
+        final users = usersAsync.valueOrNull ?? const <AppUser>[];
+        final usersById = <String, AppUser>{for (final u in users) u.id: u};
+        return _DashboardBody(
+          tickets: tickets,
+          usersById: usersById,
+          activeUserCount: users.where((u) => u.isActive).length,
+          institutionCount: institutionsAsync.valueOrNull?.length ?? 0,
+          articleCount: articlesAsync.valueOrNull?.length ?? 0,
+          recentAdminActions: adminActionsAsync.valueOrNull?.take(5).toList() ?? const <AuditLog>[],
+        );
       },
     );
   }
@@ -65,8 +88,19 @@ class DesktopDashboardScreen extends ConsumerWidget {
 class _DashboardBody extends StatelessWidget {
   final List<Ticket> tickets;
   final Map<String, AppUser> usersById;
+  final int activeUserCount;
+  final int institutionCount;
+  final int articleCount;
+  final List<AuditLog> recentAdminActions;
 
-  const _DashboardBody({required this.tickets, required this.usersById});
+  const _DashboardBody({
+    required this.tickets,
+    required this.usersById,
+    required this.activeUserCount,
+    required this.institutionCount,
+    required this.articleCount,
+    required this.recentAdminActions,
+  });
 
   List<DateTime> get _last7Days {
     final today = DateTime.now();
@@ -110,6 +144,28 @@ class _DashboardBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+          Text('System Overview', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SimpleStatCard(icon: Icons.people_alt_outlined, label: 'Active Users', value: activeUserCount),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _SimpleStatCard(icon: Icons.apartment_outlined, label: 'Institutions', value: institutionCount),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _SimpleStatCard(
+                  icon: Icons.menu_book_outlined,
+                  label: 'Knowledge Base Articles',
+                  value: articleCount,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -138,6 +194,105 @@ class _DashboardBody extends StatelessWidget {
             trailing: TextButton(onPressed: () => context.push('/tickets'), child: const Text('View All')),
             child: _RecentTicketsTable(tickets: recent.take(8).toList(), usersById: usersById),
           ),
+          const SizedBox(height: 24),
+          _Panel(
+            title: 'Recent System Activity',
+            trailing: TextButton(onPressed: () => context.push('/audit-logs'), child: const Text('View All')),
+            child: _RecentActivityList(entries: recentAdminActions, usersById: usersById),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SimpleStatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int value;
+
+  const _SimpleStatCard({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: AppTheme.accentBlue.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(icon, size: 20, color: AppTheme.accentBlue),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(NumberFormat.decimalPattern().format(value), style: Theme.of(context).textTheme.titleLarge),
+              Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentActivityList extends StatelessWidget {
+  final List<AuditLog> entries;
+  final Map<String, AppUser> usersById;
+
+  const _RecentActivityList({required this.entries, required this.usersById});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return const EmptyState(icon: Icons.history_rounded, message: 'No admin activity recorded yet.');
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < entries.length; i++) ...[
+          if (i > 0) const Divider(height: 1),
+          _ActivityRow(entry: entries[i], usersById: usersById),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  final AuditLog entry;
+  final Map<String, AppUser> usersById;
+
+  const _ActivityRow({required this.entry, required this.usersById});
+
+  @override
+  Widget build(BuildContext context) {
+    final actor = usersById[entry.actorId]?.name ?? 'System';
+    final target = usersById[entry.targetId]?.name ?? entry.targetId;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium,
+                children: [
+                  TextSpan(text: actor, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  TextSpan(text: ' ${adminActionLabel(entry.action).toLowerCase()} '),
+                  TextSpan(text: target, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+          Text(DateFormat.MMMd().add_jm().format(entry.timestamp), style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );

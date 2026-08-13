@@ -1,8 +1,10 @@
-// Firebase project: hyport-a1c90. Web and Android config filled in manually
-// from the Firebase console's web app snippet and android/app/google-services.json.
-// iOS config filled in from `firebase apps:sdkconfig IOS` once the iOS
-// platform was scaffolded — see DECISIONS.md ("Firebase project connection"
-// and the iOS-testing-pipeline entry).
+// Firebase project: mofapp-60963. Regenerated via `flutterfire configure`
+// during the migration off hyport-a1c90 (broken billing account on a
+// locked-out Google account) — see DECISIONS.md ("Firebase project
+// migration to mofapp-60963"). iOS's GoogleService-Info.plist had to be
+// re-fetched separately via `firebase apps:sdkconfig IOS`, same as during
+// the original iOS scaffolding, since flutterfire configure didn't rewrite
+// that file on this run.
 //
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
@@ -28,29 +30,31 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBu0N7zimTaCMzvBVHReo07r_7m9KIJQDk',
-    appId: '1:294438939223:web:073e6b4cb729be78971112',
-    messagingSenderId: '294438939223',
-    projectId: 'hyport-a1c90',
-    authDomain: 'hyport-a1c90.firebaseapp.com',
-    storageBucket: 'hyport-a1c90.firebasestorage.app',
-    measurementId: 'G-HYNQCRR9RH',
+    apiKey: 'AIzaSyBSBV0J8Dk7Gw7HMdD5a926l8J0iVsOWE8',
+    appId: '1:584460170232:web:f5da6fab263bac26845c0d',
+    messagingSenderId: '584460170232',
+    projectId: 'mofapp-60963',
+    authDomain: 'mofapp-60963.firebaseapp.com',
+    databaseURL: 'https://mofapp-60963-default-rtdb.firebaseio.com',
+    storageBucket: 'mofapp-60963.firebasestorage.app',
+    measurementId: 'G-5FX2GG8FPH',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCZV-lIVu-xzowX2yotiONqBs21upECPTU',
-    appId: '1:294438939223:android:dae1d22bafc2e558971112',
-    messagingSenderId: '294438939223',
-    projectId: 'hyport-a1c90',
-    storageBucket: 'hyport-a1c90.firebasestorage.app',
+    apiKey: 'AIzaSyAclbc_2Dab7Hif8VnozTLPW1WiFIB31rc',
+    appId: '1:584460170232:android:f41d06f731949f2c845c0d',
+    messagingSenderId: '584460170232',
+    projectId: 'mofapp-60963',
+    databaseURL: 'https://mofapp-60963-default-rtdb.firebaseio.com',
+    storageBucket: 'mofapp-60963.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCX7LLlh07DGZ1XCICIq6r-4iQKUA4cWdE',
-    appId: '1:294438939223:ios:0e5539ad4f4c4df8971112',
-    messagingSenderId: '294438939223',
-    projectId: 'hyport-a1c90',
-    storageBucket: 'hyport-a1c90.firebasestorage.app',
+    apiKey: 'AIzaSyDSS7quX9GEg-yXjhRVbmpgED9yvvdSiwk',
+    appId: '1:584460170232:ios:dfc24de5a2badb8e845c0d',
+    messagingSenderId: '584460170232',
+    projectId: 'mofapp-60963',
+    databaseURL: 'https://mofapp-60963-default-rtdb.firebaseio.com',
+    storageBucket: 'mofapp-60963.firebasestorage.app',
     iosBundleId: 'gov.mofep.hyport.hyport',
   );
 }

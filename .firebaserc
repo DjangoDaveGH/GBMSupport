@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "mofapp-60963"
+  },
+  "targets": {
+    "mofapp-60963": {
+      "hosting": {
+        "legacy": [
+          "mofapp-60963"
+        ],
+        "main": [
+          "gbmsupport"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

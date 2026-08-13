@@ -116,7 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Image.asset('assets/images/mof_logo.png', width: 104, height: 104),
                           const SizedBox(height: 28),
                           Text(
-                            'ORACLE HYPERION\nSUPPORT CENTRE',
+                            'GBMS\nSUPPORT CENTRE',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: AppTheme.fontFamily,

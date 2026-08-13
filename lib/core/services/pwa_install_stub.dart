@@ -8,5 +8,7 @@ class PwaInstall {
 
   static bool get canInstall => false;
 
+  static bool get isInstalled => false;
+
   static Future<String> promptInstall() async => 'unavailable';
 }

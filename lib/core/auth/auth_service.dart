@@ -28,4 +28,18 @@ class AuthService {
   Future<void> confirmPasswordReset({required String oobCode, required String newPassword}) {
     return _auth.confirmPasswordReset(code: oobCode, newPassword: newPassword);
   }
+
+  /// Self-service in-app password change (Settings screen). Firebase
+  /// requires a recent sign-in for `updatePassword`, so this reauthenticates
+  /// with the current password first — that also doubles as verifying the
+  /// user actually knows it before setting a new one.
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw StateError('No signed-in user to change the password for.');
+    }
+    final credential = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
 }

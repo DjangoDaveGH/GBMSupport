@@ -266,7 +266,8 @@ enum NotificationType {
   resolved,
   systemDowntime,
   deadlineReminder,
-  maintenance;
+  maintenance,
+  chatMessage;
 
   String get wireValue => switch (this) {
         NotificationType.ticketReceived => 'ticket_received',
@@ -277,6 +278,7 @@ enum NotificationType {
         NotificationType.systemDowntime => 'system_downtime',
         NotificationType.deadlineReminder => 'deadline_reminder',
         NotificationType.maintenance => 'maintenance',
+        NotificationType.chatMessage => 'commented',
       };
 
   static NotificationType fromWire(String value) =>

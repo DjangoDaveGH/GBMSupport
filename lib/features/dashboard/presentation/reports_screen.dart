@@ -5,6 +5,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/dashboard/data/report_providers.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _reportTypes = [
   ('summary', 'Tickets Summary Report', 'Overview of all tickets', Icons.summarize_rounded),
@@ -15,9 +16,10 @@ const _reportTypes = [
 ];
 
 /// Phase 4 mockup screen 24. Reports are computed live from real ticket
-/// data (see ReportDetailScreen) rather than exported/stored PDF files —
-/// there's no Storage yet to persist those. "Recent Reports" is a genuine
-/// log of report types this admin looked at, not fabricated file history.
+/// data (see ReportDetailScreen); PDF export (report_pdf_export.dart)
+/// renders that same live data and uploads it to Storage. "Recent Reports"
+/// is a genuine log of report types this admin looked at — entries with an
+/// exported PDF link to the real Storage file, not a fabricated one.
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
 
@@ -97,31 +99,47 @@ class ReportsScreen extends ConsumerWidget {
                 }
                 return Column(
                   children: views.map((v) {
+                    final hasPdf = v.pdfUrl != null;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.description_outlined, size: 18, color: AppTheme.gold),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          onTap: hasPdf ? () => launchUrl(Uri.parse(v.pdfUrl!), webOnlyWindowName: '_blank') : null,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
                               children: [
-                                Text(v.reportLabel, style: Theme.of(context).textTheme.titleSmall),
-                                Text(
-                                  DateFormat.yMMMd().add_jm().format(v.viewedAt),
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                Icon(
+                                  hasPdf ? Icons.picture_as_pdf_outlined : Icons.description_outlined,
+                                  size: 18,
+                                  color: AppTheme.gold,
                                 ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(v.reportLabel, style: Theme.of(context).textTheme.titleSmall),
+                                      Text(
+                                        DateFormat.yMMMd().add_jm().format(v.viewedAt),
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (hasPdf) const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.black45),
                               ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     );
                   }).toList(),

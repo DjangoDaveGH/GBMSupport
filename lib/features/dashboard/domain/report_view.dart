@@ -6,6 +6,7 @@ class ReportView {
   final String reportLabel;
   final String viewedBy;
   final DateTime viewedAt;
+  final String? pdfUrl;
 
   const ReportView({
     required this.id,
@@ -13,6 +14,7 @@ class ReportView {
     required this.reportLabel,
     required this.viewedBy,
     required this.viewedAt,
+    this.pdfUrl,
   });
 
   factory ReportView.fromMap(String id, Map<String, dynamic> map) {
@@ -22,6 +24,7 @@ class ReportView {
       reportLabel: map['reportLabel'] as String? ?? '',
       viewedBy: map['viewedBy'] as String? ?? '',
       viewedAt: (map['viewedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      pdfUrl: map['pdfUrl'] as String?,
     );
   }
 
@@ -30,5 +33,6 @@ class ReportView {
         'reportLabel': reportLabel,
         'viewedBy': viewedBy,
         'viewedAt': FieldValue.serverTimestamp(),
+        if (pdfUrl != null) 'pdfUrl': pdfUrl,
       };
 }

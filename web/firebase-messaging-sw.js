@@ -11,12 +11,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyBu0N7zimTaCMzvBVHReo07r_7m9KIJQDk',
-  appId: '1:294438939223:web:073e6b4cb729be78971112',
-  messagingSenderId: '294438939223',
-  projectId: 'hyport-a1c90',
-  authDomain: 'hyport-a1c90.firebaseapp.com',
-  storageBucket: 'hyport-a1c90.firebasestorage.app',
+  apiKey: 'AIzaSyBSBV0J8Dk7Gw7HMdD5a926l8J0iVsOWE8',
+  appId: '1:584460170232:web:f5da6fab263bac26845c0d',
+  messagingSenderId: '584460170232',
+  projectId: 'mofapp-60963',
+  authDomain: 'mofapp-60963.firebaseapp.com',
+  storageBucket: 'mofapp-60963.firebasestorage.app',
 });
 
 firebase.messaging();
