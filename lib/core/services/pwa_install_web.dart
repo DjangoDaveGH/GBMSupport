@@ -20,6 +20,11 @@ class PwaInstall {
 
   static bool get canInstall => (_available ?? false) && !(_installed ?? false);
 
+  /// Detected via `display-mode: standalone` / `navigator.standalone` in
+  /// web/index.html — works cross-browser (including Safari, which has no
+  /// `beforeinstallprompt` at all), unlike [canInstall].
+  static bool get isInstalled => _installed ?? false;
+
   static Future<String> promptInstall() async {
     final outcome = await _promptJS().toDart;
     return outcome.toDart;

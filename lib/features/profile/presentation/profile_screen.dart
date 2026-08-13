@@ -7,6 +7,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 
@@ -79,6 +80,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const Scaffold(body: BrandedLoaderCenter());
+
+    final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+    final institutionName = [
+      for (final i in institutions)
+        if (i.id == appUser.institutionId) i.name,
+    ].firstOrNull ?? appUser.institutionType.wireValue;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -171,7 +178,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           Text(
-            appUser.institutionType.wireValue,
+            institutionName,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -185,7 +192,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               _InfoRow(
                 label: 'Institution',
-                value: appUser.institutionType.wireValue,
+                value: institutionName,
               ),
               _InfoRow(label: 'Role', value: appUser.role.label),
             ],

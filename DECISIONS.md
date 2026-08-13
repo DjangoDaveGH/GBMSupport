@@ -3,6 +3,458 @@
 Judgment calls made without stopping to ask, per the project brief's
 instruction to keep going and record reasoning here instead. Newest first.
 
+## 2FA/OTP removed entirely — user asked to remove it, not just re-disable it
+
+Phone MFA was already sitting behind the `twoFactorMandatory = false` flag
+(previous entry) because reCAPTCHA wasn't resolving for real users. The
+user asked to remove it outright rather than continue troubleshooting or
+leave the disabled scaffolding in place. Unlike the previous entry, this
+is a genuine deletion, not a flag flip — nothing here is meant to come
+back:
+
+- Deleted `PhoneMfaService`, `OtpVerifyScreen`, `TwoFactorSetupScreen`,
+  and `scripts/disable_2fa_for_testing.js` outright.
+- `app_router.dart`: removed the `/otp-verify` and `/setup-2fa` routes,
+  the `needsTwoFactorSetup` redirect gate, and `/otp-verify` from
+  `preAuthPaths`. Login now goes straight from credentials to `/home`
+  via the ordinary redirect, no MFA step in between.
+- `login_screen.dart`: dropped the `FirebaseAuthMultiFactorException`
+  catch clause — Firebase can't throw it for an account with no enrolled
+  factor, and no account can enroll one anymore.
+- `settings_screen.dart` / `edit_user_dialog.dart`: removed the Security
+  section (`_TwoFactorStatus`, `_ChangePhoneDialog`) and the admin
+  "Reset 2FA" action.
+- `AppUser.twoFactorEnabled` and `UserRepository.setTwoFactorEnabled`
+  removed; `functions/index.js`'s `adminResetTwoFactor` callable deleted;
+  `firestore.rules`' `onlyFieldsChanged` carve-out for `twoFactorEnabled`
+  dropped.
+- The old client-side `OtpRepository` (generated codes shown on-screen,
+  predates the Firebase phone MFA work) was already deleted in the
+  working tree before this pass — left deleted, not restored.
+
+Existing `users/{uid}.twoFactorEnabled` fields in Firestore are now
+simply unread/ignored, not backfilled away — harmless leftover data, not
+worth a migration for a field nothing references anymore.
+
+## 2FA temporarily disabled — participants were blocked from using the app
+
+Root-caused as far as tooling in this environment allows (no browser-
+automation tool by default, so drove a real headless Chromium — found
+already installed from an earlier session — via a scratch Playwright
+script to actually click through sign-in and hit "Send Code" for real,
+rather than continuing to guess at Firebase project settings). That test
+proved the project config is genuinely correct: the flow reached a real
+interactive reCAPTCHA challenge (an actual "select all squares with
+buses" puzzle), which only happens *after* Firebase has already validated
+project config, phone/MFA provider enablement, the authorized domain, and
+the SMS region policy — everything fixed in the two prior entries. So the
+remaining failure is reCAPTCHA itself not resolving for real users in the
+field — most likely a network-level or browser-extension-level block on
+`google.com/recaptcha`/`gstatic.com/recaptcha` (common on office/
+government networks with content filtering), not a project
+misconfiguration. Confirmed via Admin SDK that no seeded account had
+actually completed enrollment (`multiFactor.enrolledFactors` empty on all
+8), so disabling the app-level gate is safe — no account can get stuck at
+a Firebase-enforced challenge that already exists.
+
+With participants waiting to use the app, the user asked to scrap 2FA
+enforcement for now rather than keep troubleshooting a network-dependent
+issue live. Disabled via a single shared flag, `twoFactorMandatory` (now
+`false`) in `lib/features/auth/data/phone_mfa_service.dart` — read by
+both `app_router.dart`'s redirect gate (wrapped in `if
+(twoFactorMandatory)`, `// ignore: dead_code` while off) and
+`settings_screen.dart`'s Security section visibility (hidden entirely
+while off, rather than showing a misleading "Required" status nobody can
+actually complete). Deliberately a flag flip, not a revert/deletion —
+`PhoneMfaService`, `TwoFactorSetupScreen`, `OtpVerifyScreen`,
+`adminResetTwoFactor`, and all the Firebase-side config fixes stay
+exactly as built, ready to re-enable by flipping the one constant back to
+`true` once reCAPTCHA is confirmed working end-to-end (worth testing from
+a non-office network / with extensions disabled first, per the previous
+entry's diagnostic suggestions, before flipping it back).
+
+Rebuilt and redeployed web (`gbmsupport.web.app`) and Android
+immediately given the urgency (participants actively blocked). No
+Firestore/rules/functions changes needed — this was purely a client-side
+routing/UI change.
+
+## Fixed: same "operation-not-allowed" persisted on web after the region-policy fix — real cause was the custom hosting site was never authorized
+
+The SMS region policy fix (previous entry) didn't resolve it — user kept
+seeing the identical error on web specifically. Reproducing the exact
+client call via REST (`accounts/mfaEnrollment:start`) surfaced a
+*different* error (`MISSING_CLIENT_IDENTIFIER`, expected — curl isn't a
+real browser with a reCAPTCHA token), which ruled out that path without
+confirming the real cause. Went back to the Identity Platform config
+already pulled for the region-policy investigation and noticed
+`authorizedDomains` only listed `mofapp-60963.web.app` /
+`mofapp-60963.firebaseapp.com` / `localhost` — **`gbmsupport.web.app` was
+never added**, a leftover gap from creating that second Hosting site and
+switching deploys to it (see the earlier "custom .web.app subdomain"
+work) without touching Firebase Auth's separate authorized-domains list.
+Phone verification's reCAPTCHA step legitimately fails on an
+unauthorized domain, which fits both the web-only symptom (user confirmed
+Android wasn't tested/affected the same way) and the generic
+`operation-not-allowed` surfacing instead of a more specific
+domain-related error.
+
+Fixed the same way as the region policy — a `PATCH` to
+`identitytoolkit.googleapis.com/admin/v2/projects/mofapp-60963/config`
+adding `gbmsupport.web.app` to `authorizedDomains` (kept the existing
+three rather than replacing them, in case anything still references the
+default site). Confirmed via the response body that all four domains are
+now listed. No code/deploy needed. Worth remembering for any *future*
+custom domain (e.g. if `gbmsupport.com` gets connected later, per the
+earlier domain conversation) — that'll need the same authorized-domains
+addition, not just the Hosting-side connection.
+
+## Fixed: "operation-not-allowed" on OTP send (SMS region policy, not the Phone/MFA toggles)
+
+Follow-up to the "unverified email" fix — user still hit an error after
+that (`auth/operation-not-allowed`) even with Phone sign-in and SMS MFA
+both confirmed enabled in the Console. Diagnosed by reading the project's
+actual Identity Platform config directly (`GET
+https://identitytoolkit.googleapis.com/admin/v2/projects/mofapp-60963/config`,
+authenticated with the existing `scripts/service-account.json` — this
+config isn't exposed through firebase-admin's `auth()` module or the
+Console UI path we'd been checking, only the raw Identity Toolkit Admin
+API) rather than guessing at more Console settings. Found the real cause:
+`smsRegionConfig: { allowlistOnly: {} }` — an *empty* allowlist, meaning
+zero countries were permitted to receive SMS at all. This is a separate
+anti-fraud setting from the Phone/MFA enable toggles (which were both
+genuinely fine — `phoneNumber.enabled: true`, `mfa.state: ENABLED` in the
+same config dump), defaults to this locked-down empty state when MFA is
+first turned on, and isn't obviously surfaced in the Sign-in method UI
+the user had been looking at.
+
+Fixed with a `PATCH` to the same Admin API endpoint, allowlisting Ghana
+specifically (`smsRegionConfig.allowlistOnly.allowedRegions: ["GH"]`)
+rather than opening it to all regions — narrower blast radius for
+SMS-pumping abuse, and the only real audience for this app is Ghanaian
+phone numbers anyway. Confirmed via a second `GET` that the change
+persisted. No code/deploy needed — this is pure Firebase project
+configuration, orthogonal to everything already shipped.
+
+## Fixed: "unverified email" error on the 2FA setup/OTP screen
+
+User-reported bug, root-caused rather than guessed at: confirmed via a
+direct Admin SDK query (`getUserByEmail('m@m.com').emailVerified`) that
+seeded accounts had `emailVerified: false`. Firebase phone Multi-Factor
+Authentication refuses to enroll a factor for an unverified email
+(`auth/unverified-email`) — a real Firebase-side precondition, not
+something this app was doing wrong in its own logic. This app has no
+email-verification flow anywhere (accounts are exclusively
+admin-provisioned, trusted as entered — see the original "no self-signup"
+scoping decision), so every admin-created and seeded account was landing
+in this unverified state by default and had no way to clear it.
+
+Fix: force `emailVerified: true` at account-creation/update time in both
+places accounts get created — `adminCreateUser` (`functions/index.js`)
+for real accounts, and `scripts/seed.js` for test accounts — rather than
+building an actual verification-email flow this app doesn't otherwise
+need. Re-ran `seed.js` to retroactively fix the 8 already-existing seeded
+accounts (`updateUser` covers existing users, per the script's own
+"safe to re-run" design) and redeployed `adminCreateUser` so new accounts
+don't hit this going forward.
+
+## 2FA made mandatory for every account, not opt-in
+
+The previous session built SMS OTP as a self-service Settings toggle. The
+user corrected this: every account must go through phone verification on
+login, no exceptions, no opt-out. Real architectural implication, not a
+flag flip — the whole mechanism depends on Firebase itself throwing
+`FirebaseAuthMultiFactorException` during sign-in, which only happens for
+an account that already has an enrolled factor. An account that's never
+enrolled just signs in normally no matter what "mandatory" means at the
+product level, so mandatory has to be enforced by the app.
+
+- **`app_router.dart`**: a new redirect gate (`needsTwoFactorSetup`),
+  same shape as the `needsOtp` gate removed last session but checking
+  *enrollment* rather than *per-session verification* — any signed-in
+  user with `!appUser.twoFactorEnabled` gets forced to a new `/setup-2fa`
+  route before anything else in the app is reachable. This is a
+  genuinely different gate from `/otp-verify` (which challenges an
+  *already-enrolled* user mid-sign-in, before Firebase even considers
+  them authenticated) — this one catches an authenticated-but-never-
+  enrolled user and forces first-time setup.
+- **New `TwoFactorSetupScreen`**: full-screen, non-dismissable version of
+  the same send-code/confirm-code mechanics already built
+  (`PhoneMfaService`, `normalizeGhanaPhone`). No Cancel button — a Sign
+  Out action instead, so a user who can't complete it right now isn't
+  hard-stuck with zero way out of the screen.
+- **Settings' 2FA row** stopped being a toggle (`_TwoFactorSwitch` →
+  `_TwoFactorStatus`) — always shows "Required", with a "Change" action
+  for re-enrolling a new number (unenroll-then-enroll,
+  `_ChangePhoneDialog`) rather than an on/off switch. Matches "not an
+  option" literally: there's no path in the UI to disable it anymore.
+- **Lost-phone recovery** (flagged as a real gap the moment 2FA has no
+  opt-out — a user who loses their phone would otherwise be permanently
+  locked out): new `adminResetTwoFactor` Cloud Function
+  (`functions/index.js`), directly mirroring `adminUpdateUser`'s
+  pfm_management-only auth check and audit-log pattern. Client SDK can
+  only unenroll the *signed-in* user's own factor, so clearing someone
+  else's enrolled factor has to go through the Admin SDK
+  (`admin.auth().updateUser(uid, {multiFactor: {enrolledFactors: []}})`)
+  — a genuinely different code path from the client-side `unenroll()`
+  already in `PhoneMfaService`, not reusable from the client. Wired into
+  `edit_user_dialog.dart` as a "Reset" action, shown only when the target
+  user has 2FA enrolled, with its own confirm-before-firing dialog since
+  it forces that account back through setup next login.
+- **Testing implication caught before it became a live lockout**: the 8
+  seeded accounts (`scripts/seed.js`) have fake phone numbers
+  (`+233200000001`..`008`) that can't receive real SMS — mandatory
+  enrollment would have hard-locked every test account with no way to
+  complete setup. Resolved by having the user register those exact 8
+  numbers as Firebase Console "phone numbers for testing" (fixed
+  verification code, no real SMS sent) rather than touching seed data —
+  they already existed and already mapped one-to-one to the 8 seeded
+  accounts.
+
+Deployed: `adminResetTwoFactor` via `firebase deploy --only functions`
+(all 5 functions redeployed clean), web rebuilt/redeployed to
+`gbmsupport.web.app`, Android APK rebuilt. Not verified end-to-end in a
+real browser/device — no browser-automation tool in this environment,
+same standing limitation as every UI change this session; `flutter
+analyze` clean and all deploys succeeded, but the actual click-through
+(sign in unenrolled → forced to /setup-2fa → complete with a Console test
+number → sign out/back in → real /otp-verify challenge fires → admin
+Reset button forces it again) is on the user once the Console test
+numbers are registered.
+
+## GBMS rebrand + UI "softer/modern" polish pass, both design-tokens-only
+
+Two follow-up requests handled as pure design-token changes rather than
+touching individual screens, since the app is disciplined about pulling
+from `AppTheme`/`AppRadius`/`ColorScheme` rather than hardcoding values
+(confirmed via grep before starting: 31 files reference
+`colorScheme.outlineVariant`, 41 reference `AppRadius.*`, only 4 hardcoded
+border colors app-wide, all on decorative white avatar rings unrelated to
+card styling) — both changes cascade everywhere automatically with zero
+per-screen edits.
+
+**Rebrand** ("Ghana Budget Management System (GBMS) Support", confirmed
+via AskUserQuestion against a memo found in the user's Downloads folder
+that expanded GBMS this way, since the user's own phrasing suggested a
+different expansion): every "Oracle Hyperion"/"Hyperion Support" string
+across `lib/`, `web/`, `android/app/src/main/AndroidManifest.xml`
+(`android:label`), and `ios/Runner/Info.plist`
+(`CFBundleDisplayName`/`CFBundleName`) replaced with "GBMS"/"GBMS Support
+Centre". First grep pass used mixed-case patterns and missed four
+ALL-CAPS occurrences (`splash_screen.dart`, `login_screen.dart`,
+`desktop_shell.dart`, `home_screen.dart`, `web/index.html`'s static
+pre-Flutter loading screen) — caught on a case-insensitive re-sweep before
+calling it done, a reminder to always grep `-i` for brand strings rather
+than trusting the first pass. `config/general.appName` in Firestore
+(admin-editable, would override the code default) was checked and
+confirmed not yet set by any admin, so the Dart-level default change
+alone was sufficient — no Firestore write needed.
+
+**"Softer/modern" polish** (user request: "touch up the UI a bit, no
+structural changes, just the feel"; confirmed scope via AskUserQuestion —
+whole-app pass, softer/modern direction over "keep crisp/corporate" or
+"more vibrant"): `AppRadius` scale bumped up a notch across the board
+(sm 8->10, md 10->14, lg 12->18, xl 18->24); `outline`/`outlineVariant`
+lightened for less visually-heavy card borders; `CardThemeData` gained
+real elevation+shadowColor instead of being purely flat-with-border;
+button shapes moved from `AppRadius.sm` to the now-larger `AppRadius.md`
+plus subtle shadowColor on Elevated/Filled buttons; `NavigationBarThemeData`
+and `AppBarTheme.scrolledUnderElevation` gained subtle elevation/shadow
+(both were explicitly flat/0 before); route transitions
+(`app_router.dart`'s `_fadePage`) switched from `Curves.easeOut` at 220ms
+to `Curves.easeOutCubic` at 260ms to match `_slideUpPage`'s already-smoother
+curve. Deliberately did **not** touch the many screens' own
+`Container`+`BoxDecoration` "card" blocks directly (that pattern is
+duplicated per-screen, not routed through a shared widget) — those still
+pick up the softer look because they reference `AppRadius.*` and
+`Theme.of(context).colorScheme.outlineVariant` rather than hardcoded
+values, which was confirmed before starting rather than assumed.
+
+**Not verified visually**: no browser-automation tool is available in
+this environment (recurring limitation this session) — rebuilt and
+redeployed web + Android after both changes, confirmed via `flutter
+analyze` and a direct `curl` fetch of the deployed HTML (bypassing
+WebFetch's own 15-minute cache, which served stale content on the first
+check), but an actual look-and-feel pass in a real browser/device is
+still worth the user doing themselves.
+
+## SMS OTP for login via Firebase phone Multi-Factor Authentication
+
+The user asked for SMS OTP on login. Rather than integrate a third-party
+SMS gateway (Twilio/Africa's Talking/Hubtel — a new vendor account, a new
+secret to store, and a new Cloud Function to send messages), used
+**Firebase Authentication's built-in phone Multi-Factor Authentication**
+instead, confirmed with the user: Google sends the SMS directly, no
+third-party account needed. Also confirmed: this **replaces** the old
+custom on-screen OTP flow rather than sitting alongside it, since Firebase
+MFA has its own enrollment/challenge mechanics that don't compose with the
+old Firestore-based `otp_codes` scheme.
+
+**Real architectural shift, not just a delivery-mechanism swap**: the old
+flow signed a 2FA user in immediately via `signInWithEmailAndPassword`,
+then gated navigation post-hoc with an app-level flag
+(`otpVerifiedProvider`) checked in the router's `redirect`. Firebase MFA
+throws `FirebaseAuthMultiFactorException` *from inside*
+`signInWithEmailAndPassword` for an MFA-enrolled account — the user isn't
+signed in at all (no `User` from `authStateChanges()`) until the phone
+challenge resolves. So the OTP step moved from "a redirect gate after
+sign-in" to "a catch-block in `LoginScreen._submit()`, before sign-in
+exists" — `otpVerifiedProvider` and the router's `needsOtp` redirect logic
+became genuinely dead code, not something to keep as a fallback, and were
+deleted along with `OtpRepository`/`otp_codes` (both firestore.rules and
+the collection itself).
+
+- **New `PhoneMfaService`** (`lib/features/auth/data/phone_mfa_service.dart`)
+  wraps `verifyPhoneNumber`'s callback API (`codeSent`/`verificationFailed`)
+  in `Completer`-based `Future`s for enroll/unenroll (Settings) and the
+  sign-in challenge (`MultiFactorResolver`-driven, from `LoginScreen`'s
+  catch block). Also a small `normalizeGhanaPhone` helper — Firebase phone
+  auth requires E.164 (`+233...`), but `AppUser.phone` (already existed,
+  already captured by admins in `add_user_screen.dart`) has never been
+  format-enforced, so local `0XXXXXXXXX` numbers get converted rather than
+  rejected outright.
+- **`OtpVerifyScreen`** reworked to take a `MultiFactorResolver` via
+  router `extra` (pushed from `LoginScreen`, not reached by redirect
+  anymore) instead of a uid. Kept the exact same 6-digit-box UI and
+  resend-cooldown pattern from the old build — only what backs it changed,
+  the mockup-matched shell didn't need to.
+- **Settings' 2FA switch** stopped being a bare toggle: turning it on now
+  opens a real two-step dialog (confirm/edit phone number → enter the
+  code just texted) that only flips `users/{uid}.twoFactorEnabled` after
+  Firebase enrollment actually succeeds. That field is now explicitly a
+  denormalized "is enrolled" read flag for UI display — Firebase's own
+  `user.multiFactor.enrolledFactors` is the real source of truth, this
+  Firestore field just avoids every screen needing to hit that API to
+  show a badge/subtitle.
+- `/otp-verify` had to move into the router's `preAuthPaths` list — it's
+  now reached mid-sign-in (before `authStateChanges` emits a user), so
+  the existing "no firebaseUser -> redirect to /welcome unless on a
+  pre-auth path" rule would otherwise bounce straight off it.
+
+**Manual Console setup** (confirmed done by the user, can't be driven from
+here): Authentication -> Sign-in method -> Phone enabled; Authentication
+-> Settings -> Multi-factor authentication -> SMS enabled.
+
+**Not verified end-to-end**: no browser-automation tool is available in
+this environment (same limitation as the Firebase project migration
+entry below) — enrollment and the sign-in challenge should be tested for
+real on the deployed app. Two things flagged as optional follow-ups, not
+blockers: Android SHA-1/SHA-256 fingerprints (smoother Play-Integrity
+verification, falls back to reCAPTCHA without them) and iOS APNs config
+(same fallback story; this project has no Mac to build/test iOS locally
+regardless, an existing documented constraint).
+
+## Firebase project migration to mofapp-60963, and every Blaze-gated feature activated
+
+The user upgraded `hyport-a1c90` to Blaze, but every deploy kept failing
+with "Billing account ... is not open" — confirmed across two different
+Google accounts logged into the CLI, so the billing account itself was
+broken, not an account-permissions issue. The account that owned/
+administered `hyport-a1c90` (`appsysunit@gmail.com`) then became fully
+locked out with no recovery path, ruling out a self-service fix via that
+account's Console access. Decided with the user, after confirming there
+was no real production data yet (QA/seed data only) and after weighing
+"add a new owner to the same project" against "start a fresh project": to
+create a brand-new Firebase project under a new account
+(`mofappsunit@gmail.com`) and cut the whole app over, clean, rather than
+pursue a Google support ticket to recover the old account.
+
+The new project ended up as **`mofapp-60963`** rather than the originally
+planned `hyport-mof` — `firebase projects:create hyport-mof` succeeded at
+the GCP-project layer but then failed attaching Firebase to it (`403
+PERMISSION_DENIED` on `addFirebase`, cause unclear — possibly a first-time-
+account quirk since `mofappsunit@gmail.com` was brand new and had to
+accept Cloud's Terms of Service before project creation would even work at
+all). Rather than fight that further, created `mofapp-60963` directly
+through the Firebase Console's "Add project" flow instead, which worked
+immediately. The orphaned `hyport-mof` GCP project (Firebase never
+attached) was left alone rather than deleted — inert, costs nothing,
+not worth a destructive cleanup step.
+
+What migrating actually involved, in order, each with its own real
+first-time-setup wrinkle:
+- **Blaze upgrade on the new project** — needed separately from the old
+  project's billing; this time it activated cleanly.
+- **`flutterfire configure --project=mofapp-60963`** regenerated
+  `lib/firebase_options.dart` and `android/app/google-services.json`
+  correctly, but did *not* rewrite `ios/Runner/GoogleService-Info.plist`
+  on this run (unclear why — possibly because a plist already existed at
+  that path). Re-fetched it manually via `firebase apps:sdkconfig IOS
+  <appId>`, the same fallback used during the original iOS scaffolding.
+- **Firestore**: had to be created explicitly (`firebase
+  firestore:databases:create "(default)" --location=nam5`) before any
+  rules/functions could deploy — brand-new projects don't provision one
+  automatically. Hit a real race condition here: the API-enablement step
+  and the actual database-creation call happened too close together, so
+  the first attempt 403'd with "Cloud Firestore API has not been used ...
+  or it is disabled" even though the API had just been "enabled" moments
+  earlier by the same command. Waiting and retrying resolved it — no code
+  or config was wrong, just eventual-consistency lag on Google's side.
+- **Storage**: needed the one-time "Get started" click in the Console
+  before `firebase deploy --only storage` would accept anything — the API
+  being enabled isn't sufficient, the bucket itself has to exist first.
+- **Cloud Functions**: `adminCreateUser`/`adminUpdateUser` deployed clean
+  on the first pass (no Eventarc trigger). The two Firestore-triggered
+  functions (`onTicketCreated`/`onTicketUpdated`) failed on the first
+  attempt with an Eventarc Service Agent permission error — expected and
+  explicitly flagged by Google's own error message as "first time using
+  2nd gen functions, ... permissions to propagate" — a bare retry a
+  minute later succeeded with no changes needed.
+- **Auth**: Email/Password sign-in had to be enabled explicitly in the
+  Console (Authentication -> Sign-in method) before the seeded accounts
+  could actually sign in, even though the Admin SDK could already create
+  them regardless of that toggle. Verified past this with a direct
+  `accounts:signInWithPassword` REST call before trusting it, rather than
+  assuming the toggle was sufficient.
+- **`scripts/service-account.json`** (gitignored) had to be regenerated
+  from the new project's Console and swapped in before `seed.js` could
+  run again.
+
+With Blaze active and genuinely working this time (unlike the abandoned
+`hyport-a1c90` attempt), everything that had been built-but-gated behind
+billing got activated, and a few UI gaps that had been explicitly deferred
+pending Storage got built for real rather than left disabled:
+- **Application Logo upload** (`desktop_settings_screen.dart`) was a
+  hard-disabled button (`onPressed: null`) pending Storage. Wired for
+  real, mirroring the exact upload pattern already used for ticket
+  attachments (`new_ticket_screen.dart`) and profile photos
+  (`profile_screen.dart`): pick an image, upload to a fixed
+  `branding/logo` Storage path, persist the resulting URL onto
+  `config/general.logoUrl`. New `branding/logo` Storage rule restricts
+  writes to `pfm_management`, matching the existing Firestore rule on
+  `config/general` itself.
+- **Reports PDF export** (`reports_screen.dart` / `report_detail_screen.dart`)
+  previously had no export at all — "no Storage yet to persist those."
+  Rather than duplicate each report type's row-building logic between the
+  on-screen widgets and a new PDF renderer, extracted it into
+  `report_section_data.dart` (`List<ReportSectionData>` — title + label/
+  value rows) as the single source both `ReportDetailScreen`'s widgets and
+  the new `ReportPdfExporter` (`report_pdf_export.dart`, using the `pdf`
+  package) read from, so the two can't drift apart. Exported PDFs upload
+  to `reports/{uid}/...` (new Storage rule, owner-only + support-side-role
+  gated) and the resulting URL is attached to that export's `report_views`
+  entry (`ReportView.pdfUrl`, new nullable field) — so "Recent Reports"
+  entries with an export are now real, re-openable files (`url_launcher`,
+  new dependency) rather than just a view-history log.
+- Doc comments and README that previously said "blocked on the Blaze
+  billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
+  `audit_log_repository.dart`) were corrected: Blaze is active now, so
+  those gaps (emailed OTP codes, broader audit-log instrumentation) are
+  unbuilt-scope items, not billing blockers. Deliberately did *not* build
+  real OTP email delivery in this pass — the user scoped this migration to
+  reactivating what was already gated plus the logo button and PDF export,
+  not new email-provider integration work.
+
+**Not done, still open**: Web Push (FCM) needs a VAPID key generated fresh
+for `mofapp-60963` (Console -> Cloud Messaging -> Web Push certificates)
+and set in `lib/core/services/push_notification_service.dart` —
+independent of Blaze, was already a manual step before the migration too.
+No browser-automation tool was available in this environment to click
+through the live app end-to-end (logo upload, PDF export, attachment
+upload) — verified instead via `flutter analyze`, successful builds/
+deploys, and a direct Auth REST call confirming sign-in works; a manual
+pass through the deployed app (https://mofapp-60963.web.app) is still
+worth doing.
+
 ## iOS testing pipeline scaffolded (no Apple Developer account yet — confirmed with the user)
 
 Asked how to get an "APK equivalent" for iOS testers. There isn't a true

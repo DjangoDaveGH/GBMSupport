@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/audit_log.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/percent_ring.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
+import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
+import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
+import 'package:hyport/features/dashboard/domain/audit_log_formatting.dart';
+import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
 import 'package:hyport/features/notifications/data/notification_providers.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
@@ -73,6 +79,11 @@ class _HomeHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(unreadNotificationCountProvider(appUser.id));
+    final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+    final institutionName = [
+      for (final i in institutions)
+        if (i.id == appUser.institutionId) i.name,
+    ].firstOrNull ?? appUser.institutionType.wireValue;
 
     return Material(
       color: Colors.white,
@@ -143,7 +154,7 @@ class _HomeHeader extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        showMenu ? appUser.role.label : 'Ministry of Finance',
+                        showMenu ? appUser.role.label : institutionName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -230,7 +241,7 @@ class _AdminDrawer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ORACLE HYPERION',
+                    'GBMS',
                     style: Theme.of(
                       context,
                     ).textTheme.labelMedium?.copyWith(color: AppTheme.gold),
@@ -548,7 +559,7 @@ void _showContactSupportSheet(BuildContext context) {
             ),
             const SizedBox(height: 6),
             Text(
-              'Log a support ticket and the PFM-Systems team will respond, or browse the Knowledge Base for instant answers to common Oracle Hyperion issues.',
+              'Log a support ticket and the PFM-Systems team will respond, or browse the Knowledge Base for instant answers to common GBMS issues.',
               style: Theme.of(
                 sheetContext,
               ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
@@ -732,6 +743,23 @@ class _SupportHome extends ConsumerWidget {
     );
     final slaPolicy =
         ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    // users/{uid} and audit_logs are unreadable by Vendor per
+    // firestore.rules' isSupportSide() (deliberately excludes Vendor —
+    // Section 3 caps them at "resolve or re-escalate"), and this widget is
+    // shared with Vendor via HomeScreen's broader isSupportSide check — so
+    // these two watches are skipped entirely for Vendor rather than
+    // issuing a doomed-to-permission-denied read. institutions and
+    // knowledge_articles are readable by anyone signed in, so those stay
+    // unconditional.
+    final hasBackOfficeAccess = appUser.role.hasBackOfficeAccess;
+    final allUsers = hasBackOfficeAccess ? ref.watch(allUsersProvider).valueOrNull ?? const <AppUser>[] : const <AppUser>[];
+    final activeUserCount = allUsers.where((u) => u.isActive).length;
+    final institutionCount = ref.watch(institutionListProvider).valueOrNull?.length ?? 0;
+    final articleCount = ref.watch(articleListProvider(null)).valueOrNull?.length ?? 0;
+    final recentAdminActions = hasBackOfficeAccess
+        ? ref.watch(adminActionsAuditLogProvider).valueOrNull?.take(5).toList() ?? const <AuditLog>[]
+        : const <AuditLog>[];
+    final usersById = <String, AppUser>{for (final u in allUsers) u.id: u};
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
@@ -816,6 +844,43 @@ class _SupportHome extends ConsumerWidget {
                 ),
               ],
             ),
+            // Users/institutions/audit_logs are unreadable by Vendor per
+            // firestore.rules' isSupportSide() (deliberately excludes
+            // Vendor — Section 3 caps them at "resolve or re-escalate");
+            // this ListView is shared with Vendor via HomeScreen's broader
+            // isSupportSide check, so these two sections are scoped to the
+            // narrower hasBackOfficeAccess to match what Vendor can
+            // actually read, rather than showing them a wrong "0".
+            if (appUser.role.hasBackOfficeAccess) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text('System Overview', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.05,
+                children: [
+                  _StatNumberCard(
+                    value: '$activeUserCount',
+                    label: 'Active Users',
+                    color: AppTheme.navy,
+                  ),
+                  _StatNumberCard(
+                    value: '$institutionCount',
+                    label: 'Institutions',
+                    color: AppTheme.accentBlue,
+                  ),
+                  _StatNumberCard(
+                    value: '$articleCount',
+                    label: 'KB Articles',
+                    color: AppTheme.gold,
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             Container(
               padding: const EdgeInsets.all(16),
@@ -878,9 +943,72 @@ class _SupportHome extends ConsumerWidget {
               )
             else
               ...tickets.take(10).map((t) => _HomeTicketTile(ticket: t)),
+            if (appUser.role.hasBackOfficeAccess) ...[
+              const SizedBox(height: AppSpacing.xl),
+              _SectionHeader(
+                title: 'Recent System Activity',
+                onViewAll: () => context.push('/audit-logs'),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (recentAdminActions.isEmpty)
+                const EmptyState(
+                  icon: Icons.history_rounded,
+                  message: 'No admin activity recorded yet.',
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < recentAdminActions.length; i++) ...[
+                        if (i > 0) const Divider(height: 1),
+                        _ActivityTile(entry: recentAdminActions[i], usersById: usersById),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
           ],
         );
       },
+    );
+  }
+}
+
+class _ActivityTile extends StatelessWidget {
+  final AuditLog entry;
+  final Map<String, AppUser> usersById;
+
+  const _ActivityTile({required this.entry, required this.usersById});
+
+  @override
+  Widget build(BuildContext context) {
+    final actor = usersById[entry.actorId]?.name ?? 'System';
+    final target = usersById[entry.targetId]?.name ?? entry.targetId;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: Theme.of(context).textTheme.bodySmall,
+                children: [
+                  TextSpan(text: actor, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  TextSpan(text: ' ${adminActionLabel(entry.action).toLowerCase()} '),
+                  TextSpan(text: target, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+          Text(DateFormat.MMMd().format(entry.timestamp), style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
     );
   }
 }

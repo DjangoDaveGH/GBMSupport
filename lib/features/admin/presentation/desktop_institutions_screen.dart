@@ -87,7 +87,15 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
                 ),
               ),
               const SizedBox(width: 12),
-              FilledButton.icon(onPressed: _showAddDialog, icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Add Institution')),
+              // Same FilledButton-silently-fails-to-paint issue as
+              // DesktopTicketDetailScreen's Actions button — this Row is a
+              // direct child of a start-aligned Column with no
+              // Expanded/stretch upstream giving it a tightly-bounded width.
+              // IntrinsicWidth forces the two-pass measure the button needs,
+              // without changing its appearance.
+              IntrinsicWidth(
+                child: FilledButton.icon(onPressed: _showAddDialog, icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Add Institution')),
+              ),
             ],
           ),
           const SizedBox(height: 20),

@@ -33,6 +33,7 @@ class DesktopTicketDetailScreen extends ConsumerStatefulWidget {
 class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabController = TabController(length: 4, vsync: this);
   final _noteController = TextEditingController();
+  final _actionsButtonKey = GlobalKey();
 
   @override
   void dispose() {
@@ -86,6 +87,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               // a concrete size regardless, without changing its appearance.
               IntrinsicWidth(
                 child: FilledButton.icon(
+                  key: _actionsButtonKey,
                   onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate),
                   icon: const Icon(Icons.more_horiz_rounded, size: 18),
                   label: const Text('Actions'),
@@ -96,11 +98,11 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
           const SizedBox(height: 16),
           Expanded(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(flex: 3, child: _MainColumn(ticket: ticket, tabController: _tabController, noteController: _noteController)),
                 const SizedBox(width: 20),
-                Expanded(flex: 1, child: _SidebarColumn(ticket: ticket)),
+                Expanded(flex: 1, child: SingleChildScrollView(child: _SidebarColumn(ticket: ticket))),
               ],
             ),
           ),
@@ -117,9 +119,18 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     bool canAssign,
     bool canEscalate,
   ) {
+    final button = _actionsButtonKey.currentContext!.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset(0, button.size.height), ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
     showMenu<void>(
       context: context,
-      position: const RelativeRect.fromLTRB(1000, 80, 24, 0),
+      position: position,
       items: [
         if (canAssign)
           PopupMenuItem(
@@ -302,10 +313,20 @@ class _MainColumn extends ConsumerWidget {
               unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
               indicatorColor: AppTheme.navy,
               tabs: const [Tab(text: 'Timeline'), Tab(text: 'Chat'), Tab(text: 'Details'), Tab(text: 'SLA')],
+              // Chat is a full dedicated page (same one mobile uses), not an
+              // inline pane like the other three tabs — TabController.animateTo
+              // has already run by the time onTap fires, so this snaps the
+              // selection straight back before pushing, rather than leaving
+              // "Chat" highlighted over its (now-unused) inline pane.
+              onTap: (index) {
+                if (index == 1) {
+                  tabController.index = tabController.previousIndex;
+                  context.push('/tickets/${ticket.id}/chat');
+                }
+              },
             ),
           ),
-          SizedBox(
-            height: 360,
+          Expanded(
             child: TabBarView(
               controller: tabController,
               children: [
@@ -502,6 +523,7 @@ class _DetailsView extends StatelessWidget {
         _InfoRow(label: 'Category', value: ticket.category.label),
         if (ticket.subCategory.isNotEmpty) _InfoRow(label: 'Sub-category', value: ticket.subCategory),
         _InfoRow(label: 'Priority', value: ticket.priority.label),
+        _InfoRow(label: 'Impact', value: ticket.impact.label),
         _InfoRow(label: 'Status', value: ticket.status.label),
         _InfoRow(label: 'Escalation Level', value: '${ticket.escalationLevel}'),
         _InfoRow(label: 'Created', value: DateFormat.yMMMd().add_jm().format(ticket.createdAt)),

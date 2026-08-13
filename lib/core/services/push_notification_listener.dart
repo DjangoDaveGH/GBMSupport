@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/routing/app_router.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
-import 'package:hyport/core/services/global_keys.dart';
+import 'package:hyport/core/services/local_notification_service.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 
 /// Wraps the app: once a user is signed in, requests notification
@@ -54,9 +54,16 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
 
     service.onForegroundMessage.listen((message) {
       final text = message.notification?.body ?? message.data['message'] as String?;
-      if (text != null) {
-        scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(content: Text(text)));
-      }
+      if (text == null) return;
+      // Firebase never auto-shows a system notification for a foreground
+      // message (only background/terminated) — without this it was audible
+      // and visible nowhere except an in-app SnackBar, easy to miss and
+      // impossible to hear. Real tray/banner pop-up + sound instead, same
+      // as what a background push already gets.
+      LocalNotificationService.show(
+        title: message.notification?.title ?? 'Hyperion Support',
+        body: text,
+      );
     });
 
     service.onMessageOpenedApp.listen(_openTicketFrom);

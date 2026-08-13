@@ -284,7 +284,7 @@ class _TopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ORACLE HYPERION SUPPORT CENTRE',
+                'GBMS SUPPORT CENTRE',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppTheme.navy,
                   letterSpacing: 0.7,

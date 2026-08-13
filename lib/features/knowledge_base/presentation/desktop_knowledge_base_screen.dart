@@ -91,10 +91,19 @@ class _DesktopKnowledgeBaseScreenState extends ConsumerState<DesktopKnowledgeBas
                     ),
                     if (canEdit) ...[
                       const SizedBox(width: 12),
-                      FilledButton.icon(
-                        onPressed: () => context.push('/knowledge-base/new'),
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('New Article'),
+                      // Same FilledButton-silently-fails-to-paint issue as
+                      // DesktopTicketDetailScreen's Actions button — this Row
+                      // is a direct child of a start-aligned Column with no
+                      // Expanded/stretch upstream giving it a
+                      // tightly-bounded width. IntrinsicWidth forces the
+                      // two-pass measure the button needs, without changing
+                      // its appearance.
+                      IntrinsicWidth(
+                        child: FilledButton.icon(
+                          onPressed: () => context.push('/knowledge-base/new'),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('New Article'),
+                        ),
                       ),
                     ],
                   ],

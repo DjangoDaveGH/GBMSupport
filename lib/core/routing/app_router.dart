@@ -11,7 +11,6 @@ import 'package:hyport/features/admin/presentation/desktop_users_screen.dart';
 import 'package:hyport/features/admin/presentation/users_screen.dart';
 import 'package:hyport/features/auth/presentation/forgot_password_screen.dart';
 import 'package:hyport/features/auth/presentation/login_screen.dart';
-import 'package:hyport/features/auth/presentation/otp_verify_screen.dart';
 import 'package:hyport/features/auth/presentation/request_access_screen.dart';
 import 'package:hyport/features/auth/presentation/reset_password_screen.dart';
 import 'package:hyport/features/auth/presentation/splash_screen.dart';
@@ -62,13 +61,7 @@ final _goRouterRefreshProvider = ChangeNotifierProvider<GoRouterRefreshNotifier>
   ref.listen(authStateChangesProvider, (previous, next) {
     notifier.notify();
     final uid = next.valueOrNull?.uid;
-    if (uid == null) {
-      // Force re-verification on the next login (same account or not)
-      // rather than letting a signed-out session's "verified" flag linger —
-      // see otpVerifiedProvider's doc comment for why this can't just be
-      // autoDispose instead.
-      ref.invalidate(otpVerifiedProvider);
-    } else {
+    if (uid != null) {
       ref.read(userRepositoryProvider).touchLastActive(uid);
     }
   });
@@ -85,9 +78,9 @@ const adminOnlyPaths = ['/admin'];
 CustomTransitionPage _fadePage(Widget child) {
   return CustomTransitionPage(
     child: child,
-    transitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: const Duration(milliseconds: 260),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(opacity: CurveTween(curve: Curves.easeOut).animate(animation), child: child);
+      return FadeTransition(opacity: CurveTween(curve: Curves.easeOutCubic).animate(animation), child: child);
     },
   );
 }
@@ -142,22 +135,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         return onPreAuthPath ? null : '/login';
       }
 
-      final needsOtp = appUser.twoFactorEnabled && !ref.read(otpVerifiedProvider(firebaseUser.uid));
-      if (needsOtp) {
-        return location == '/otp-verify' ? null : '/otp-verify';
-      }
-      if (location == '/otp-verify') {
-        // Already verified (or 2FA got turned off mid-session) — don't let
-        // the user linger on this screen.
-        return '/home';
-      }
-
       if (onSplash || onPreAuthPath) return '/home';
 
       if (supportSideOnlyPaths.any(location.startsWith) && !appUser.role.hasBackOfficeAccess) {
         return '/home';
       }
       if (adminOnlyPaths.any(location.startsWith) && appUser.role != UserRole.pfmManagement) {
+        return '/home';
+      }
+      // AssignTicketScreen has no role check of its own — it relies on the
+      // ticket detail screens never linking to it for anyone but Support
+      // Coordinator (canAssign in both ticket_detail_screen.dart and
+      // desktop_ticket_detail_screen.dart) and on firestore.rules blocking
+      // the write itself. That leaves a direct-URL gap: a non-Coordinator
+      // (PFM Management included) could still open this screen and hit a
+      // confusing permission-denied write instead of never seeing it.
+      // Redirect at the door instead, matching what the UI already implies.
+      if (location.startsWith('/tickets/') && location.endsWith('/assign') && appUser.role != UserRole.supportCoordinator) {
+        return '/home';
+      }
+      // Same direct-URL gap as above: firestore.rules' tickets `allow
+      // create` only ever admits isRequesterSide() (MDA/MMDA User, Focal
+      // Person). AppShell already hides the "+" FAB for every other role,
+      // but that's just the UI entry point — redirect at the door too, so
+      // a support-side role can't reach the wizard via a direct URL and
+      // hit a permission-denied write after filling it out.
+      if (location == '/tickets/new' && appUser.role != UserRole.mdaUser && appUser.role != UserRole.focalPerson) {
         return '/home';
       }
       return null;
@@ -187,10 +190,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/request-access',
         pageBuilder: (context, state) => _slideUpPage(const RequestAccessScreen()),
-      ),
-      GoRoute(
-        path: '/otp-verify',
-        pageBuilder: (context, state) => _fadePage(const OtpVerifyScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

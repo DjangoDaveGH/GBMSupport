@@ -23,12 +23,29 @@ class TicketRepository {
   /// Builds the base query scoped to what [viewer] is allowed to see. Per
   /// Section 3's role table, a plain MDA/MMDA User only sees tickets they
   /// personally logged; a Focal Person sees every ticket from their
-  /// institution. Support-side roles see across institutions, and
-  /// vendor/specialist support only sees tickets explicitly escalated to
-  /// them (escalationLevel 2 and assignedTo == their uid).
+  /// institution. Support Coordinator and Management see across
+  /// institutions unrestricted (Coordinator specifically must see
+  /// unassigned tickets to assign them). Functional Lead only sees tickets
+  /// assigned to them; Technical Lead only the ones assigned to them that
+  /// have actually been escalated (escalationLevel >= 1); vendor/specialist
+  /// support only sees tickets explicitly escalated to them (escalationLevel
+  /// 2 and assignedTo == their uid). This mirrors firestore.rules exactly —
+  /// that's the real access boundary, this is just the matching UX query so
+  /// these roles' ticket lists/dashboards aren't full of tickets they can't
+  /// even open.
   Query<Map<String, dynamic>> scopedQuery(AppUser viewer) {
     if (viewer.role == UserRole.vendorSupport) {
       return _tickets.where('assignedTo', isEqualTo: viewer.id).where('escalationLevel', isEqualTo: 2);
+    }
+    if (viewer.role == UserRole.functionalLead) {
+      return _tickets.where('assignedTo', isEqualTo: viewer.id);
+    }
+    if (viewer.role == UserRole.technicalLead) {
+      // Firestore requires a range filter's field to be the query's first
+      // orderBy — incompatible with watchTickets' orderBy('createdAt'). A
+      // whereIn over the only two escalated levels (1, 2) is a set-membership
+      // filter, not a range, so it doesn't carry that restriction.
+      return _tickets.where('assignedTo', isEqualTo: viewer.id).where('escalationLevel', whereIn: [1, 2]);
     }
     if (viewer.role.isSupportSide) {
       return _tickets;

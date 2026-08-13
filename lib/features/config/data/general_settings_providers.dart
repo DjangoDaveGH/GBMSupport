@@ -21,4 +21,6 @@ class GeneralSettingsRepository {
   GeneralSettingsRepository(this._doc);
 
   Future<void> update(GeneralSettings settings) => _doc.set(settings.toMap(), SetOptions(merge: true));
+
+  Future<void> setLogoUrl(String url) => _doc.set({'logoUrl': url}, SetOptions(merge: true));
 }

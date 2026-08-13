@@ -1,6 +1,9 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/features/config/data/general_settings_providers.dart';
@@ -127,6 +130,7 @@ class _GeneralSettingsPanelState extends ConsumerState<_GeneralSettingsPanel> {
   String _timeFormat = '24-hour';
   bool _initialized = false;
   bool _saving = false;
+  bool _uploadingLogo = false;
 
   static const _timezones = ['GMT+00:00 Accra', 'GMT+00:00 London', 'GMT-05:00 New York'];
   static const _dateFormats = ['MMM d, yyyy', 'dd/MM/yyyy', 'yyyy-MM-dd'];
@@ -144,6 +148,50 @@ class _GeneralSettingsPanelState extends ConsumerState<_GeneralSettingsPanel> {
   void dispose() {
     if (_initialized) _appNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAndUploadLogo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      _showMessage('Could not read that image. Please try another file.');
+      return;
+    }
+    if (bytes.length > 5 * 1024 * 1024) {
+      _showMessage('Logo images must be smaller than 5 MB.');
+      return;
+    }
+
+    setState(() => _uploadingLogo = true);
+    try {
+      final extension = file.extension?.toLowerCase();
+      final contentType = switch (extension) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'gif' => 'image/gif',
+        _ => 'image/jpeg',
+      };
+      final storageRef = ref.read(firebaseStorageProvider).ref('branding/logo');
+      final snapshot = await storageRef.putData(bytes, SettableMetadata(contentType: contentType));
+      final url = await snapshot.ref.getDownloadURL();
+      await ref.read(generalSettingsRepositoryProvider).setLogoUrl(url);
+      _showMessage('Application logo updated.');
+    } catch (e) {
+      _showMessage('Could not update the logo: $e');
+    } finally {
+      if (mounted) setState(() => _uploadingLogo = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _save() async {
@@ -191,11 +239,23 @@ class _GeneralSettingsPanelState extends ConsumerState<_GeneralSettingsPanel> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    OutlinedButton(onPressed: null, child: const Text('Choose File')),
+                    if (settings.logoUrl != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.network(settings.logoUrl!, width: 40, height: 40, fit: BoxFit.cover),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    OutlinedButton(
+                      onPressed: _uploadingLogo ? null : _pickAndUploadLogo,
+                      child: _uploadingLogo
+                          ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('Choose File'),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Requires Firebase Storage, not active yet — see DECISIONS.md.',
+                        settings.logoUrl != null ? 'Logo uploaded.' : 'No logo uploaded yet.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45),
                       ),
                     ),

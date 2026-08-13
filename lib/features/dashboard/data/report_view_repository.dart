@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/features/dashboard/domain/report_view.dart';
 
-/// Reports are computed live from ticket data, not exported/stored files
-/// (no Firebase Storage yet — see DECISIONS.md), so this just logs which
-/// report a given admin looked at recently for the "Recent Reports"
-/// section, scoped strictly to that admin.
+/// Reports are computed live from ticket data. This logs which report a
+/// given admin looked at recently for the "Recent Reports" section, scoped
+/// strictly to that admin — and, when a PDF was exported (see
+/// ReportPdfExporter), carries the Storage download URL so that entry is a
+/// real, revisitable file rather than just a view record.
 class ReportViewRepository {
   final FirebaseFirestore _db;
 
@@ -16,11 +17,18 @@ class ReportViewRepository {
     required String viewedBy,
     required String reportType,
     required String reportLabel,
+    String? pdfUrl,
   }) {
     final ref = _views.doc();
     return ref.set(
-      ReportView(id: ref.id, reportType: reportType, reportLabel: reportLabel, viewedBy: viewedBy, viewedAt: DateTime.now())
-          .toMap(),
+      ReportView(
+        id: ref.id,
+        reportType: reportType,
+        reportLabel: reportLabel,
+        viewedBy: viewedBy,
+        viewedAt: DateTime.now(),
+        pdfUrl: pdfUrl,
+      ).toMap(),
     );
   }
 

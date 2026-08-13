@@ -11,7 +11,6 @@ class AppUser {
   final InstitutionType institutionType;
   final DateTime createdAt;
   final bool isActive;
-  final bool twoFactorEnabled;
   final DateTime? lastActiveAt;
   final String? profilePhotoUrl;
 
@@ -25,7 +24,6 @@ class AppUser {
     required this.institutionType,
     required this.createdAt,
     required this.isActive,
-    this.twoFactorEnabled = false,
     this.lastActiveAt,
     this.profilePhotoUrl,
   });
@@ -43,7 +41,6 @@ class AppUser {
       ),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: map['isActive'] as bool? ?? true,
-      twoFactorEnabled: map['twoFactorEnabled'] as bool? ?? false,
       lastActiveAt: (map['lastActiveAt'] as Timestamp?)?.toDate(),
       profilePhotoUrl: map['profilePhotoUrl'] as String?,
     );
@@ -58,7 +55,6 @@ class AppUser {
     'institutionType': institutionType.wireValue,
     'createdAt': Timestamp.fromDate(createdAt),
     'isActive': isActive,
-    'twoFactorEnabled': twoFactorEnabled,
     'lastActiveAt': lastActiveAt != null
         ? Timestamp.fromDate(lastActiveAt!)
         : null,
@@ -76,7 +72,6 @@ class AppUser {
     String? name,
     String? phone,
     bool? isActive,
-    bool? twoFactorEnabled,
     String? profilePhotoUrl,
   }) {
     return AppUser(
@@ -89,7 +84,6 @@ class AppUser {
       institutionType: institutionType,
       createdAt: createdAt,
       isActive: isActive ?? this.isActive,
-      twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
     );
   }

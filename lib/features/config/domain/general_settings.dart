@@ -7,21 +7,24 @@ class GeneralSettings {
   final String timezone;
   final String dateFormat;
   final String timeFormat;
+  final String? logoUrl;
 
   const GeneralSettings({
-    this.appName = 'Oracle Hyperion Support Centre',
+    this.appName = 'GBMS Support Centre',
     this.timezone = 'GMT+00:00 Accra',
     this.dateFormat = 'MMM d, yyyy',
     this.timeFormat = '24-hour',
+    this.logoUrl,
   });
 
   factory GeneralSettings.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const GeneralSettings();
     return GeneralSettings(
-      appName: map['appName'] as String? ?? 'Oracle Hyperion Support Centre',
+      appName: map['appName'] as String? ?? 'GBMS Support Centre',
       timezone: map['timezone'] as String? ?? 'GMT+00:00 Accra',
       dateFormat: map['dateFormat'] as String? ?? 'MMM d, yyyy',
       timeFormat: map['timeFormat'] as String? ?? '24-hour',
+      logoUrl: map['logoUrl'] as String?,
     );
   }
 
@@ -30,5 +33,6 @@ class GeneralSettings {
         'timezone': timezone,
         'dateFormat': dateFormat,
         'timeFormat': timeFormat,
+        'logoUrl': logoUrl,
       };
 }

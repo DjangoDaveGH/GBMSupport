@@ -18,19 +18,19 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="PFM-Systems Division support and ticketing centre for Hyperion budgeting-system issues.">
+  <meta name="description" content="PFM-Systems Division support and ticketing centre for GBMS budgeting-system issues.">
   <meta name="theme-color" content="#0B3578">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Hyperion Support">
+  <meta name="apple-mobile-web-app-title" content="GBMS Support">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Oracle Hyperion Support Centre</title>
+  <title>GBMS Support Centre</title>
   <link rel="manifest" href="manifest.json">
 
   <!-- Branded loading screen, shown before the Flutter engine has even
@@ -72,8 +72,8 @@
 <body>
   <div id="hyport-loading">
     <img src="splash_logo.png" alt="" />
-    <div class="title">ORACLE HYPERION<br />SUPPORT CENTRE</div>
-    <div class="subtitle">Enterprise Management Platform</div>
+    <div class="title">GBMS<br />SUPPORT CENTRE</div>
+    <div class="subtitle">Budget Management Platform</div>
   </div>
   <script>
     window.addEventListener('flutter-first-frame', function () {
@@ -115,6 +115,23 @@
       window.hyportPwaInstall.deferredPrompt = null;
       window.hyportPwaInstall.available = false;
       return choice.outcome; // 'accepted' | 'dismissed'
+    };
+  </script>
+
+  <!-- Real OS notification-bar pop-up (with sound — the browser plays its
+       own default notification sound automatically) for a *foreground*
+       FCM message. firebase-messaging-sw.js's background handler already
+       covers the tab-not-focused case; PushNotificationListener calls this
+       for the tab-focused case, which Firebase's web SDK never surfaces as
+       a system notification on its own (core/services/web_notification.dart
+       / local_notification_service.dart). Notification permission is
+       already granted by the time this fires — requested earlier via
+       firebase_messaging's requestPermission(), same underlying browser
+       permission. -->
+  <script>
+    window.hyportShowNotification = function (title, body) {
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      new Notification(title, { body: body, icon: 'icons/Icon-192.png' });
     };
   </script>
 

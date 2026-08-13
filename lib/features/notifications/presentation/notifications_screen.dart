@@ -20,6 +20,7 @@ IconData _iconFor(NotificationType type) => switch (type) {
       NotificationType.systemDowntime => Icons.power_off_rounded,
       NotificationType.deadlineReminder => Icons.event_available_rounded,
       NotificationType.maintenance => Icons.build_rounded,
+      NotificationType.chatMessage => Icons.chat_bubble_outline_rounded,
     };
 
 // Mockup screen 7 groups notifications into All/Tickets/System/
@@ -36,7 +37,8 @@ bool _isTicketNotification(NotificationType type) => switch (type) {
       NotificationType.escalated ||
       NotificationType.pendingAction ||
       NotificationType.resolved ||
-      NotificationType.deadlineReminder => true,
+      NotificationType.deadlineReminder ||
+      NotificationType.chatMessage => true,
       NotificationType.systemDowntime || NotificationType.maintenance => false,
     };
 
@@ -49,6 +51,7 @@ Color _colorFor(NotificationType type) => switch (type) {
       NotificationType.systemDowntime => StatusColors.critical,
       NotificationType.deadlineReminder => AppTheme.gold,
       NotificationType.maintenance => AppTheme.accentBlue,
+      NotificationType.chatMessage => AppTheme.accentBlue,
     };
 
 String _dayLabel(DateTime dt) {

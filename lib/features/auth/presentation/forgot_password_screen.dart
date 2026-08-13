@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 
-/// Fully functional — unlike the OTP/SSO screens elsewhere in this flow,
-/// password reset is backed by real Firebase Auth capability
-/// (sendPasswordResetEmail works for any email regardless of sign-in
-/// state), so this one isn't a UI-only stub.
+/// Fully functional — password reset is backed by real Firebase Auth
+/// capability (sendPasswordResetEmail works for any email regardless of
+/// sign-in state).
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 

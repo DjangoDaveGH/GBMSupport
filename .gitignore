@@ -49,6 +49,20 @@ app.*.map.json
 /scripts/service-account.json
 /scripts/node_modules/
 
+# This repo is public. These carry real people's names/emails/phone numbers
+# and/or the literal shared default account password — never committed,
+# regardless of what else gets swept up by a broad `git add`.
+/scripts/login_emails.csv
+/scripts/training_users.json
+/scripts/import_training_users.js
+/scripts/create_missing_apps_unit.js
+/scripts/fix_apps_unit_institution.js
+/scripts/update_isha_email.js
+/scripts/reset_apps_unit_passwords.js
+/scripts/generate_login_emails.js
+/APP UNIT MEN.xlsx
+/Group 1&2 Training Participants.xlsx
+
 # Cloud Functions build artifacts
 /functions/node_modules/
 

@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/responsive.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/pwa_install_button.dart';
 
-/// Bottom-nav shell. Both requester and support-side roles get the
-/// reference design's split bar with a raised gold center "+" button —
-/// Create Ticket for requesters, and the same action for support-side
-/// staff logging a ticket on a caller's behalf (Phase 4 mockup's Admin
-/// Dashboard/Tickets/+/Alerts/Profile bar). Support-side roles reach
+/// Bottom-nav shell. The reference design's split bar with a raised gold
+/// center "+" button is Create Ticket — but only for requester-side roles
+/// (MDA/MMDA User, Focal Person). firestore.rules' tickets `allow create`
+/// only ever admits `isRequesterSide()`, so any support-side role
+/// (Coordinator, Functional/Technical Lead, Vendor, Management) tapping it
+/// would always hit a permission-denied write after going through the whole
+/// wizard — hidden here for all of them, not just Management, to keep this
+/// narrow (mobile-width) shell honest with what the desktop shell already
+/// does for those roles (no create-ticket entry point at all — see
+/// DesktopShell/DesktopDashboardScreen). Support-side roles reach
 /// Analytics/Reports/Users/Institutions/Knowledge Base/Settings via the
 /// Dashboard screen's drawer (see the ☰ icon in that mockup) rather than
 /// the bottom bar, which only has room for 4 primary destinations + FAB.
@@ -46,6 +52,8 @@ class AppShell extends ConsumerWidget {
     var currentIndex = tabs.indexOf(location);
     if (currentIndex == -1) currentIndex = 0;
 
+    final canCreateTicket = appUser?.role == UserRole.mdaUser || appUser?.role == UserRole.focalPerson;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -62,7 +70,7 @@ class AppShell extends ConsumerWidget {
         currentIndex: currentIndex,
         isSupportSide: isSupportSide,
         onTap: (i) => context.go(tabs[i]),
-        onCenterAction: () => context.push('/tickets/new'),
+        onCenterAction: canCreateTicket ? () => context.push('/tickets/new') : null,
       ),
     );
   }
@@ -73,7 +81,7 @@ class _BottomBar extends StatelessWidget {
   final int currentIndex;
   final bool isSupportSide;
   final ValueChanged<int> onTap;
-  final VoidCallback onCenterAction;
+  final VoidCallback? onCenterAction;
 
   const _BottomBar({
     required this.tabs,
@@ -151,33 +159,34 @@ class _BottomBar extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            top: 0,
-            child: GestureDetector(
-              onTap: onCenterAction,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppTheme.navy,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.navy.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 26,
+          if (onCenterAction != null)
+            Positioned(
+              top: 0,
+              child: GestureDetector(
+                onTap: onCenterAction,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppTheme.navy,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.navy.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

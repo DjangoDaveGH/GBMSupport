@@ -573,6 +573,7 @@ class _DetailsTab extends ConsumerWidget {
               _InfoRow(label: 'Category', value: ticket.category.label),
               if (ticket.subCategory.isNotEmpty) _InfoRow(label: 'Sub-category', value: ticket.subCategory),
               _InfoRow(label: 'Priority', value: ticket.priority.label),
+              _InfoRow(label: 'Impact', value: ticket.impact.label),
               _InfoRow(label: 'Status', value: ticket.status.label),
               _InfoRow(label: 'Created', value: DateFormat.yMMMd().add_jm().format(ticket.createdAt)),
               if (ticket.resolvedAt != null) _InfoRow(label: 'Resolved', value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!)),

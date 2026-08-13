@@ -1,11 +1,11 @@
 {
-    "name": "Oracle Hyperion Support Centre",
-    "short_name": "Hyperion Support",
+    "name": "GBMS Support Centre",
+    "short_name": "GBMS Support",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0A1B3D",
     "theme_color": "#0B3578",
-    "description": "PFM-Systems Division support and ticketing centre for Hyperion budgeting-system issues.",
+    "description": "PFM-Systems Division support and ticketing centre for GBMS budgeting-system issues.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -36,5 +36,29 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
       allow delete: if false;
     }
+
+    // The app-wide branding logo (desktop Settings -> General). Same
+    // pfm_management-only write boundary as config/general in
+    // firestore.rules, which is what actually stores the resulting URL.
+    match /branding/logo {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+        && request.auth.token.role == 'pfm_management'
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if false;
+    }
+
+    // Exported report PDFs, scoped strictly to the admin who generated
+    // them — same owner-only boundary as report_views in firestore.rules,
+    // which is what actually stores the resulting download URL.
+    match /reports/{uploaderUid}/{fileName} {
+      allow read: if isSignedIn() && request.auth.uid == uploaderUid;
+      allow write: if isSignedIn()
+        && request.auth.uid == uploaderUid
+        && isSupportSide()
+        && request.resource.size < 10 * 1024 * 1024;
+      allow delete: if false;
+    }
   }
 }

@@ -5,6 +5,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/features/admin/presentation/edit_user_dialog.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
@@ -99,10 +100,18 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: () => context.push('/admin/users/new'),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add User'),
+                  // Same FilledButton-silently-fails-to-paint issue as
+                  // DesktopTicketDetailScreen's Actions button — this Row is
+                  // a direct child of a start-aligned Column with no
+                  // Expanded/stretch upstream giving it a tightly-bounded
+                  // width. IntrinsicWidth forces the two-pass measure the
+                  // button needs, without changing its appearance.
+                  IntrinsicWidth(
+                    child: FilledButton.icon(
+                      onPressed: () => context.push('/admin/users/new'),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add User'),
+                    ),
                   ),
                 ],
               ),
@@ -134,6 +143,7 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                                       DataColumn(label: Text('Institution')),
                                       DataColumn(label: Text('Status')),
                                       DataColumn(label: Text('Last Active')),
+                                      DataColumn(label: Text('')),
                                     ],
                                     rows: pageItems.map((u) => _row(context, u, institutionsById)).toList(),
                                   ),
@@ -193,6 +203,11 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
         ),
       )),
       DataCell(Text(online ? 'Online now' : (u.lastActiveAt == null ? '—' : DateFormat.yMMMd().format(u.lastActiveAt!)))),
+      DataCell(IconButton(
+        icon: const Icon(Icons.edit_outlined, size: 18),
+        tooltip: 'Edit user',
+        onPressed: () => showEditUserDialog(context, u),
+      )),
     ]);
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hyport/core/routing/app_router.dart';
 import 'package:hyport/core/services/global_keys.dart';
+import 'package:hyport/core/services/local_notification_service.dart';
 import 'package:hyport/core/services/push_notification_listener.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/tickets/data/draft_ticket_repository.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
   await DraftTicketRepository.openBox();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await LocalNotificationService.init();
   // Web's IndexedDB-backed persistence is unreliable on Safari/iOS (private
   // browsing, backgrounded tabs, and PWA+tab lock conflicts can leave the
   // IndexedDB connection hung instead of erroring), which silently stalls
@@ -41,7 +43,7 @@ class HyportApp extends ConsumerWidget {
     return OfflineSyncListener(
       child: PushNotificationListener(
         child: MaterialApp.router(
-          title: 'Hyperion Support',
+          title: 'GBMS Support',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           scaffoldMessengerKey: scaffoldMessengerKey,
