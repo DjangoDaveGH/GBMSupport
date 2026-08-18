@@ -594,6 +594,7 @@ class _SidebarColumn extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final policy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
     final due = ticket.createdAt.add(Duration(hours: policy.targetHoursFor(ticket.priority)));
+    final viewer = ref.watch(currentAppUserProvider).valueOrNull;
 
     return Column(
       children: [
@@ -611,6 +612,13 @@ class _SidebarColumn extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (viewer?.role.hasBackOfficeAccess ?? false) ...[
+          _SidebarCard(
+            title: 'Requested By',
+            child: _AssigneeInfo(userId: ticket.createdBy),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (ticket.assignedTo != null)
           _SidebarCard(
             title: 'Assigned To',
