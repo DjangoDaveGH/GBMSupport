@@ -57,6 +57,12 @@ class _AssignTicketScreenState extends ConsumerState<AssignTicketScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ticket assigned.')));
         context.pop();
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not assign ticket: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -183,13 +189,14 @@ class _AssignTicketScreenState extends ConsumerState<AssignTicketScreen> {
   }
 }
 
-class _TicketSummaryCard extends StatelessWidget {
+class _TicketSummaryCard extends ConsumerWidget {
   final Ticket ticket;
 
   const _TicketSummaryCard({required this.ticket});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requesterAsync = ref.watch(userByIdProvider(ticket.createdBy));
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -208,6 +215,11 @@ class _TicketSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(ticket.title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            'Requested by ${requesterAsync.valueOrNull?.name ?? '…'}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+          ),
         ],
       ),
     );
