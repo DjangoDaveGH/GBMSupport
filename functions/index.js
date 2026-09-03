@@ -32,10 +32,11 @@
  *      users/{uid}.isDemoAccount == true. Unlike clearTrainingTickets this
  *      never marks the account "done" — it's a standing rolling purge for
  *      accounts used to demo the app, not a one-time onboarding grace period.
- *   7. adminBroadcastNotification — sends a system-wide announcement
- *      (downtime/maintenance/deadline) to every active user: an in-app
- *      notification doc + FCM push each, via the same notifyUser() the
- *      ticket triggers use. Restricted to pfm_management, same as
+ *   7. adminBroadcastNotification — sends an admin-authored announcement
+ *      (type: downtime/maintenance/deadline, plus a free-text topic used as
+ *      the push title) to a chosen audience (all / MDA / MMDA / staff): an
+ *      in-app notification doc + FCM push each, via the same notifyUser()
+ *      the ticket triggers use. Restricted to pfm_management, same as
  *      adminCreateUser/adminUpdateUser. Goes through a Cloud Function rather
  *      than a client-side Firestore write because neither piece is safe to
  *      do from the client at this app's user count: a single WriteBatch
@@ -291,12 +292,18 @@ exports.adminResetTwoFactor = onCall(async (request) => {
  * opened the app since this shipped) just gets the in-app notification —
  * FCM failures are logged, not thrown, so they never block the Firestore
  * write that the Notifications screen depends on.
+ *
+ * [title] overrides the push notification's title (and is stored on the
+ * notification doc) — used by adminBroadcastNotification for its
+ * admin-authored topic. Every other caller (ticket-lifecycle triggers)
+ * omits it and keeps the fixed "Hyperion Support" title.
  */
-async function notifyUser({userId, type, message, ticketId}) {
+async function notifyUser({userId, type, message, ticketId, title = "Hyperion Support"}) {
   const db = admin.firestore();
 
   await db.collection("notifications").add({
     userId,
+    title,
     ticketId: ticketId || null,
     type,
     message,
@@ -328,7 +335,7 @@ async function notifyUser({userId, type, message, ticketId}) {
   try {
     const res = await admin.messaging().sendEachForMulticast({
       tokens,
-      notification: {title: "Hyperion Support", body: message},
+      notification: {title, body: message},
       data: {ticketId: ticketId || "", type, unreadCount: String(unreadCount)},
       // Neither Android nor iOS plays a sound for a background/terminated
       // push by default — both require an explicit sound field, otherwise
@@ -354,7 +361,7 @@ async function notifyUser({userId, type, message, ticketId}) {
       // is where a tap takes the user.
       webpush: {
         notification: {
-          title: "Hyperion Support",
+          title,
           body: message,
           icon: "https://gbmsupport.web.app/icons/Icon-192.png",
           badge: "https://gbmsupport.web.app/icons/Icon-192.png",
@@ -417,12 +424,32 @@ async function notifyUsersWithRole(role, {type, message, ticketId, exclude}) {
 }
 
 const BROADCAST_TYPES = ["system_downtime", "deadline_reminder", "maintenance"];
+const BROADCAST_AUDIENCES = ["all", "mda", "mmda", "staff"];
+
+// Deliberately distinct from SUPPORT_ROLES below (the narrower
+// auto-assignment eligibility pool, which excludes pfm_management and
+// vendor_support) — "Staff" here means every internal/back-office account,
+// full stop.
+const STAFF_ROLES = ["support_coordinator", "functional_lead", "technical_lead", "pfm_management", "vendor_support"];
+const REQUESTER_ROLES = ["mda_user", "focal_person"];
+
+function matchesBroadcastAudience(userData, audience) {
+  if (audience === "all") return true;
+  if (audience === "staff") return STAFF_ROLES.includes(userData.role);
+  if (audience === "mda") return REQUESTER_ROLES.includes(userData.role) && userData.institutionType === "MDA";
+  if (audience === "mmda") return REQUESTER_ROLES.includes(userData.role) && userData.institutionType === "MMDA";
+  return false;
+}
 
 /**
- * Sends a system-wide announcement to every active user (see responsibility
- * 7 in the file header). Fans out with bounded concurrency rather than one
- * user at a time — at ~1,600 active users, doing this fully sequentially
- * would risk running past the callable's own timeout.
+ * Sends a system-wide announcement to every active user matching [audience]
+ * (see responsibility 7 in the file header). Fans out with bounded
+ * concurrency rather than one user at a time — at ~1,600 active users,
+ * doing this fully sequentially would risk running past the callable's own
+ * timeout. Audience filtering happens in memory over a single
+ * isActive-only query rather than as additional Firestore query clauses,
+ * so this never needs a new composite index as roles/institution types
+ * change.
  */
 exports.adminBroadcastNotification = onCall(
     {timeoutSeconds: 300},
@@ -434,27 +461,40 @@ exports.adminBroadcastNotification = onCall(
         );
       }
 
-      const {type, message} = request.data || {};
+      const {type, message, topic, audience} = request.data || {};
       if (!BROADCAST_TYPES.includes(type)) {
         throw new HttpsError("invalid-argument", `Unknown broadcast type: ${type}`);
       }
-      const trimmed = (message || "").trim();
-      if (!trimmed) {
+      if (!BROADCAST_AUDIENCES.includes(audience)) {
+        throw new HttpsError("invalid-argument", `Unknown audience: ${audience}`);
+      }
+      const trimmedMessage = (message || "").trim();
+      if (!trimmedMessage) {
         throw new HttpsError("invalid-argument", "Message is required.");
       }
-      if (trimmed.length > 500) {
+      if (trimmedMessage.length > 500) {
         throw new HttpsError("invalid-argument", "Message must be 500 characters or fewer.");
+      }
+      const trimmedTopic = (topic || "").trim();
+      if (!trimmedTopic) {
+        throw new HttpsError("invalid-argument", "Topic is required.");
+      }
+      if (trimmedTopic.length > 120) {
+        throw new HttpsError("invalid-argument", "Topic must be 120 characters or fewer.");
       }
 
       const db = admin.firestore();
       const snap = await db.collection("users").where("isActive", "==", true).get();
-      const userIds = snap.docs.map((d) => d.id);
+      const userIds = snap.docs
+          .filter((d) => matchesBroadcastAudience(d.data(), audience))
+          .map((d) => d.id);
 
       const CONCURRENCY = 25;
       let sent = 0;
       for (let i = 0; i < userIds.length; i += CONCURRENCY) {
         const chunk = userIds.slice(i, i + CONCURRENCY);
-        await Promise.all(chunk.map((userId) => notifyUser({userId, type, message: trimmed})));
+        await Promise.all(chunk.map((userId) =>
+          notifyUser({userId, type, message: trimmedMessage, title: trimmedTopic})));
         sent += chunk.length;
       }
 
@@ -462,8 +502,8 @@ exports.adminBroadcastNotification = onCall(
         actorId: request.auth.uid,
         action: "announcement_sent",
         targetType: "announcement",
-        targetId: "All Users",
-        metadata: {type, message: trimmed, recipientCount: sent},
+        targetId: trimmedTopic,
+        metadata: {type, audience, topic: trimmedTopic, message: trimmedMessage, recipientCount: sent},
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
