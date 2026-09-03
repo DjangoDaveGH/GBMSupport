@@ -241,7 +241,9 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
     );
   }
 
-  bool get _canAssign => viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed;
+  bool get _canAssign =>
+      (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+      ticket.status != TicketStatus.closed;
 
   bool get _canEscalate =>
       (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed) ||
@@ -526,7 +528,9 @@ class _DetailsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(currentAppUserProvider).valueOrNull;
-    final canReassign = viewer != null && viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed;
+    final canReassign = viewer != null &&
+        (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+        ticket.status != TicketStatus.closed;
 
     return ListView(
       padding: const EdgeInsets.all(16),

@@ -169,15 +169,18 @@ service cloud.firestore {
         && request.resource.data.assignedTo == null;
 
       allow update: if
-        // Only Support Coordinator gets unrestricted ticket-field access —
-        // assign/escalate/edit-priority/close are all theirs alone (Section
-        // 3). PFM Management/Administrator is deliberately excluded even
-        // though it satisfies the broader isSupportSide(): its only
-        // ticket-detail action in the UI is adding a chat comment (governed
-        // separately, under /activity below), never assign/escalate/close —
-        // see AddUserScreen/DesktopTicketDetailScreen's role checks, which
-        // this mirrors so a raw API call can't do what the UI never offers.
+        // Support Coordinator gets unrestricted ticket-field access —
+        // assign/escalate/edit-priority/close are all theirs (Section 3).
         role() == 'support_coordinator'
+        // PFM Management/Administrator can manually (re)assign a ticket —
+        // same write TicketRepository.assignTicket() makes (assignedTo,
+        // status -> 'assigned', updatedAt) and nothing more: escalate,
+        // close, and priority-edit stay Coordinator-only, matching
+        // canAssign in ticket_detail_screen.dart/desktop_ticket_detail_
+        // screen.dart, which offers Admin only the Assign action.
+        || (role() == 'pfm_management'
+            && onlyFieldsChanged(['assignedTo', 'status', 'updatedAt'])
+            && request.resource.data.status == 'assigned')
         // Vendor/Specialist's only granted action is resolving a ticket
         // escalated to them (Section 3: no assign/escalate/close) — the app
         // UI never offers those to Vendor, but the rule shouldn't rely on
