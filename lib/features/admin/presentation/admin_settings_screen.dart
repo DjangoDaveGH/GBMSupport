@@ -34,6 +34,13 @@ class AdminSettingsScreen extends StatelessWidget {
             ),
             const Divider(height: 1, indent: 56),
             _SettingsTile(
+              icon: Icons.auto_awesome_motion_outlined,
+              label: 'Auto-Assignment',
+              subtitle: 'Which staff handle each ticket category',
+              onTap: () => context.push('/admin-settings/assignment'),
+            ),
+            const Divider(height: 1, indent: 56),
+            _SettingsTile(
               icon: Icons.confirmation_number_outlined,
               label: 'Ticket Settings',
               subtitle: 'Categories, priorities, workflows',

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/features/admin/presentation/edit_user_dialog.dart';
+import 'package:hyport/features/admin/presentation/user_status_actions.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 
@@ -44,14 +46,15 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   }
 
   bool _matchesTab(AppUser u) => switch (_tab) {
-        _UserTab.all => true,
-        _UserTab.supportOfficers => _supportOfficerRoles.contains(u.role),
-        _UserTab.mdas => _mdaRoles.contains(u.role),
-      };
+    _UserTab.all => true,
+    _UserTab.supportOfficers => _supportOfficerRoles.contains(u.role),
+    _UserTab.mdas => _mdaRoles.contains(u.role),
+  };
 
   @override
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(allUsersProvider);
+    final viewer = ref.watch(currentAppUserProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Users')),
@@ -102,7 +105,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                         itemCount: filtered.length,
-                        itemBuilder: (context, i) => _UserTile(user: filtered[i]),
+                        itemBuilder: (context, i) => _UserTile(user: filtered[i], isSelf: viewer?.id == filtered[i].id),
                       ),
               ),
             ],
@@ -128,8 +131,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
 class _UserTile extends StatelessWidget {
   final AppUser user;
+  final bool isSelf;
 
-  const _UserTile({required this.user});
+  const _UserTile({required this.user, required this.isSelf});
 
   @override
   Widget build(BuildContext context) {
@@ -146,47 +150,76 @@ class _UserTile extends StatelessWidget {
           border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Row(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
-                child: Text(
-                  user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 11,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                    style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(user.name, style: Theme.of(context).textTheme.titleSmall),
-                Text(user.role.label, style: Theme.of(context).textTheme.bodySmall),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-            Text(
-              online ? 'Online' : 'Offline',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(user.name, style: Theme.of(context).textTheme.titleSmall),
+                  Text(user.role.shortLabel, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Two axes, same vocabulary as the desktop Users table:
+                // account state (Active/Inactive) and last-seen.
+                Text(
+                  user.accountStatusLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: user.isActive
+                        ? StatusColors.resolved
+                        : Theme.of(context).colorScheme.error,
+                  ),
+                ),
+                Text(
+                  user.lastSeenLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
                   ),
+                ),
+              ],
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, size: 20),
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(value: 'toggle', enabled: !isSelf, child: Text(user.isActive ? 'Deactivate' : 'Reactivate')),
+              ],
+              onSelected: (value) {
+                if (value == 'edit') {
+                  showEditUserDialog(context, user);
+                } else if (value == 'toggle') {
+                  confirmSetUserActive(context, user, active: !user.isActive);
+                }
+              },
             ),
           ],
         ),

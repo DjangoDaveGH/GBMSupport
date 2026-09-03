@@ -17,6 +17,7 @@ import 'package:hyport/features/auth/presentation/splash_screen.dart';
 import 'package:hyport/features/auth/presentation/welcome_screen.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/admin/presentation/admin_settings_screen.dart';
+import 'package:hyport/features/admin/presentation/assignment_rules_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_settings_screen.dart';
 import 'package:hyport/features/admin/presentation/institutions_screen.dart';
 import 'package:hyport/features/admin/presentation/sla_management_screen.dart';
@@ -352,6 +353,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           mobile: SlaManagementScreen(),
           desktop: Padding(padding: EdgeInsets.all(24), child: SlaManagementScreen()),
           desktopTitle: 'SLA Management',
+        )),
+      ),
+      GoRoute(
+        path: '/admin-settings/assignment',
+        pageBuilder: (context, state) => _slideUpPage(const ResponsiveScreen(
+          mobile: AssignmentRulesScreen(),
+          desktop: Padding(padding: EdgeInsets.all(24), child: AssignmentRulesScreen()),
+          desktopTitle: 'Auto-Assignment',
         )),
       ),
       GoRoute(

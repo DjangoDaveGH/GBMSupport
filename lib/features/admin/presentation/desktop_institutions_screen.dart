@@ -4,6 +4,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 
@@ -120,24 +121,26 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
                   child: filtered.isEmpty
                       ? const EmptyState(icon: Icons.account_balance_outlined, message: 'No institutions found.')
                       : SingleChildScrollView(
-                          child: DataTable(
-                            headingRowHeight: 44,
-                            columns: const [
-                              DataColumn(label: Text('Name')),
-                              DataColumn(label: Text('Type')),
-                              DataColumn(label: Text('Users')),
-                            ],
-                            rows: filtered
-                                .map((i) => DataRow(cells: [
-                                      DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-                                        const Icon(Icons.account_balance_rounded, size: 16, color: AppTheme.accentBlue),
-                                        const SizedBox(width: 8),
-                                        Text(i.name),
-                                      ])),
-                                      DataCell(Text(i.type.wireValue)),
-                                      DataCell(Text('${userCounts[i.id] ?? 0}')),
-                                    ]))
-                                .toList(),
+                          child: ScrollableTable(
+                            child: DataTable(
+                              headingRowHeight: 44,
+                              columns: const [
+                                DataColumn(label: Text('Name')),
+                                DataColumn(label: Text('Type')),
+                                DataColumn(label: Text('Users')),
+                              ],
+                              rows: filtered
+                                  .map((i) => DataRow(cells: [
+                                        DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
+                                          const Icon(Icons.account_balance_rounded, size: 16, color: AppTheme.accentBlue),
+                                          const SizedBox(width: 8),
+                                          Text(i.name),
+                                        ])),
+                                        DataCell(Text(i.type.wireValue)),
+                                        DataCell(Text('${userCounts[i.id] ?? 0}')),
+                                      ]))
+                                  .toList(),
+                            ),
                           ),
                         ),
                 );

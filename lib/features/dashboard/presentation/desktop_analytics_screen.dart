@@ -6,9 +6,22 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
+import 'package:hyport/features/config/data/sla_providers.dart';
+import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:intl/intl.dart';
+
+const _statusOptions = [
+  TicketStatus.open,
+  TicketStatus.assigned,
+  TicketStatus.inProgress,
+  TicketStatus.escalated,
+  TicketStatus.resolved,
+  TicketStatus.reopened,
+  TicketStatus.closed,
+];
 
 const _categoryPalette = [
   AppTheme.navy,
@@ -20,24 +33,292 @@ const _categoryPalette = [
   StatusColors.medium,
 ];
 
-/// Phase 5 mockup screen 35 — same ticketListProvider data as the mobile
-/// Analytics screen, laid out with a category donut + a Received-vs-
-/// Resolved-by-weekday bar chart side by side plus a resolution-time trend
-/// line, matching the enterprise mockup's density.
-class DesktopAnalyticsScreen extends ConsumerWidget {
+/// Phase 5 mockup screen 35 — same ticket data as the mobile Analytics
+/// screen (via [ticketAnalyticsProvider], unbounded so every KPI reflects
+/// the true dataset rather than [ticketListProvider]'s page-size cap), laid
+/// out with a category donut + a Received-vs-Resolved-by-weekday bar chart
+/// side by side plus a resolution-time trend line, matching the enterprise
+/// mockup's density. A search + status/priority/category filter bar above
+/// narrows the dataset every chart below is computed from.
+class DesktopAnalyticsScreen extends ConsumerStatefulWidget {
   const DesktopAnalyticsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DesktopAnalyticsScreen> createState() => _DesktopAnalyticsScreenState();
+}
+
+class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen> {
+  final _searchController = TextEditingController();
+  String _search = '';
+  TicketStatus? _statusFilter;
+  TicketPriority? _priorityFilter;
+  TicketCategory? _categoryFilter;
+  String? _institutionId;
+  InstitutionType? _institutionType;
+  DateTimeRange? _dateRange;
+  bool _overdueOnly = false;
+
+  /// Filters applied in memory over the already-loaded dataset (institution,
+  /// created-date range, overdue) — see [TicketFilter.matchesClientSide].
+  /// Matches the mobile Analytics screen's filter set.
+  TicketFilter get _advancedFilter => TicketFilter(
+        institutionId: _institutionId,
+        institutionType: _institutionType,
+        createdAfter: _dateRange?.start,
+        createdBefore: _dateRange?.end,
+        overdueOnly: _overdueOnly,
+      );
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearch(Ticket t) {
+    if (_search.isEmpty) return true;
+    final q = _search.toLowerCase();
+    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]..sort((a, b) => a.name.compareTo(b.name));
+    final institutionNameById = {for (final i in institutions) i.id: i.name};
+    final institutionTypes = {for (final i in institutions) i.id: i.type};
+    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
-    return ticketsAsync.when(
-      loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load analytics: $e')),
-      data: (tickets) => _Body(tickets: tickets),
+    // Only the query-backed fields go to the provider; institution / date /
+    // overdue are applied in memory below.
+    final filter = TicketFilter(
+      statuses: _statusFilter == null ? const {} : {_statusFilter!},
+      category: _categoryFilter,
+      priorities: _priorityFilter == null ? const {} : {_priorityFilter!},
+    );
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, filter)));
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FilterBar(
+            searchController: _searchController,
+            onSearchChanged: (v) => setState(() => _search = v),
+            statusFilter: _statusFilter,
+            onStatusChanged: (v) => setState(() => _statusFilter = v),
+            priorityFilter: _priorityFilter,
+            onPriorityChanged: (v) => setState(() => _priorityFilter = v),
+            categoryFilter: _categoryFilter,
+            onCategoryChanged: (v) => setState(() => _categoryFilter = v),
+            institutionNameById: institutionNameById,
+            institutionId: institutionNameById.containsKey(_institutionId) ? _institutionId : null,
+            onInstitutionChanged: (v) => setState(() => _institutionId = v),
+            institutionType: _institutionType,
+            onInstitutionTypeChanged: (v) => setState(() => _institutionType = v),
+            dateRange: _dateRange,
+            onDateRangeChanged: (v) => setState(() => _dateRange = v),
+            overdueOnly: _overdueOnly,
+            onOverdueChanged: (v) => setState(() => _overdueOnly = v),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: ticketsAsync.when(
+              loading: () => const BrandedLoaderCenter(),
+              error: (e, _) => Center(child: Text('Could not load analytics: $e')),
+              data: (tickets) => _Body(
+                tickets: tickets
+                    .where(_matchesSearch)
+                    .where((t) => _advancedFilter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+                    .toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterBar extends StatelessWidget {
+  final TextEditingController searchController;
+  final ValueChanged<String> onSearchChanged;
+  final TicketStatus? statusFilter;
+  final ValueChanged<TicketStatus?> onStatusChanged;
+  final TicketPriority? priorityFilter;
+  final ValueChanged<TicketPriority?> onPriorityChanged;
+  final TicketCategory? categoryFilter;
+  final ValueChanged<TicketCategory?> onCategoryChanged;
+  final Map<String, String> institutionNameById;
+  final String? institutionId;
+  final ValueChanged<String?> onInstitutionChanged;
+  final InstitutionType? institutionType;
+  final ValueChanged<InstitutionType?> onInstitutionTypeChanged;
+  final DateTimeRange? dateRange;
+  final ValueChanged<DateTimeRange?> onDateRangeChanged;
+  final bool overdueOnly;
+  final ValueChanged<bool> onOverdueChanged;
+
+  const _FilterBar({
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.statusFilter,
+    required this.onStatusChanged,
+    required this.priorityFilter,
+    required this.onPriorityChanged,
+    required this.categoryFilter,
+    required this.onCategoryChanged,
+    required this.institutionNameById,
+    required this.institutionId,
+    required this.onInstitutionChanged,
+    required this.institutionType,
+    required this.onInstitutionTypeChanged,
+    required this.dateRange,
+    required this.onDateRangeChanged,
+    required this.overdueOnly,
+    required this.onOverdueChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final institutionIds = institutionNameById.keys.toList()
+      ..sort((a, b) => (institutionNameById[a] ?? '').compareTo(institutionNameById[b] ?? ''));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: searchController,
+          onChanged: onSearchChanged,
+          decoration: const InputDecoration(
+            hintText: 'Search by title or reference',
+            prefixIcon: Icon(Icons.search_rounded, size: 20),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _FilterDropdown<TicketStatus>(
+              hint: 'Status',
+              allLabel: 'All Statuses',
+              value: statusFilter,
+              items: _statusOptions,
+              labelOf: (s) => s.label,
+              onChanged: onStatusChanged,
+            ),
+            _FilterDropdown<TicketPriority>(
+              hint: 'Priority',
+              allLabel: 'All Priorities',
+              value: priorityFilter,
+              items: TicketPriority.values,
+              labelOf: (p) => p.label,
+              onChanged: onPriorityChanged,
+            ),
+            _FilterDropdown<TicketCategory>(
+              hint: 'Category',
+              allLabel: 'All Categories',
+              value: categoryFilter,
+              items: TicketCategory.values,
+              labelOf: (c) => c.label,
+              onChanged: onCategoryChanged,
+            ),
+            _FilterDropdown<String>(
+              hint: 'Institution',
+              allLabel: 'All Institutions',
+              value: institutionId,
+              items: institutionIds,
+              labelOf: (id) => institutionNameById[id] ?? id,
+              onChanged: onInstitutionChanged,
+            ),
+            _FilterDropdown<InstitutionType>(
+              hint: 'Type',
+              allLabel: 'All Types',
+              value: institutionType,
+              items: InstitutionType.values,
+              labelOf: (t) => t.wireValue,
+              onChanged: onInstitutionTypeChanged,
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final now = DateTime.now();
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2023),
+                  lastDate: DateTime(now.year + 1, 12, 31),
+                  initialDateRange: dateRange,
+                );
+                if (picked != null) onDateRangeChanged(picked);
+              },
+              icon: const Icon(Icons.date_range_outlined, size: 18),
+              label: Text(
+                dateRange == null
+                    ? 'Date range'
+                    : '${DateFormat.MMMd().format(dateRange!.start)} – ${DateFormat.MMMd().format(dateRange!.end)}',
+              ),
+            ),
+            if (dateRange != null)
+              IconButton(
+                tooltip: 'Clear dates',
+                icon: const Icon(Icons.close_rounded, size: 16),
+                onPressed: () => onDateRangeChanged(null),
+              ),
+            FilterChip(
+              label: const Text('Overdue'),
+              selected: overdueOnly,
+              onSelected: onOverdueChanged,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterDropdown<T> extends StatelessWidget {
+  final String hint;
+  final String allLabel;
+  final T? value;
+  final List<T> items;
+  final String Function(T) labelOf;
+  final ValueChanged<T?> onChanged;
+
+  const _FilterDropdown({
+    required this.hint,
+    required this.allLabel,
+    required this.value,
+    required this.items,
+    required this.labelOf,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T?>(
+          hint: Text(hint),
+          isDense: true,
+          value: value,
+          items: [
+            DropdownMenuItem<T?>(value: null, child: Text(allLabel)),
+            ...items.map((i) => DropdownMenuItem(value: i, child: Text(labelOf(i)))),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
     );
   }
 }
@@ -84,7 +365,7 @@ class _Body extends StatelessWidget {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

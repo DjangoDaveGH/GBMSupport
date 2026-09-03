@@ -16,6 +16,11 @@ class Ticket {
   final bool affectsMultipleUsers;
   final TicketStatus status;
   final String? assignedTo;
+  /// Denormalized display name of [assignedTo], written by onTicketUpdated.
+  /// Lets the requester see who's handling their ticket without needing read
+  /// access to the assignee's `users/{uid}` doc (firestore.rules only lets
+  /// support-side roles read other users).
+  final String? assignedToName;
   final EscalationLevel escalationLevel;
   final String? resolutionNotes;
   final DateTime createdAt;
@@ -43,6 +48,7 @@ class Ticket {
     required this.createdAt,
     required this.updatedAt,
     this.assignedTo,
+    this.assignedToName,
     this.resolutionNotes,
     this.resolvedAt,
     this.closedAt,
@@ -66,6 +72,7 @@ class Ticket {
       affectsMultipleUsers: map['affectsMultipleUsers'] as bool? ?? false,
       status: TicketStatus.fromWire(map['status'] as String? ?? 'open'),
       assignedTo: map['assignedTo'] as String?,
+      assignedToName: map['assignedToName'] as String?,
       escalationLevel: (map['escalationLevel'] as num?)?.toInt() ?? 0,
       resolutionNotes: map['resolutionNotes'] as String?,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -91,6 +98,7 @@ class Ticket {
         'affectsMultipleUsers': affectsMultipleUsers,
         'status': status.wireValue,
         'assignedTo': assignedTo,
+        'assignedToName': assignedToName,
         'escalationLevel': escalationLevel,
         'resolutionNotes': resolutionNotes,
         'createdAt': Timestamp.fromDate(createdAt),
@@ -112,6 +120,7 @@ class Ticket {
     bool? affectsMultipleUsers,
     TicketStatus? status,
     String? assignedTo,
+    String? assignedToName,
     EscalationLevel? escalationLevel,
     String? resolutionNotes,
     DateTime? updatedAt,
@@ -135,6 +144,7 @@ class Ticket {
       affectsMultipleUsers: affectsMultipleUsers ?? this.affectsMultipleUsers,
       status: status ?? this.status,
       assignedTo: assignedTo ?? this.assignedTo,
+      assignedToName: assignedToName ?? this.assignedToName,
       escalationLevel: escalationLevel ?? this.escalationLevel,
       resolutionNotes: resolutionNotes ?? this.resolutionNotes,
       createdAt: createdAt,

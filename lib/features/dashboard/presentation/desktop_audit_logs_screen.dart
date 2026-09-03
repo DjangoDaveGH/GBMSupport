@@ -7,6 +7,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
@@ -79,7 +80,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
   void _exportCsv(List<TicketActivity> entries, Map<String, AppUser> usersById, Map<String, Ticket> ticketsById) {
     final buffer = StringBuffer('Date,User,Action,Details\n');
     for (final a in entries) {
-      final user = usersById[a.actorId]?.name ?? a.actorId;
+      final user = a.actorId == systemActorId ? 'System' : (usersById[a.actorId]?.name ?? a.actorId);
       final ticketRef = ticketsById[a.ticketId]?.ticketReference ?? a.ticketId;
       buffer.writeln('"${DateFormat.yMd().add_jms().format(a.timestamp)}","$user","${_actionLabel(a.action)}","${_describe(a, ticketRef).replaceAll('"', '""')}"');
     }
@@ -121,7 +122,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
   Widget _buildTicketActivityTab(BuildContext context, AppUser appUser) {
     final logAsync = ref.watch(auditLogProvider);
     final usersAsync = ref.watch(allUsersProvider);
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
 
     return logAsync.when(
       loading: () => const BrandedLoaderCenter(),
@@ -223,8 +224,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                           children: [
                             Expanded(
                               child: SingleChildScrollView(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
+                                child: ScrollableTable(
                                   child: DataTable(
                                     headingRowHeight: 44,
                                     columns: const [
@@ -240,7 +240,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                                         onSelectChanged: a.ticketId.isEmpty ? null : (_) => context.push('/tickets/${a.ticketId}'),
                                         cells: [
                                           DataCell(Text(DateFormat.yMd().add_jms().format(a.timestamp))),
-                                          DataCell(Text(user?.name ?? 'Unknown')),
+                                          DataCell(Text(a.actorId == systemActorId ? 'System' : (user?.name ?? 'Unknown'))),
                                           DataCell(Text(_actionLabel(a.action))),
                                           DataCell(SizedBox(width: 320, child: Text(_describe(a, ticketRef), overflow: TextOverflow.ellipsis))),
                                         ],
@@ -291,8 +291,7 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
             child: entries.isEmpty
                 ? const EmptyState(icon: Icons.admin_panel_settings_outlined, message: 'No admin actions recorded yet.')
                 : SingleChildScrollView(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+                    child: ScrollableTable(
                       child: DataTable(
                         headingRowHeight: 44,
                         columns: const [

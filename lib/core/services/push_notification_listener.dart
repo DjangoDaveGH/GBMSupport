@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/routing/app_router.dart';
+import 'package:hyport/core/services/app_badge_service.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/services/local_notification_service.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
+import 'package:hyport/features/notifications/data/notification_providers.dart';
 
 /// Wraps the app: once a user is signed in, requests notification
 /// permission, registers this device's FCM token against their profile,
@@ -36,6 +38,9 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
     if (user == null) return;
     _started = true;
 
+    LocalNotificationService.onTicketTap =
+        (ticketId) => ref.read(routerProvider).push('/tickets/$ticketId');
+
     final service = ref.read(pushNotificationServiceProvider);
     final granted = await service.requestPermission();
     if (!granted) return;
@@ -55,6 +60,7 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
     service.onForegroundMessage.listen((message) {
       final text = message.notification?.body ?? message.data['message'] as String?;
       if (text == null) return;
+      final unread = int.tryParse(message.data['unreadCount']?.toString() ?? '');
       // Firebase never auto-shows a system notification for a foreground
       // message (only background/terminated) — without this it was audible
       // and visible nowhere except an in-app SnackBar, easy to miss and
@@ -63,7 +69,10 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
       LocalNotificationService.show(
         title: message.notification?.title ?? 'Hyperion Support',
         body: text,
+        ticketId: message.data['ticketId']?.toString(),
+        badgeCount: unread,
       );
+      if (unread != null) AppBadgeService.set(unread);
     });
 
     service.onMessageOpenedApp.listen(_openTicketFrom);
@@ -88,8 +97,21 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
       if (previous?.valueOrNull?.id != next.valueOrNull?.id) {
         _started = false;
         _start();
+        if (next.valueOrNull == null) AppBadgeService.set(0);
       }
     });
+
+    // Keep the app-icon badge in step with the unread notification count
+    // while the app is open (background pushes update it from the service
+    // worker / aps.badge — see functions/index.js and firebase-messaging-sw.js).
+    final userId = ref.watch(currentAppUserProvider).valueOrNull?.id;
+    if (userId != null) {
+      AppBadgeService.set(ref.read(unreadNotificationCountProvider(userId)));
+      ref.listen(unreadNotificationCountProvider(userId), (previous, next) {
+        AppBadgeService.set(next);
+      });
+    }
+
     return widget.child;
   }
 }

@@ -48,9 +48,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       // Navigation is handled by the router's redirect once auth state changes.
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = _messageFor(e.code));
+      if (mounted) setState(() => _error = _messageFor(e.code));
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

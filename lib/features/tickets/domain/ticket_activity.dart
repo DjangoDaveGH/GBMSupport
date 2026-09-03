@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
 
+/// Sentinel `actorId` for entries written by a Cloud Function rather than a
+/// person (e.g. category auto-assignment). No `users/{uid}` doc exists for
+/// it — UIs that show an actor render it as "System".
+const String systemActorId = 'system';
+
 /// One entry in a ticket's audit trail (subcollection: tickets/{id}/activity).
 class TicketActivity {
   final String id;

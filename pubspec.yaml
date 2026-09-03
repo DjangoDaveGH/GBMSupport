@@ -50,6 +50,10 @@ dependencies:
   cloud_functions: ^5.1.5
   flutter_local_notifications: ^18.0.1
 
+  # App-icon unread badge (Android/iOS); web uses navigator.setAppBadge via
+  # the JS bridge in web/index.html instead.
+  app_badge_plus: ^1.2.2
+
   # Offline draft queue (works on web + mobile, unlike sqflite)
   hive: ^2.2.3
   hive_flutter: ^1.1.0

@@ -47,7 +47,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
       type: FileType.image,
       withData: true,
     );
-    if (result != null && result.files.isNotEmpty) {
+    if (result != null && result.files.isNotEmpty && mounted) {
       setState(() => _pickedImage = result.files.first);
     }
   }
@@ -81,12 +81,22 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
       }
     }
 
-    await ref.read(ticketRepositoryProvider).addComment(
-          ticketId: widget.ticketId,
-          actorId: viewer.id,
-          note: text,
-          attachmentUrl: attachmentUrl,
+    try {
+      await ref.read(ticketRepositoryProvider).addComment(
+            ticketId: widget.ticketId,
+            actorId: viewer.id,
+            note: text,
+            attachmentUrl: attachmentUrl,
+          );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _sending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not send message: $e')),
         );
+      }
+      return;
+    }
 
     if (!mounted) return;
     _textController.clear();
@@ -169,7 +179,14 @@ class _ChatBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final partnerId = _partnerId;
-    final partnerAsync = partnerId != null ? ref.watch(userByIdProvider(partnerId)) : null;
+    // A requester can't read the assignee's users/{uid} doc (firestore.rules
+    // — support-side only). Only look it up when allowed; a requester falls
+    // back to the denormalized assignee name stored on the ticket.
+    final canReadPartner = viewer.role.isSupportSide;
+    final partnerAsync = (partnerId != null && canReadPartner) ? ref.watch(userByIdProvider(partnerId)) : null;
+    final fallbackName = (partnerId != null && !canReadPartner && viewer.id == ticket.createdBy)
+        ? (ticket.assignedToName ?? 'Support agent')
+        : null;
     final activityAsync = ref.watch(ticketActivityProvider(ticket.id));
 
     return Scaffold(
@@ -179,7 +196,7 @@ class _ChatBody extends ConsumerWidget {
       // background, same way a chat "wallpaper" reads differently from app
       // chrome in most messaging apps.
       backgroundColor: const Color(0xFFAEB6C4),
-      appBar: _ChatAppBar(ticketId: ticket.id, partner: partnerAsync?.valueOrNull),
+      appBar: _ChatAppBar(ticketId: ticket.id, partner: partnerAsync?.valueOrNull, fallbackName: fallbackName),
       body: Column(
         children: [
           Expanded(
@@ -236,7 +253,11 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String ticketId;
   final AppUser? partner;
 
-  const _ChatAppBar({required this.ticketId, required this.partner});
+  /// Shown when [partner] couldn't be loaded (a requester has no read access
+  /// to the assignee's user doc) — the denormalized name from the ticket.
+  final String? fallbackName;
+
+  const _ChatAppBar({required this.ticketId, required this.partner, this.fallbackName});
 
   @override
   Size get preferredSize => const Size.fromHeight(72);
@@ -244,6 +265,8 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final online = partner?.isRecentlyActive ?? false;
+    final displayName = partner?.name ?? fallbackName ?? 'Support Team';
+    final subtitle = partner?.role.shortLabel ?? (fallbackName != null ? 'Support agent' : 'Awaiting assignment');
     return AppBar(
       toolbarHeight: 72,
       titleSpacing: 0,
@@ -256,10 +279,10 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
           CircleAvatar(
             radius: 20,
             backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
-            child: partner == null
+            child: displayName == 'Support Team'
                 ? const Icon(Icons.support_agent_rounded, color: AppTheme.navy)
                 : Text(
-                    partner!.name.isNotEmpty ? partner!.name[0].toUpperCase() : '?',
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                     style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
                   ),
           ),
@@ -270,13 +293,13 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  partner?.name ?? 'Support Team',
+                  displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 Text(
-                  partner?.role.label ?? 'Awaiting assignment',
+                  subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -306,15 +329,6 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.call_outlined),
-          tooltip: partner?.phone.isNotEmpty == true ? partner!.phone : 'Call',
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Calling isn\'t available yet.')),
-            );
-          },
-        ),
         IconButton(
           icon: const Icon(Icons.menu_rounded),
           tooltip: 'Ticket details',

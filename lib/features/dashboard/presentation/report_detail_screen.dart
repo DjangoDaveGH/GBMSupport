@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
@@ -10,11 +11,19 @@ import 'package:hyport/features/dashboard/data/report_pdf_export.dart';
 import 'package:hyport/features/dashboard/data/report_providers.dart';
 import 'package:hyport/features/dashboard/domain/report_section_data.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
+import 'package:hyport/features/tickets/domain/ticket.dart';
 
 /// Renders one of the five report types from real live data. The section/
 /// row content comes from report_section_data.dart, shared with the PDF
 /// export builder so the on-screen view and the exported file never drift
-/// apart — see DECISIONS.md ("Reports PDF export").
+/// apart — see DECISIONS.md ("Reports PDF export"). Ticket data comes from
+/// [ticketAnalyticsProvider] (unbounded), not [ticketListProvider] (capped
+/// at [ticketPageSize]), so "Total Tickets" and every breakdown below it is
+/// a true count. A filter (status/priority/category, via the same
+/// TicketFiltersScreen the Ticket Queue uses) plus a title/reference search
+/// let the report be scoped to a subset before those figures are computed —
+/// PDF export uses that same filtered set, so the exported file matches
+/// what's on screen.
 class ReportDetailScreen extends ConsumerStatefulWidget {
   final String reportType;
   final String reportLabel;
@@ -27,6 +36,26 @@ class ReportDetailScreen extends ConsumerStatefulWidget {
 
 class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   bool _exporting = false;
+  final _searchController = TextEditingController();
+  String _search = '';
+  TicketFilter _filter = const TicketFilter();
+
+  bool _matchesSearch(Ticket t) {
+    if (_search.isEmpty) return true;
+    final q = _search.toLowerCase();
+    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+  }
+
+  Future<void> _openFilters() async {
+    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
+    if (result != null && mounted) setState(() => _filter = result);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -78,7 +107,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const Scaffold(body: BrandedLoaderCenter());
 
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, _filter)));
     final usersAsync = ref.watch(allUsersProvider);
     final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
@@ -86,9 +115,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       appBar: AppBar(
         title: Text(widget.reportLabel),
         actions: [
+          IconButton(
+            onPressed: _openFilters,
+            icon: Icon(_filter.isEmpty ? Icons.filter_alt_outlined : Icons.filter_alt_rounded),
+          ),
           ticketsAsync.maybeWhen(
             data: (tickets) {
-              final sections = reportSectionDataFor(widget.reportType, tickets, usersAsync.valueOrNull ?? const [], slaPolicy);
+              final filtered = tickets.where(_matchesSearch).toList();
+              final sections = reportSectionDataFor(widget.reportType, filtered, usersAsync.valueOrNull ?? const [], slaPolicy);
               return IconButton(
                 tooltip: 'Export PDF',
                 icon: _exporting
@@ -101,21 +135,48 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ),
         ],
       ),
-      body: ticketsAsync.when(
-        loading: () => const BrandedLoaderCenter(),
-        error: (e, _) => Center(child: Text('Could not load report: $e')),
-        data: (tickets) {
-          final sections = reportSectionDataFor(widget.reportType, tickets, usersAsync.valueOrNull ?? const [], slaPolicy);
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: sections
-                .map((s) => _ReportSection(
-                      title: s.title,
-                      rows: s.rows.map((r) => _ReportRow(label: r.$1, value: r.$2, valueColor: _rowColor(s.title, r.$1))).toList(),
-                    ))
-                .toList(),
-          );
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _search = v),
+              decoration: InputDecoration(
+                hintText: 'Search by title or reference',
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                suffixIcon: _search.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () => setState(() {
+                          _searchController.clear();
+                          _search = '';
+                        }),
+                      ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ticketsAsync.when(
+              loading: () => const BrandedLoaderCenter(),
+              error: (e, _) => Center(child: Text('Could not load report: $e')),
+              data: (tickets) {
+                final filtered = tickets.where(_matchesSearch).toList();
+                final sections = reportSectionDataFor(widget.reportType, filtered, usersAsync.valueOrNull ?? const [], slaPolicy);
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: sections
+                      .map((s) => _ReportSection(
+                            title: s.title,
+                            rows: s.rows.map((r) => _ReportRow(label: r.$1, value: r.$2, valueColor: _rowColor(s.title, r.$1))).toList(),
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

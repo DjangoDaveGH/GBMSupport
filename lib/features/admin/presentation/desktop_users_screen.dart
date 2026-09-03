@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/features/admin/presentation/edit_user_dialog.dart';
+import 'package:hyport/features/admin/presentation/user_status_actions.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/auth/domain/institution.dart';
-import 'package:intl/intl.dart';
 
 /// Phase 5 mockup screen 36 — same allUsersProvider data as the mobile
 /// Users screen, as a sortable/paginated table instead of a card list.
@@ -38,6 +40,7 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(allUsersProvider);
     final institutionsAsync = ref.watch(institutionListProvider);
+    final viewer = ref.watch(currentAppUserProvider).valueOrNull;
 
     return usersAsync.when(
       loading: () => const BrandedLoaderCenter(),
@@ -130,12 +133,13 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                           children: [
                             Expanded(
                               child: SingleChildScrollView(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
+                                child: ScrollableTable(
                                   child: DataTable(
                                     headingRowHeight: 44,
                                     dataRowMinHeight: 56,
                                     dataRowMaxHeight: 56,
+                                    columnSpacing: 24,
+                                    showCheckboxColumn: false,
                                     columns: const [
                                       DataColumn(label: Text('Name')),
                                       DataColumn(label: Text('Email')),
@@ -143,20 +147,25 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                                       DataColumn(label: Text('Institution')),
                                       DataColumn(label: Text('Status')),
                                       DataColumn(label: Text('Last Active')),
-                                      DataColumn(label: Text('')),
+                                      DataColumn(label: Text('Actions')),
                                     ],
-                                    rows: pageItems.map((u) => _row(context, u, institutionsById)).toList(),
+                                    rows: pageItems.map((u) => _row(context, u, institutionsById, viewer)).toList(),
                                   ),
                                 ),
                               ),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+                              decoration: BoxDecoration(
+                                border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+                              ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  IconButton(onPressed: page > 0 ? () => setState(() => _page = page - 1) : null, icon: const Icon(Icons.chevron_left_rounded)),
+                                  IconButton(
+                                    onPressed: page > 0 ? () => setState(() => _page = page - 1) : null,
+                                    icon: const Icon(Icons.chevron_left_rounded),
+                                  ),
                                   Text('Page ${page + 1} of $totalPages', style: Theme.of(context).textTheme.bodySmall),
                                   IconButton(
                                     onPressed: page < totalPages - 1 ? () => setState(() => _page = page + 1) : null,
@@ -176,38 +185,67 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
     );
   }
 
-  DataRow _row(BuildContext context, AppUser u, Map<String, Institution> institutionsById) {
-    final online = u.isRecentlyActive;
-    return DataRow(cells: [
-      DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-        CircleAvatar(
-          radius: 14,
-          backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
-          child: Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?', style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11)),
+  DataRow _row(BuildContext context, AppUser u, Map<String, Institution> institutionsById, AppUser? viewer) {
+    final isSelf = viewer != null && viewer.id == u.id;
+    return DataRow(
+      // Whole row opens the editor — the pencil in the last column is easy
+      // to miss (and can be off-screen on a narrow window).
+      onSelectChanged: (_) => showEditUserDialog(context, u),
+      cells: [
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
+                child: Text(
+                  u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(u.name),
+            ],
+          ),
         ),
-        const SizedBox(width: 10),
-        Text(u.name),
-      ])),
-      DataCell(Text(u.email)),
-      DataCell(Text(u.role.label)),
-      DataCell(Text(institutionsById[u.institutionId]?.name ?? u.institutionType.wireValue)),
-      DataCell(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: (u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+        DataCell(ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 240),
+          child: Text(u.email, overflow: TextOverflow.ellipsis),
+        )),
+        DataCell(Text(u.role.shortLabel)),
+        DataCell(Text(institutionsById[u.institutionId]?.name ?? u.institutionType.wireValue)),
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: (u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              u.accountStatusLabel,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline),
+            ),
+          ),
         ),
-        child: Text(
-          u.isActive ? 'Active' : 'Inactive',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline),
+        DataCell(Text(u.lastSeenLabel)),
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(icon: const Icon(Icons.edit_outlined, size: 18), tooltip: 'Edit user', onPressed: () => showEditUserDialog(context, u)),
+              IconButton(
+                icon: Icon(u.isActive ? Icons.block_outlined : Icons.check_circle_outline_rounded, size: 18),
+                tooltip: isSelf ? "You can't deactivate your own account" : (u.isActive ? 'Deactivate user' : 'Reactivate user'),
+                color: u.isActive ? Theme.of(context).colorScheme.error : StatusColors.resolved,
+                onPressed: isSelf ? null : () => confirmSetUserActive(context, u, active: !u.isActive),
+              ),
+            ],
+          ),
         ),
-      )),
-      DataCell(Text(online ? 'Online now' : (u.lastActiveAt == null ? '—' : DateFormat.yMMMd().format(u.lastActiveAt!)))),
-      DataCell(IconButton(
-        icon: const Icon(Icons.edit_outlined, size: 18),
-        tooltip: 'Edit user',
-        onPressed: () => showEditUserDialog(context, u),
-      )),
-    ]);
+      ],
+    );
   }
 }

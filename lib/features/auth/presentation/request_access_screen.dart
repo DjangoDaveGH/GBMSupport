@@ -51,9 +51,9 @@ class _RequestAccessScreenState extends ConsumerState<RequestAccessScreen> {
         institutionType: _institutionType.wireValue,
         institutionName: _institutionController.text.trim(),
       );
-      setState(() => _done = true);
+      if (mounted) setState(() => _done = true);
     } catch (e) {
-      setState(() => _error = 'Could not submit request: $e');
+      if (mounted) setState(() => _error = 'Could not submit request: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

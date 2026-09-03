@@ -33,14 +33,28 @@ enum UserRole {
         _ => throw ArgumentError('Unknown UserRole: $value'),
       };
 
+  /// Human-readable label only — the wire value (`functional_lead`,
+  /// `pfm_management`, …) is what firestore.rules, the Cloud Functions and
+  /// scoping logic key on, and never changes. Use [shortLabel] in tight UI
+  /// (table cells, list subtitles, chips); [label] in forms/dropdowns.
   String get label => switch (this) {
         UserRole.mdaUser => 'MDA/MMDA User',
         UserRole.focalPerson => 'MDA/MMDA Focal Person',
         UserRole.supportCoordinator => 'Support Coordinator',
-        UserRole.functionalLead => 'Functional Lead',
+        UserRole.functionalLead => 'Team Member, Applications Systems Unit',
         UserRole.technicalLead => 'Technical Lead',
-        UserRole.pfmManagement => 'PFM-Systems Division / Management',
+        UserRole.pfmManagement => 'Head, Applications Systems Unit',
         UserRole.vendorSupport => 'Vendor/Specialist Support',
+      };
+
+  String get shortLabel => switch (this) {
+        UserRole.mdaUser => 'MDA/MMDA User',
+        UserRole.focalPerson => 'Focal Person',
+        UserRole.supportCoordinator => 'Support Coordinator',
+        UserRole.functionalLead => 'APPS Team Member',
+        UserRole.technicalLead => 'Technical Lead',
+        UserRole.pfmManagement => 'APPS Head',
+        UserRole.vendorSupport => 'Vendor Support',
       };
 
   /// Roles that can see tickets beyond their own institution — Coordinator,

@@ -64,13 +64,15 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             oobCode: widget.oobCode!,
             newPassword: _passwordController.text,
           );
-      setState(() => _done = true);
+      if (mounted) setState(() => _done = true);
     } on FirebaseAuthException catch (e) {
-      setState(
-        () => _error = e.message ?? 'Could not reset password (${e.code}).',
-      );
+      if (mounted) {
+        setState(
+          () => _error = e.message ?? 'Could not reset password (${e.code}).',
+        );
+      }
     } catch (e) {
-      setState(() => _error = 'Something went wrong: $e');
+      if (mounted) setState(() => _error = 'Something went wrong: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

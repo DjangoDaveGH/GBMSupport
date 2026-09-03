@@ -5,6 +5,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
@@ -193,7 +194,11 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
                         ),
                         Expanded(
                           child: ticket.assignedTo != null
-                              ? _AssignedToCell(userId: ticket.assignedTo!)
+                              ? _AssignedToCell(
+                                  userId: ticket.assignedTo!,
+                                  fallbackName: ticket.assignedToName,
+                                  attemptRead: viewer.role.isSupportSide,
+                                )
                               : _HeaderInfoCell(label: 'Assigned To', value: 'Unassigned'),
                         ),
                       ],
@@ -380,16 +385,17 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
       builder: (context) => Consumer(builder: (context, ref, _) {
         final usersAsync = ref.watch(assignableUsersProvider);
         return AlertDialog(
-          title: Text(targetLevel == 1 ? 'Escalate to Functional/Technical Lead' : 'Escalate to Vendor/Specialist'),
+          title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
           content: usersAsync.when(
             loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
             error: (e, _) => Text('Could not load users: $e'),
             data: (users) {
               final eligible = users.where((u) {
                 if (targetLevel == 1) {
-                  return ticket.category.isFunctional
-                      ? u.role == UserRole.functionalLead
-                      : u.role == UserRole.technicalLead;
+                  // One Applications Systems Unit now — the functional/
+                  // technical split no longer maps to distinct people, so
+                  // level-1 escalation targets any active APPS member.
+                  return u.role == UserRole.functionalLead || u.role == UserRole.technicalLead;
                 }
                 return u.role == UserRole.vendorSupport;
               }).toList();
@@ -406,7 +412,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
                     const SizedBox(height: 8),
                     ...eligible.map((u) => ListTile(
                           title: Text(u.name),
-                          subtitle: Text(u.role.label),
+                          subtitle: Text(u.role.shortLabel),
                           onTap: () async {
                             await ref.read(ticketRepositoryProvider).escalate(
                                   ticketId: ticket.id,
@@ -563,7 +569,28 @@ class _DetailsTab extends ConsumerWidget {
           ),
         ),
         if (ticket.assignedTo != null)
-          _AssignedCard(userId: ticket.assignedTo!, ticketId: ticket.id, canReassign: canReassign),
+          if (viewer?.role.isSupportSide ?? false)
+            _AssignedCard(userId: ticket.assignedTo!, ticketId: ticket.id, canReassign: canReassign)
+          else
+            // Requester: no read access to the assignee's users/{uid} doc,
+            // so show the denormalized name from the ticket instead.
+            _SectionCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.support_agent_rounded, size: 18, color: AppTheme.accentBlue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Assigned to', style: Theme.of(context).textTheme.labelSmall),
+                        Text(ticket.assignedToName ?? 'A support agent', style: Theme.of(context).textTheme.titleSmall),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
         _SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,7 +675,7 @@ class _AssignedCard extends ConsumerWidget {
                   child: const Text('Change'),
                 )
               else
-                _PlainBadge(label: user.role.label, color: AppTheme.accentBlue),
+                _PlainBadge(label: user.role.shortLabel, color: AppTheme.accentBlue),
             ],
           );
         },
@@ -703,16 +730,51 @@ class _HeaderInfoCell extends StatelessWidget {
 class _AssignedToCell extends ConsumerWidget {
   final String userId;
 
-  const _AssignedToCell({required this.userId});
+  /// Denormalized name from the ticket, used when [attemptRead] is false
+  /// (requesters can't read the assignee's user doc) or the read fails.
+  final String? fallbackName;
+
+  /// Only support-side viewers may read `users/{uid}`; a requester passes
+  /// false here so no denied read is even attempted.
+  final bool attemptRead;
+
+  const _AssignedToCell({required this.userId, this.fallbackName, this.attemptRead = true});
+
+  Widget _cell(BuildContext context, String name) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Assigned To', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
+              ),
+            ],
+          ),
+        ],
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!attemptRead) return _cell(context, fallbackName ?? 'A support agent');
     final userAsync = ref.watch(userByIdProvider(userId));
     return userAsync.when(
-      loading: () => const _HeaderInfoCell(label: 'Assigned To', value: '…'),
-      error: (e, _) => const _HeaderInfoCell(label: 'Assigned To', value: '—'),
+      loading: () => _HeaderInfoCell(label: 'Assigned To', value: fallbackName ?? '…'),
+      error: (e, _) => fallbackName != null
+          ? _cell(context, fallbackName!)
+          : const _HeaderInfoCell(label: 'Assigned To', value: '—'),
       data: (user) {
-        if (user == null) return const _HeaderInfoCell(label: 'Assigned To', value: 'Unknown');
+        if (user == null) return _cell(context, fallbackName ?? 'Unknown');
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -968,6 +1030,17 @@ class _RequestedByCard extends ConsumerWidget {
         error: (e, _) => Text('Could not load requester: $e'),
         data: (user) {
           if (user == null) return const Text('Requester not found.');
+          // Resolve the requester's specific assembly/MDA name from their
+          // institutionId; fall back to the broad MDA/MMDA type while the
+          // institution list is still loading or if the id has no match.
+          final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+          var institutionLabel = user.institutionType.wireValue;
+          for (final i in institutions) {
+            if (i.id == user.institutionId) {
+              institutionLabel = i.name;
+              break;
+            }
+          }
           return Row(
             children: [
               CircleAvatar(
@@ -985,16 +1058,10 @@ class _RequestedByCard extends ConsumerWidget {
                   children: [
                     Text('Requested By', style: Theme.of(context).textTheme.bodySmall),
                     Text(user.name, style: Theme.of(context).textTheme.titleSmall),
-                    Text('${user.role.label}, ${user.institutionType.wireValue}', style: Theme.of(context).textTheme.bodySmall),
+                    Text('${user.role.shortLabel} · $institutionLabel', style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
-              if (user.phone.isNotEmpty)
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.call_outlined, color: AppTheme.accentBlue),
-                  tooltip: user.phone,
-                ),
             ],
           );
         },

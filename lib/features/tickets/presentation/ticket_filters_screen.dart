@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
+import 'package:intl/intl.dart';
 
 /// Status checkbox groups shown on the mockup's Filters screen (screen 14):
 /// Open / In Progress / Pending User / Resolved / Closed. Together they
@@ -23,19 +27,24 @@ const _statusGroups = [
   _StatusGroup('Closed', {TicketStatus.closed}),
 ];
 
-class TicketFiltersScreen extends StatefulWidget {
+class TicketFiltersScreen extends ConsumerStatefulWidget {
   final TicketFilter initialFilter;
 
   const TicketFiltersScreen({super.key, required this.initialFilter});
 
   @override
-  State<TicketFiltersScreen> createState() => _TicketFiltersScreenState();
+  ConsumerState<TicketFiltersScreen> createState() => _TicketFiltersScreenState();
 }
 
-class _TicketFiltersScreenState extends State<TicketFiltersScreen> {
+class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
   late Set<TicketStatus> _statuses = {...widget.initialFilter.statuses};
   late Set<TicketPriority> _priorities = {...widget.initialFilter.priorities};
   late TicketCategory? _category = widget.initialFilter.category;
+  late String? _institutionId = widget.initialFilter.institutionId;
+  late InstitutionType? _institutionType = widget.initialFilter.institutionType;
+  late DateTime? _createdAfter = widget.initialFilter.createdAfter;
+  late DateTime? _createdBefore = widget.initialFilter.createdBefore;
+  late bool _overdueOnly = widget.initialFilter.overdueOnly;
 
   void _toggleGroup(_StatusGroup group, bool checked) {
     setState(() {
@@ -57,22 +66,62 @@ class _TicketFiltersScreenState extends State<TicketFiltersScreen> {
     });
   }
 
+  Future<void> _pickDate({required bool isFrom}) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: (isFrom ? _createdAfter : _createdBefore) ?? now,
+      firstDate: DateTime(2023),
+      lastDate: DateTime(now.year + 1, 12, 31),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isFrom) {
+        _createdAfter = picked;
+        if (_createdBefore != null && _createdBefore!.isBefore(picked)) _createdBefore = picked;
+      } else {
+        _createdBefore = picked;
+        if (_createdAfter != null && _createdAfter!.isAfter(picked)) _createdAfter = picked;
+      }
+    });
+  }
+
   void _reset() {
     setState(() {
       _statuses = {};
       _priorities = {};
       _category = null;
+      _institutionId = null;
+      _institutionType = null;
+      _createdAfter = null;
+      _createdBefore = null;
+      _overdueOnly = false;
     });
   }
 
   void _apply() {
     context.pop(
-      TicketFilter(statuses: _statuses, category: _category, priorities: _priorities),
+      TicketFilter(
+        statuses: _statuses,
+        category: _category,
+        priorities: _priorities,
+        institutionId: _institutionId,
+        institutionType: _institutionType,
+        createdAfter: _createdAfter,
+        createdBefore: _createdBefore,
+        overdueOnly: _overdueOnly,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Institution / date / SLA filters are triage tools — only the
+    // support-side queue ("Ticket Queue") needs them; on a requester's
+    // "My Tickets" list they'd add only noise.
+    final isSupportSide = ref.watch(currentAppUserProvider).valueOrNull?.role.isSupportSide ?? false;
+    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]..sort((a, b) => a.name.compareTo(b.name));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Filters'),
@@ -117,6 +166,75 @@ class _TicketFiltersScreenState extends State<TicketFiltersScreen> {
                       ],
                       onChanged: (v) => setState(() => _category = v),
                     ),
+                    if (isSupportSide) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      _sectionLabel(context, 'Institution'),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final option in const [
+                            ('All types', null),
+                            ('MDA', InstitutionType.mda),
+                            ('MMDA', InstitutionType.mmda),
+                          ])
+                            ChoiceChip(
+                              label: Text(option.$1),
+                              selected: _institutionType == option.$2,
+                              showCheckmark: false,
+                              selectedColor: AppTheme.navy,
+                              labelStyle: TextStyle(
+                                color: _institutionType == option.$2 ? Colors.white : AppTheme.ink,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                              onSelected: (_) => setState(() => _institutionType = option.$2),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String?>(
+                        initialValue: institutions.any((i) => i.id == _institutionId) ? _institutionId : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(hintText: 'All institutions'),
+                        items: [
+                          const DropdownMenuItem<String?>(value: null, child: Text('All institutions')),
+                          ...institutions.map((i) => DropdownMenuItem(value: i.id, child: Text(i.name, overflow: TextOverflow.ellipsis))),
+                        ],
+                        onChanged: (v) => setState(() => _institutionId = v),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _sectionLabel(context, 'Created date'),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DateField(
+                              label: 'From',
+                              value: _createdAfter,
+                              onPick: () => _pickDate(isFrom: true),
+                              onClear: () => setState(() => _createdAfter = null),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _DateField(
+                              label: 'To',
+                              value: _createdBefore,
+                              onPick: () => _pickDate(isFrom: false),
+                              onClear: () => setState(() => _createdBefore = null),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _sectionLabel(context, 'SLA'),
+                      _FilterCheckboxRow(
+                        label: 'Overdue only',
+                        checked: _overdueOnly,
+                        onChanged: (v) => setState(() => _overdueOnly = v),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -150,6 +268,36 @@ Widget _sectionLabel(BuildContext context, String text) => Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(text, style: Theme.of(context).textTheme.titleSmall),
     );
+
+class _DateField extends StatelessWidget {
+  final String label;
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  const _DateField({required this.label, required this.value, required this.onPick, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      onTap: onPick,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          suffixIcon: value == null
+              ? const Icon(Icons.calendar_today_rounded, size: 16)
+              : IconButton(icon: const Icon(Icons.close_rounded, size: 16), onPressed: onClear),
+        ),
+        child: Text(
+          value == null ? 'Any' : DateFormat.yMMMd().format(value!),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
 
 class _FilterCheckboxRow extends StatelessWidget {
   final String label;

@@ -37,15 +37,11 @@ class TicketRepository {
     if (viewer.role == UserRole.vendorSupport) {
       return _tickets.where('assignedTo', isEqualTo: viewer.id).where('escalationLevel', isEqualTo: 2);
     }
-    if (viewer.role == UserRole.functionalLead) {
+    if (viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) {
+      // One Applications Systems Unit — both roles see any ticket assigned
+      // to them, at any escalation level (category auto-assignment places
+      // level-0 tickets directly with an APPS member).
       return _tickets.where('assignedTo', isEqualTo: viewer.id);
-    }
-    if (viewer.role == UserRole.technicalLead) {
-      // Firestore requires a range filter's field to be the query's first
-      // orderBy — incompatible with watchTickets' orderBy('createdAt'). A
-      // whereIn over the only two escalated levels (1, 2) is a set-membership
-      // filter, not a range, so it doesn't carry that restriction.
-      return _tickets.where('assignedTo', isEqualTo: viewer.id).where('escalationLevel', whereIn: [1, 2]);
     }
     if (viewer.role.isSupportSide) {
       return _tickets;
@@ -63,19 +59,24 @@ class TicketRepository {
   /// heavy priority filter can return fewer than [limit] tickets even when
   /// more would match further back — acceptable for this app's ticket
   /// volume, not correct for arbitrarily large result sets.
+  /// [limit] defaults to [ticketPageSize] for list-screen pagination; pass
+  /// `null` for an unbounded fetch (used by analytics/dashboard/report
+  /// screens, which need every matching ticket to compute a true count, not
+  /// just the page size).
   Stream<List<Ticket>> watchTickets(
     AppUser viewer, {
     Set<TicketStatus> statuses = const {},
     TicketCategory? category,
     Set<TicketPriority> priorities = const {},
-    int limit = ticketPageSize,
+    int? limit = ticketPageSize,
   }) {
     Query<Map<String, dynamic>> query = scopedQuery(viewer);
     if (statuses.isNotEmpty) {
       query = query.where('status', whereIn: statuses.map((s) => s.wireValue).toList());
     }
     if (category != null) query = query.where('category', isEqualTo: category.wireValue);
-    query = query.orderBy('createdAt', descending: true).limit(limit);
+    query = query.orderBy('createdAt', descending: true);
+    if (limit != null) query = query.limit(limit);
 
     return query.snapshots().map((snap) {
       final tickets = snap.docs.map((d) => Ticket.fromMap(d.id, d.data())).toList();
@@ -126,6 +127,11 @@ class TicketRepository {
 
       final ref = 'PFMSD-$year-${nextSeq.toString().padLeft(6, '0')}';
 
+      // `now` here is only for the transient Ticket returned to the caller;
+      // the authoritative createdAt/updatedAt are server-stamped below and
+      // reach the UI via the ticket stream a moment later. Ticket ordering
+      // (orderBy('createdAt')) and the Analytics response/resolution metrics
+      // must never depend on each device's wall clock.
       ticket = Ticket(
         id: ticketRef.id,
         ticketReference: ref,
@@ -144,12 +150,15 @@ class TicketRepository {
         createdAt: now,
         updatedAt: now,
       );
-      tx.set(ticketRef, ticket.toMap());
+      tx.set(ticketRef, {
+        ...ticket.toMap(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       final activityRef = _activityFor(ticketRef.id).doc();
-      tx.set(
-        activityRef,
-        TicketActivity(
+      tx.set(activityRef, {
+        ...TicketActivity(
           id: activityRef.id,
           ticketId: ticketRef.id,
           actorId: createdBy,
@@ -157,7 +166,8 @@ class TicketRepository {
           toValue: TicketStatus.open.wireValue,
           timestamp: now,
         ).toMap(),
-      );
+        'timestamp': FieldValue.serverTimestamp(),
+      });
     });
 
     return ticket;
@@ -173,8 +183,10 @@ class TicketRepository {
     String? attachmentUrl,
   }) {
     final ref = _activityFor(ticketId).doc();
-    return ref.set(
-      TicketActivity(
+    // Server-stamped, not the client clock — see createTicket's note. The
+    // `timestamp` passed to the constructor is a throwaway, overridden below.
+    return ref.set({
+      ...TicketActivity(
         id: ref.id,
         ticketId: ticketId,
         actorId: actorId,
@@ -185,7 +197,8 @@ class TicketRepository {
         attachmentUrl: attachmentUrl,
         timestamp: DateTime.now(),
       ).toMap(),
-    );
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> assignTicket({
@@ -193,35 +206,31 @@ class TicketRepository {
     required String assigneeId,
     required String actorId,
   }) async {
-    final ticketRef = _tickets.doc(ticketId);
-    final now = DateTime.now();
-
-    await _db.runTransaction<void>((tx) async {
-      final snap = await tx.get(ticketRef);
-      final alreadyResponded = snap.data()?['firstRespondedAt'] != null;
-
-      tx.update(ticketRef, {
-        'assignedTo': assigneeId,
-        'status': TicketStatus.assigned.wireValue,
-        'updatedAt': Timestamp.fromDate(now),
-        // Stamped once — powers the Analytics "First Response Time" metric
-        // with a real timestamp instead of an inferred/approximated one.
-        if (!alreadyResponded) 'firstRespondedAt': Timestamp.fromDate(now),
-      });
-
-      final activityRef = _activityFor(ticketId).doc();
-      tx.set(
-        activityRef,
-        TicketActivity(
-          id: activityRef.id,
-          ticketId: ticketId,
-          actorId: actorId,
-          action: TicketActivityAction.assigned,
-          toValue: assigneeId,
-          timestamp: now,
-        ).toMap(),
-      );
+    // firstRespondedAt is deliberately NOT set here: assignment (manual or
+    // the onTicketCreated auto-assign) isn't a "response". It's stamped by
+    // the Cloud Functions on the assignee's first real action (status move
+    // or comment), so the Analytics metric means the same thing regardless
+    // of how a ticket got assigned.
+    final batch = _db.batch();
+    batch.update(_tickets.doc(ticketId), {
+      'assignedTo': assigneeId,
+      'status': TicketStatus.assigned.wireValue,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    final activityRef = _activityFor(ticketId).doc();
+    batch.set(activityRef, {
+      ...TicketActivity(
+        id: activityRef.id,
+        ticketId: ticketId,
+        actorId: actorId,
+        action: TicketActivityAction.assigned,
+        toValue: assigneeId,
+        timestamp: DateTime.now(),
+      ).toMap(),
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
   }
 
   Future<void> changeStatus({
@@ -232,19 +241,17 @@ class TicketRepository {
     String? note,
   }) async {
     final batch = _db.batch();
-    final now = DateTime.now();
     final updates = <String, dynamic>{
       'status': to.wireValue,
-      'updatedAt': Timestamp.fromDate(now),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
-    if (to == TicketStatus.resolved) updates['resolvedAt'] = Timestamp.fromDate(now);
+    if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
     if (note != null && note.isNotEmpty) updates['resolutionNotes'] = note;
     batch.update(_tickets.doc(ticketId), updates);
 
     final activityRef = _activityFor(ticketId).doc();
-    batch.set(
-      activityRef,
-      TicketActivity(
+    batch.set(activityRef, {
+      ...TicketActivity(
         id: activityRef.id,
         ticketId: ticketId,
         actorId: actorId,
@@ -252,9 +259,10 @@ class TicketRepository {
         fromValue: from.wireValue,
         toValue: to.wireValue,
         note: note,
-        timestamp: now,
+        timestamp: DateTime.now(),
       ).toMap(),
-    );
+      'timestamp': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
   }
 
@@ -266,26 +274,25 @@ class TicketRepository {
     String? note,
   }) async {
     final batch = _db.batch();
-    final now = DateTime.now();
     batch.update(_tickets.doc(ticketId), {
       'escalationLevel': toLevel,
       'assignedTo': assigneeId,
       'status': TicketStatus.escalated.wireValue,
-      'updatedAt': Timestamp.fromDate(now),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     final activityRef = _activityFor(ticketId).doc();
-    batch.set(
-      activityRef,
-      TicketActivity(
+    batch.set(activityRef, {
+      ...TicketActivity(
         id: activityRef.id,
         ticketId: ticketId,
         actorId: actorId,
         action: TicketActivityAction.escalated,
         toValue: assigneeId,
         note: note,
-        timestamp: now,
+        timestamp: DateTime.now(),
       ).toMap(),
-    );
+      'timestamp': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
   }
 
@@ -310,25 +317,29 @@ class TicketRepository {
     String? note,
   }) async {
     final batch = _db.batch();
-    final now = DateTime.now();
     batch.update(_tickets.doc(ticketId), {
       'status': TicketStatus.reopened.wireValue,
-      'updatedAt': Timestamp.fromDate(now),
+      'updatedAt': FieldValue.serverTimestamp(),
       'closedAt': null,
       'closedBy': null,
+      // Clear the resolution stamp too — a reopened ticket is no longer
+      // resolved, so it must stop counting toward "Tickets Resolved",
+      // resolution-time averages, and SLA compliance. changeStatus() re-sets
+      // it if the ticket is resolved again.
+      'resolvedAt': null,
     });
     final activityRef = _activityFor(ticketId).doc();
-    batch.set(
-      activityRef,
-      TicketActivity(
+    batch.set(activityRef, {
+      ...TicketActivity(
         id: activityRef.id,
         ticketId: ticketId,
         actorId: actorId,
         action: TicketActivityAction.reopened,
         note: note,
-        timestamp: now,
+        timestamp: DateTime.now(),
       ).toMap(),
-    );
+      'timestamp': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
   }
 
@@ -337,24 +348,23 @@ class TicketRepository {
     required String actorId,
   }) async {
     final batch = _db.batch();
-    final now = DateTime.now();
     batch.update(_tickets.doc(ticketId), {
       'status': TicketStatus.closed.wireValue,
-      'closedAt': Timestamp.fromDate(now),
+      'closedAt': FieldValue.serverTimestamp(),
       'closedBy': actorId,
-      'updatedAt': Timestamp.fromDate(now),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     final activityRef = _activityFor(ticketId).doc();
-    batch.set(
-      activityRef,
-      TicketActivity(
+    batch.set(activityRef, {
+      ...TicketActivity(
         id: activityRef.id,
         ticketId: ticketId,
         actorId: actorId,
         action: TicketActivityAction.closed,
-        timestamp: now,
+        timestamp: DateTime.now(),
       ).toMap(),
-    );
+      'timestamp': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
   }
 }

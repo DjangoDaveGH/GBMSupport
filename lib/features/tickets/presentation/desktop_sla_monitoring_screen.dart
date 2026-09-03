@@ -6,6 +6,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
@@ -47,7 +48,7 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
     final usersAsync = ref.watch(allUsersProvider);
     final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
@@ -125,8 +126,7 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                         child: breachedTickets.isEmpty
                             ? const EmptyState(icon: Icons.gpp_good_outlined, message: 'No SLA breaches on record.')
                             : SingleChildScrollView(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
+                                child: ScrollableTable(
                                   child: DataTable(
                                     headingRowHeight: 44,
                                     columns: const [

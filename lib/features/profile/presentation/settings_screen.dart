@@ -135,13 +135,15 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = switch (e.code) {
-            'wrong-password' || 'invalid-credential' => 'Current password is incorrect.',
-            'weak-password' => 'New password is too weak.',
-            _ => e.message ?? 'Could not change password (${e.code}).',
-          });
+      if (mounted) {
+        setState(() => _error = switch (e.code) {
+              'wrong-password' || 'invalid-credential' => 'Current password is incorrect.',
+              'weak-password' => 'New password is too weak.',
+              _ => e.message ?? 'Could not change password (${e.code}).',
+            });
+      }
     } catch (e) {
-      setState(() => _error = 'Could not change password: $e');
+      if (mounted) setState(() => _error = 'Could not change password: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

@@ -154,7 +154,7 @@ class _HomeHeader extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        showMenu ? appUser.role.label : institutionName,
+                        showMenu ? appUser.role.shortLabel : institutionName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -603,7 +603,7 @@ class _UserHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketsAsync = ref.watch(
-      ticketListProvider((appUser, const TicketFilter())),
+      ticketAnalyticsProvider((appUser, const TicketFilter())),
     );
 
     return ticketsAsync.when(
@@ -739,7 +739,7 @@ class _SupportHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketsAsync = ref.watch(
-      ticketListProvider((appUser, const TicketFilter())),
+      ticketAnalyticsProvider((appUser, const TicketFilter())),
     );
     final slaPolicy =
         ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();

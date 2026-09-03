@@ -38,15 +38,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       await ref
           .read(authServiceProvider)
           .sendPasswordResetEmail(_emailController.text.trim());
-      setState(() => _sent = true);
+      if (mounted) setState(() => _sent = true);
     } on FirebaseAuthException catch (e) {
-      setState(
-        () => _error = e.code == 'user-not-found'
-            ? 'No account found for that email.'
-            : e.message,
-      );
+      if (mounted) {
+        setState(
+          () => _error = e.code == 'user-not-found'
+              ? 'No account found for that email.'
+              : e.message,
+        );
+      }
     } catch (e) {
-      setState(() => _error = 'Something went wrong: $e');
+      if (mounted) setState(() => _error = 'Something went wrong: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
