@@ -7,6 +7,10 @@ class AppNotification {
   final String userId;
   final String? ticketId;
   final NotificationType type;
+  /// Set on admin-broadcast announcements (the admin's free-text topic,
+  /// also used as the push notification's title) — null for every
+  /// ticket-lifecycle notification, which use a fixed generic title instead.
+  final String? title;
   final String message;
   final bool read;
   final DateTime createdAt;
@@ -19,6 +23,7 @@ class AppNotification {
     required this.read,
     required this.createdAt,
     this.ticketId,
+    this.title,
   });
 
   factory AppNotification.fromMap(String id, Map<String, dynamic> map) {
@@ -27,6 +32,7 @@ class AppNotification {
       userId: map['userId'] as String? ?? '',
       ticketId: map['ticketId'] as String?,
       type: NotificationType.fromWire(map['type'] as String? ?? 'pending_action'),
+      title: map['title'] as String?,
       message: map['message'] as String? ?? '',
       read: map['read'] as bool? ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -37,6 +43,7 @@ class AppNotification {
         'userId': userId,
         'ticketId': ticketId,
         'type': type.wireValue,
+        'title': title,
         'message': message,
         'read': read,
         'createdAt': Timestamp.fromDate(createdAt),

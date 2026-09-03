@@ -267,6 +267,15 @@ class _NotificationTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (notification.title != null && notification.title!.isNotEmpty) ...[
+                        Text(
+                          notification.title!,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: read ? FontWeight.w600 : FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                      ],
                       Text(
                         notification.message,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
