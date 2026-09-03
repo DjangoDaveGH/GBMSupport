@@ -146,13 +146,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       // AssignTicketScreen has no role check of its own — it relies on the
       // ticket detail screens never linking to it for anyone but Support
-      // Coordinator (canAssign in both ticket_detail_screen.dart and
-      // desktop_ticket_detail_screen.dart) and on firestore.rules blocking
-      // the write itself. That leaves a direct-URL gap: a non-Coordinator
-      // (PFM Management included) could still open this screen and hit a
+      // Coordinator and PFM Management/Administrator (canAssign in both
+      // ticket_detail_screen.dart and desktop_ticket_detail_screen.dart) and
+      // on firestore.rules blocking the write itself. That leaves a
+      // direct-URL gap: anyone else could still open this screen and hit a
       // confusing permission-denied write instead of never seeing it.
       // Redirect at the door instead, matching what the UI already implies.
-      if (location.startsWith('/tickets/') && location.endsWith('/assign') && appUser.role != UserRole.supportCoordinator) {
+      if (location.startsWith('/tickets/') &&
+          location.endsWith('/assign') &&
+          appUser.role != UserRole.supportCoordinator &&
+          appUser.role != UserRole.pfmManagement) {
         return '/home';
       }
       // Same direct-URL gap as above: firestore.rules' tickets `allow

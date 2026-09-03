@@ -62,7 +62,9 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
   Widget _buildBody(BuildContext context, Ticket ticket, AppUser viewer) {
     final isAssignee = viewer.id == ticket.assignedTo;
     final isOwner = viewer.id == ticket.createdBy;
-    final canAssign = viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed;
+    final canAssign =
+        (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+        ticket.status != TicketStatus.closed;
     final canEscalate = (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed) ||
         ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
             isAssignee &&
