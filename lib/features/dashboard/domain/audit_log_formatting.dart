@@ -9,6 +9,7 @@ String adminActionLabel(String action) => switch (action) {
       'user_activated' => 'User Activated',
       'user_deactivated' => 'User Deactivated',
       'user_updated' => 'User Updated',
+      'announcement_sent' => 'Sent Announcement',
       _ => action,
     };
 

@@ -28,27 +28,4 @@ class NotificationRepository {
     }
     await batch.commit();
   }
-
-  /// Admin-triggered broadcast (system downtime / deadline / maintenance
-  /// notices) — see Section 7: full scheduling is out of scope for the MVP.
-  Future<void> broadcast({
-    required List<String> userIds,
-    required String type,
-    required String message,
-  }) async {
-    final batch = _db.batch();
-    final now = Timestamp.now();
-    for (final userId in userIds) {
-      final ref = _notifications.doc();
-      batch.set(ref, {
-        'userId': userId,
-        'ticketId': null,
-        'type': type,
-        'message': message,
-        'read': false,
-        'createdAt': now,
-      });
-    }
-    await batch.commit();
-  }
 }

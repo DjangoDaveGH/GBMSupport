@@ -12,9 +12,9 @@ import 'package:hyport/features/config/domain/general_settings.dart';
 /// Phase 5 mockup screen 37. General Settings is real (see
 /// GeneralSettingsRepository); Security/Notifications/Roles & Permissions
 /// stay honestly labeled as not configurable in this build, same policy as
-/// everywhere else. SLA Management/Ticket Settings/Audit Logs push to
-/// their own already-built routes rather than duplicating that content
-/// inline.
+/// everywhere else. SLA Management/Auto-Assignment/Ticket Settings/
+/// Announcements/Audit Logs push to their own already-built routes rather
+/// than duplicating that content inline.
 class DesktopSettingsScreen extends StatefulWidget {
   const DesktopSettingsScreen({super.key});
 
@@ -45,6 +45,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
                   _NavTile(label: 'SLA Management', selected: false, onTap: () => context.push('/admin-settings/sla')),
                   _NavTile(label: 'Auto-Assignment', selected: false, onTap: () => context.push('/admin-settings/assignment')),
                   _NavTile(label: 'Ticket Settings', selected: false, onTap: () => context.push('/admin-settings/tickets')),
+                  _NavTile(label: 'Announcements', selected: false, onTap: () => context.push('/admin-settings/announcements')),
                   _NavTile(
                     label: 'Security',
                     selected: false,

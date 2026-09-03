@@ -6,6 +6,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/routing/app_shell.dart';
 import 'package:hyport/core/routing/desktop_shell.dart';
 import 'package:hyport/features/admin/presentation/add_user_screen.dart';
+import 'package:hyport/features/admin/presentation/announcements_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_institutions_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_users_screen.dart';
 import 'package:hyport/features/admin/presentation/users_screen.dart';
@@ -375,6 +376,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           mobile: TicketSettingsScreen(),
           desktop: Padding(padding: EdgeInsets.all(24), child: TicketSettingsScreen()),
           desktopTitle: 'Ticket Settings',
+        )),
+      ),
+      GoRoute(
+        path: '/admin-settings/announcements',
+        pageBuilder: (context, state) => _slideUpPage(const ResponsiveScreen(
+          mobile: AnnouncementsScreen(),
+          desktop: Padding(padding: EdgeInsets.all(24), child: AnnouncementsScreen()),
+          desktopTitle: 'Announcements',
         )),
       ),
       GoRoute(

@@ -4,10 +4,10 @@ import 'package:hyport/core/theme/app_theme.dart';
 
 /// Phase 4 mockup screen 28 — application/system-wide settings, distinct
 /// from the per-user account Settings reachable from Profile. SLA
-/// Management and Ticket Settings are real; General/Notifications/
-/// Security/System are honestly labeled as not configurable in this build
-/// rather than presented as working controls — same policy as the
-/// per-user Settings screen's Biometric/2FA rows.
+/// Management, Auto-Assignment, Ticket Settings, and Announcements are
+/// real; General/Notifications/Security/System are honestly labeled as not
+/// configurable in this build rather than presented as working controls —
+/// same policy as the per-user Settings screen's Biometric/2FA rows.
 class AdminSettingsScreen extends StatelessWidget {
   const AdminSettingsScreen({super.key});
 
@@ -45,6 +45,13 @@ class AdminSettingsScreen extends StatelessWidget {
               label: 'Ticket Settings',
               subtitle: 'Categories, priorities, workflows',
               onTap: () => context.push('/admin-settings/tickets'),
+            ),
+            const Divider(height: 1, indent: 56),
+            _SettingsTile(
+              icon: Icons.campaign_outlined,
+              label: 'Announcements',
+              subtitle: 'Send a system-wide notice to all users',
+              onTap: () => context.push('/admin-settings/announcements'),
             ),
             const Divider(height: 1, indent: 56),
             _SettingsTile(
