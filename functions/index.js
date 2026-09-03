@@ -32,6 +32,15 @@
  *      users/{uid}.isDemoAccount == true. Unlike clearTrainingTickets this
  *      never marks the account "done" — it's a standing rolling purge for
  *      accounts used to demo the app, not a one-time onboarding grace period.
+ *   7. adminBroadcastNotification — sends a system-wide announcement
+ *      (downtime/maintenance/deadline) to every active user: an in-app
+ *      notification doc + FCM push each, via the same notifyUser() the
+ *      ticket triggers use. Restricted to pfm_management, same as
+ *      adminCreateUser/adminUpdateUser. Goes through a Cloud Function rather
+ *      than a client-side Firestore write because neither piece is safe to
+ *      do from the client at this app's user count: a single WriteBatch
+ *      caps at 500 writes (well under the active user total), and only the
+ *      Admin SDK can send FCM.
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
@@ -406,6 +415,61 @@ async function notifyUsersWithRole(role, {type, message, ticketId, exclude}) {
   }
   return sent;
 }
+
+const BROADCAST_TYPES = ["system_downtime", "deadline_reminder", "maintenance"];
+
+/**
+ * Sends a system-wide announcement to every active user (see responsibility
+ * 7 in the file header). Fans out with bounded concurrency rather than one
+ * user at a time — at ~1,600 active users, doing this fully sequentially
+ * would risk running past the callable's own timeout.
+ */
+exports.adminBroadcastNotification = onCall(
+    {timeoutSeconds: 300},
+    async (request) => {
+      if (!request.auth || request.auth.token.role !== "pfm_management") {
+        throw new HttpsError(
+            "permission-denied",
+            "Only the Head, Applications Systems Unit can send announcements.",
+        );
+      }
+
+      const {type, message} = request.data || {};
+      if (!BROADCAST_TYPES.includes(type)) {
+        throw new HttpsError("invalid-argument", `Unknown broadcast type: ${type}`);
+      }
+      const trimmed = (message || "").trim();
+      if (!trimmed) {
+        throw new HttpsError("invalid-argument", "Message is required.");
+      }
+      if (trimmed.length > 500) {
+        throw new HttpsError("invalid-argument", "Message must be 500 characters or fewer.");
+      }
+
+      const db = admin.firestore();
+      const snap = await db.collection("users").where("isActive", "==", true).get();
+      const userIds = snap.docs.map((d) => d.id);
+
+      const CONCURRENCY = 25;
+      let sent = 0;
+      for (let i = 0; i < userIds.length; i += CONCURRENCY) {
+        const chunk = userIds.slice(i, i + CONCURRENCY);
+        await Promise.all(chunk.map((userId) => notifyUser({userId, type, message: trimmed})));
+        sent += chunk.length;
+      }
+
+      await db.collection("audit_logs").add({
+        actorId: request.auth.uid,
+        action: "announcement_sent",
+        targetType: "announcement",
+        targetId: "All Users",
+        metadata: {type, message: trimmed, recipientCount: sent},
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {sent};
+    },
+);
 
 const SUPPORT_ROLES = ["support_coordinator", "functional_lead", "technical_lead"];
 const DEFAULT_OPEN_STATUSES = ["assigned", "in_progress", "escalated", "reopened"];
