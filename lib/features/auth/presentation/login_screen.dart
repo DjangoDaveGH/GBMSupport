@@ -46,13 +46,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-      // Navigation is handled by the router's redirect once auth state changes.
+      // Navigation is handled by the router's redirect once auth state
+      // changes. Deliberately leave _submitting true on success — the
+      // profile fetch the redirect waits on takes a beat, and resetting it
+      // here would flash the form back to idle for that beat before the
+      // screen is replaced.
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _error = _messageFor(e.code));
+      if (mounted) {
+        setState(() {
+          _error = _messageFor(e.code);
+          _submitting = false;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() {
+          _error = 'Something went wrong. Please try again.';
+          _submitting = false;
+        });
+      }
     }
   }
 

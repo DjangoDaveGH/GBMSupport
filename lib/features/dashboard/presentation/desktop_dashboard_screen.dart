@@ -80,6 +80,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
           institutionCount: institutionsAsync.valueOrNull?.length ?? 0,
           articleCount: articlesAsync.valueOrNull?.length ?? 0,
           recentAdminActions: adminActionsAsync.valueOrNull?.take(5).toList() ?? const <AuditLog>[],
+          isPfmManagement: appUser.role == UserRole.pfmManagement,
         );
       },
     );
@@ -93,6 +94,7 @@ class _DashboardBody extends StatelessWidget {
   final int institutionCount;
   final int articleCount;
   final List<AuditLog> recentAdminActions;
+  final bool isPfmManagement;
 
   const _DashboardBody({
     required this.tickets,
@@ -101,6 +103,7 @@ class _DashboardBody extends StatelessWidget {
     required this.institutionCount,
     required this.articleCount,
     required this.recentAdminActions,
+    required this.isPfmManagement,
   });
 
   List<DateTime> get _last7Days {
@@ -135,13 +138,41 @@ class _DashboardBody extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _StatCard(label: 'Total Tickets', value: totalTrend.count, delta: totalTrend.delta)),
+              Expanded(
+                child: _StatCard(
+                  label: 'Total Tickets',
+                  value: totalTrend.count,
+                  delta: totalTrend.delta,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter()),
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _StatCard(label: 'Open Tickets', value: openTrend.count, delta: openTrend.delta)),
+              Expanded(
+                child: _StatCard(
+                  label: 'Open Tickets',
+                  value: openTrend.count,
+                  delta: openTrend.delta,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _StatCard(label: 'In Progress', value: inProgressTrend.count, delta: inProgressTrend.delta)),
+              Expanded(
+                child: _StatCard(
+                  label: 'In Progress',
+                  value: inProgressTrend.count,
+                  delta: inProgressTrend.delta,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.inProgress})),
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _StatCard(label: 'Resolved', value: resolvedTrend.count, delta: resolvedTrend.delta)),
+              Expanded(
+                child: _StatCard(
+                  label: 'Resolved',
+                  value: resolvedTrend.count,
+                  delta: resolvedTrend.delta,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -150,11 +181,24 @@ class _DashboardBody extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _SimpleStatCard(icon: Icons.people_alt_outlined, label: 'Active Users', value: activeUserCount),
+                child: _SimpleStatCard(
+                  icon: Icons.people_alt_outlined,
+                  label: 'Active Users',
+                  value: activeUserCount,
+                  // /admin/users is pfmManagement-only (see app_router.dart's
+                  // adminOnlyPaths) — other roles would just get bounced
+                  // back to /home, so leave this non-interactive for them.
+                  onTap: isPfmManagement ? () => context.push('/admin/users') : null,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _SimpleStatCard(icon: Icons.apartment_outlined, label: 'Institutions', value: institutionCount),
+                child: _SimpleStatCard(
+                  icon: Icons.apartment_outlined,
+                  label: 'Institutions',
+                  value: institutionCount,
+                  onTap: isPfmManagement ? () => context.push('/admin/institutions') : null,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -162,6 +206,7 @@ class _DashboardBody extends StatelessWidget {
                   icon: Icons.menu_book_outlined,
                   label: 'Knowledge Base Articles',
                   value: articleCount,
+                  onTap: () => context.push('/knowledge-base'),
                 ),
               ),
             ],
@@ -211,35 +256,43 @@ class _SimpleStatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final int value;
+  final VoidCallback? onTap;
 
-  const _SimpleStatCard({required this.icon, required this.label, required this.value});
+  const _SimpleStatCard({required this.icon, required this.label, required this.value, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: AppTheme.accentBlue.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: Icon(icon, size: 20, color: AppTheme.accentBlue),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(NumberFormat.decimalPattern().format(value), style: Theme.of(context).textTheme.titleLarge),
-              Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: AppTheme.accentBlue.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(icon, size: 20, color: AppTheme.accentBlue),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(NumberFormat.decimalPattern().format(value), style: Theme.of(context).textTheme.titleLarge),
+                  Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -304,35 +357,43 @@ class _StatCard extends StatelessWidget {
   final String label;
   final int value;
   final double delta;
+  final VoidCallback? onTap;
 
-  const _StatCard({required this.label, required this.value, required this.delta});
+  const _StatCard({required this.label, required this.value, required this.delta, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final rising = delta >= 0;
     final color = rising ? StatusColors.resolved : StatusColors.critical;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(NumberFormat.decimalPattern().format(value), style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 6),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(rising ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: color),
-              Text('${delta.abs().toStringAsFixed(1)}%', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color)),
+              Text(NumberFormat.decimalPattern().format(value), style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 6),
+              Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(rising ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: color),
+                  Text('${delta.abs().toStringAsFixed(1)}%', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color)),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

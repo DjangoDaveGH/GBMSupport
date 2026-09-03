@@ -33,7 +33,12 @@ Set<TicketStatus> statusesForTab(StatusTab tab) => switch (tab) {
 bool setEquals<T>(Set<T> a, Set<T> b) => a.length == b.length && a.every(b.contains);
 
 class TicketListScreen extends ConsumerStatefulWidget {
-  const TicketListScreen({super.key});
+  /// Seeds the filter state from e.g. a dashboard stat card ("Open Tickets"
+  /// -> statuses: {open}) so arriving here already shows the relevant data
+  /// instead of the unfiltered list.
+  final TicketFilter? initialFilter;
+
+  const TicketListScreen({super.key, this.initialFilter});
 
   @override
   ConsumerState<TicketListScreen> createState() => _TicketListScreenState();
@@ -50,6 +55,22 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   DateTime? _createdAfter;
   DateTime? _createdBefore;
   bool _overdueOnly = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final f = widget.initialFilter;
+    if (f != null) {
+      _statuses = f.statuses;
+      _category = f.category;
+      _priorities = f.priorities;
+      _institutionId = f.institutionId;
+      _institutionType = f.institutionType;
+      _createdAfter = f.createdAfter;
+      _createdBefore = f.createdBefore;
+      _overdueOnly = f.overdueOnly;
+    }
+  }
 
   bool get _hasAdvancedFilters =>
       _category != null ||
