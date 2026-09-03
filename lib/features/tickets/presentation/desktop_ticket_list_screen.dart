@@ -35,7 +35,12 @@ const _statusGroups = <(String, Set<TicketStatus>)>[
 /// Phase 5 mockup screen 31 — same `ticketListProvider` data as the mobile
 /// Ticket Queue, rendered as a filterable/sortable table instead of cards.
 class DesktopTicketListScreen extends ConsumerStatefulWidget {
-  const DesktopTicketListScreen({super.key});
+  /// Seeds the filter state from e.g. a dashboard stat card ("Open Tickets"
+  /// -> statuses: {open}) so arriving here already shows the relevant data
+  /// instead of the unfiltered list.
+  final TicketFilter? initialFilter;
+
+  const DesktopTicketListScreen({super.key, this.initialFilter});
 
   @override
   ConsumerState<DesktopTicketListScreen> createState() => _DesktopTicketListScreenState();
@@ -53,6 +58,23 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
   bool _overdueOnly = false;
   int _page = 0;
   static const _pageSize = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    final f = widget.initialFilter;
+    if (f != null) {
+      _statuses = f.statuses;
+      _priority = f.priorities.firstOrNull;
+      _category = f.category;
+      _institutionId = f.institutionId;
+      _institutionType = f.institutionType;
+      if (f.createdAfter != null && f.createdBefore != null) {
+        _dateRange = DateTimeRange(start: f.createdAfter!, end: f.createdBefore!);
+      }
+      _overdueOnly = f.overdueOnly;
+    }
+  }
 
   /// Filters applied in memory over the already-loaded list (institution,
   /// created-date range, overdue) — see [TicketFilter.matchesClientSide].

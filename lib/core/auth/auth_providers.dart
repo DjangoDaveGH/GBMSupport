@@ -30,7 +30,14 @@ final currentAppUserProvider = StreamProvider.autoDispose<AppUser?>((ref) {
         return AppUser.fromMap(doc.id, doc.data()!);
       });
     },
-    loading: () => Stream.value(null),
+    // While auth itself is still resolving, "is there an app user" is
+    // unknown — not "no". Emitting Stream.value(null) here would briefly
+    // report a signed-in user as null (data, not loading), which the
+    // router's redirect reads as logged-out and flashes /login before the
+    // real Firestore profile arrives a moment later. An empty stream keeps
+    // this provider in AsyncValue.loading() (its natural initial state)
+    // until authState settles and this rebuilds with the real answer.
+    loading: () => const Stream.empty(),
     error: (_, _) => Stream.value(null),
   );
 });

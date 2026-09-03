@@ -419,38 +419,47 @@ class _StatNumberCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatNumberCard({
     required this.value,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        boxShadow: softShadow(),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(color: color),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            boxShadow: softShadow(),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(color: color),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -644,6 +653,7 @@ class _UserHome extends ConsumerWidget {
                     value: '$openCount',
                     label: 'Open Tickets',
                     color: AppTheme.accentBlue,
+                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -652,6 +662,12 @@ class _UserHome extends ConsumerWidget {
                     value: '$pendingCount',
                     label: 'Pending',
                     color: AppTheme.gold,
+                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {
+                      TicketStatus.assigned,
+                      TicketStatus.inProgress,
+                      TicketStatus.escalated,
+                      TicketStatus.reopened,
+                    })),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -660,6 +676,7 @@ class _UserHome extends ConsumerWidget {
                     value: '$resolvedCount',
                     label: 'Resolved',
                     color: AppTheme.success,
+                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
                   ),
                 ),
               ],
@@ -816,31 +833,37 @@ class _SupportHome extends ConsumerWidget {
                   value: '${tickets.length}',
                   label: 'Total Tickets',
                   color: AppTheme.navy,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter()),
                 ),
                 _StatNumberCard(
                   value: '$open',
                   label: 'Open',
                   color: AppTheme.accentBlue,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
                 ),
                 _StatNumberCard(
                   value: '$resolved',
                   label: 'Resolved',
                   color: StatusColors.resolved,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
                 ),
                 _StatNumberCard(
                   value: '$inProgress',
                   label: 'In Progress',
                   color: AppTheme.gold,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.inProgress})),
                 ),
                 _StatNumberCard(
                   value: '$overdue',
                   label: 'Overdue',
                   color: StatusColors.critical,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(overdueOnly: true)),
                 ),
                 _StatNumberCard(
                   value: '$escalated',
                   label: 'Escalated',
                   color: StatusColors.escalated,
+                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.escalated})),
                 ),
               ],
             ),
@@ -867,16 +890,23 @@ class _SupportHome extends ConsumerWidget {
                     value: '$activeUserCount',
                     label: 'Active Users',
                     color: AppTheme.navy,
+                    // /admin/users is pfmManagement-only (see app_router.dart's
+                    // adminOnlyPaths) — other back-office roles see this card
+                    // but would just get bounced back to /home, so leave it
+                    // non-interactive for them.
+                    onTap: appUser.role == UserRole.pfmManagement ? () => context.push('/admin/users') : null,
                   ),
                   _StatNumberCard(
                     value: '$institutionCount',
                     label: 'Institutions',
                     color: AppTheme.accentBlue,
+                    onTap: appUser.role == UserRole.pfmManagement ? () => context.push('/admin/institutions') : null,
                   ),
                   _StatNumberCard(
                     value: '$articleCount',
                     label: 'KB Articles',
                     color: AppTheme.gold,
+                    onTap: () => context.push('/knowledge-base'),
                   ),
                 ],
               ),

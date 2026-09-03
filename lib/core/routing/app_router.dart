@@ -205,11 +205,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/tickets',
-            pageBuilder: (context, state) => _fadePage(const ResponsiveScreen(
-              mobile: TicketListScreen(),
-              desktop: DesktopTicketListScreen(),
-              desktopTitle: 'Tickets',
-            )),
+            pageBuilder: (context, state) {
+              final initialFilter = state.extra as TicketFilter?;
+              return _fadePage(ResponsiveScreen(
+                mobile: TicketListScreen(initialFilter: initialFilter),
+                desktop: DesktopTicketListScreen(initialFilter: initialFilter),
+                desktopTitle: 'Tickets',
+              ));
+            },
           ),
           GoRoute(
             path: '/notifications',
