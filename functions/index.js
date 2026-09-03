@@ -27,6 +27,11 @@
  *   5. clearTrainingTickets — hourly scheduled sweep that wipes the practice
  *      tickets a new MMDA account creates during its 2-day onboarding window
  *      (users/{uid}.trainingTicketsClearAt), then leaves the account on live.
+ *   6. clearDemoAccountTickets — hourly scheduled sweep that perpetually
+ *      deletes any ticket older than 48h created by an account flagged
+ *      users/{uid}.isDemoAccount == true. Unlike clearTrainingTickets this
+ *      never marks the account "done" — it's a standing rolling purge for
+ *      accounts used to demo the app, not a one-time onboarding grace period.
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
@@ -764,6 +769,64 @@ exports.clearTrainingTickets = onSchedule(
           );
         } catch (error) {
           console.error(`clearTrainingTickets failed for ${data.email || uid}:`, error);
+        }
+      }
+    },
+);
+
+/**
+ * Perpetual 48h rolling purge for demo accounts (users/{uid}.isDemoAccount
+ * == true) — e.g. accounts used to walk stakeholders through the live app.
+ * Unlike clearTrainingTickets this has no "cleared" flag and never stops: on
+ * every hourly run, any ticket a demo account created more than 48h ago is
+ * deleted (ticket doc, its `activity` subcollection, and any notification
+ * that referenced it), while anything newer is left for a later run.
+ */
+exports.clearDemoAccountTickets = onSchedule(
+    {schedule: "every 1 hours", timeZone: "Africa/Accra"},
+    async () => {
+      const db = admin.firestore();
+      const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+
+      const snap = await db.collection("users")
+          .where("isDemoAccount", "==", true)
+          .get();
+
+      for (const userDoc of snap.docs) {
+        const data = userDoc.data();
+        const uid = userDoc.id;
+
+        try {
+          const created = await db.collection("tickets")
+              .where("createdBy", "==", uid)
+              .get();
+          const stale = created.docs.filter((d) => {
+            const c = d.data().createdAt;
+            return c && typeof c.toMillis === "function" && c.toMillis() <= cutoff;
+          });
+
+          let deletedNotifs = 0;
+          for (const t of stale) {
+            const notifs = await db.collection("notifications")
+                .where("ticketId", "==", t.id)
+                .get();
+            for (let i = 0; i < notifs.docs.length; i += 400) {
+              const batch = db.batch();
+              for (const n of notifs.docs.slice(i, i + 400)) batch.delete(n.ref);
+              await batch.commit();
+            }
+            deletedNotifs += notifs.size;
+            await db.recursiveDelete(t.ref);
+          }
+
+          if (stale.length > 0) {
+            console.log(
+                `clearDemoAccountTickets: ${data.email || uid} — removed ` +
+                `${stale.length} ticket(s), ${deletedNotifs} notification(s)`,
+            );
+          }
+        } catch (error) {
+          console.error(`clearDemoAccountTickets failed for ${data.email || uid}:`, error);
         }
       }
     },
