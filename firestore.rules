@@ -148,12 +148,13 @@ service cloud.firestore {
     // ----- tickets -----
     match /tickets/{ticketId} {
       // Section 3: a plain User only sees tickets they personally logged; a
-      // Focal Person sees every ticket from their institution. Functional
-      // Lead sees only tickets assigned to them; Technical Lead only the
-      // ones assigned to them that have actually been escalated.
+      // Focal Person sees every ticket from their institution. Functional and
+      // Technical Lead (one Applications Systems Unit now) both see any ticket
+      // assigned to them, at any escalation level — category auto-assignment
+      // places level-0 tickets directly with an ASU member.
       allow read: if canViewAllTickets()
         || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
-        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel >= 1)
+        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid)
         || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2)
         || (isFocalPerson() && resource.data.institutionId == institutionId())
         || (isRequesterSide() && resource.data.createdBy == request.auth.uid);
@@ -189,12 +190,14 @@ service cloud.firestore {
             && onlyFieldsChanged(['status', 'updatedAt', 'resolutionNotes', 'resolvedAt'])
             && request.resource.data.status == 'resolved')
         || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
-        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel >= 1)
+        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid)
         // Requester: may only reopen or confirm-close their own ticket —
         // never touch assignment, escalation, or category/priority fields.
+        // reopen() also clears resolvedAt (a reopened ticket is no longer
+        // resolved), so that field is in the allowed set here.
         || (isRequesterSide()
             && resource.data.createdBy == request.auth.uid
-            && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy']));
+            && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy', 'resolvedAt']));
 
       allow delete: if false; // tickets are closed, never deleted — audit trail must persist
 
@@ -202,8 +205,7 @@ service cloud.firestore {
       match /activity/{activityId} {
         allow read: if canViewAllTickets()
           || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel >= 1)
+          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || (isVendor() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || (isFocalPerson() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.institutionId == institutionId())
           || (isRequesterSide()
@@ -211,14 +213,13 @@ service cloud.firestore {
 
         // Every status-changing action must leave an activity record
         // (Section 8); anyone who can read the ticket can add one, but only
-        // as themselves, and entries are immutable once written. Functional/
-        // Technical Lead mirror the same assignedTo (+ escalated, for
-        // Technical Lead) condition as the read rule above — they shouldn't
-        // be able to write to a ticket's trail they can't even open.
+        // as themselves, and entries are immutable once written. Functional
+        // and Technical Lead mirror the same assignedTo condition as the read
+        // rule above — they shouldn't be able to write to a ticket's trail
+        // they can't even open.
         allow create: if (canViewAllTickets()
           || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel >= 1)
+          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || isVendor() || isRequesterSide())
           && request.resource.data.actorId == request.auth.uid
           && request.resource.data.ticketId == ticketId;

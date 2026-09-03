@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/percent_ring.dart';
 import 'package:hyport/core/widgets/sparkline.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
@@ -27,24 +29,103 @@ const _categoryPalette = [
 
 /// Phase 4 mockup screen 23. Support-side only (see supportSideOnlyPaths).
 /// Every figure is computed live from the same tickets the rest of the app
-/// already sees — no synthetic trend data.
-class AnalyticsScreen extends ConsumerWidget {
+/// already sees — no synthetic trend data, and no page-size cap: this
+/// watches [ticketAnalyticsProvider] (unbounded) rather than
+/// [ticketListProvider] (capped at [ticketPageSize]) so every KPI reflects
+/// the true dataset. Status/priority/category filters and a title/reference
+/// search narrow that dataset down before the figures below are computed
+/// from it, reusing the same TicketFilter/TicketFiltersScreen the Ticket
+/// Queue uses.
+class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
+
+class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
+  final _searchController = TextEditingController();
+  String _search = '';
+  TicketFilter _filter = const TicketFilter();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearch(Ticket t) {
+    if (_search.isEmpty) return true;
+    final q = _search.toLowerCase();
+    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+  }
+
+  Future<void> _openFilters() async {
+    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
+    if (result != null && mounted) setState(() => _filter = result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const Scaffold(body: BrandedLoaderCenter());
 
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    // Only the query-backed fields go to the provider; institution / date /
+    // overdue are applied in memory (TicketFilter.matchesClientSide) so they
+    // don't spawn an identical refetch under a new family key.
+    final queryFilter = TicketFilter(statuses: _filter.statuses, category: _filter.category, priorities: _filter.priorities);
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, queryFilter)));
     final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final institutionTypes = {
+      for (final i in [...?ref.watch(institutionListProvider).valueOrNull]) i.id: i.type,
+    };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Analytics')),
-      body: ticketsAsync.when(
-        loading: () => const BrandedLoaderCenter(),
-        error: (e, _) => Center(child: Text('Could not load analytics data: $e')),
-        data: (tickets) => _AnalyticsBody(tickets: tickets, slaPolicy: slaPolicy),
+      appBar: AppBar(
+        title: const Text('Analytics'),
+        actions: [
+          IconButton(
+            onPressed: _openFilters,
+            icon: Icon(_filter.isEmpty ? Icons.filter_alt_outlined : Icons.filter_alt_rounded),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _search = v),
+              decoration: InputDecoration(
+                hintText: 'Search by title or reference',
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                suffixIcon: _search.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () => setState(() {
+                          _searchController.clear();
+                          _search = '';
+                        }),
+                      ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ticketsAsync.when(
+              loading: () => const BrandedLoaderCenter(),
+              error: (e, _) => Center(child: Text('Could not load analytics data: $e')),
+              data: (tickets) => _AnalyticsBody(
+                tickets: tickets
+                    .where(_matchesSearch)
+                    .where((t) => _filter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+                    .toList(),
+                slaPolicy: slaPolicy,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -63,11 +144,17 @@ class _AnalyticsBody extends StatelessWidget {
 
   bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
+  /// [countMode] = true for a count metric (e.g. "Tickets Resolved"): the
+  /// series is tickets-per-day and the percent change compares the two
+  /// 7-day counts. Without it, [valueOf] is averaged (used for time-based
+  /// metrics like resolution hours) — averaging a constant, as the resolved
+  /// count previously did, made the change always 0 / ±100.
   ({List<double> series, double total, double percentChange}) _dailyTrend(
     List<Ticket> tickets,
     DateTime? Function(Ticket) dateOf,
-    double Function(Ticket) valueOf,
-  ) {
+    double Function(Ticket) valueOf, {
+    bool countMode = false,
+  }) {
     final days = _last7Days;
     final series = <double>[];
     for (final day in days) {
@@ -75,7 +162,11 @@ class _AnalyticsBody extends StatelessWidget {
         final d = dateOf(t);
         return d != null && _isSameDay(d, day);
       }).toList();
-      series.add(onDay.isEmpty ? 0 : onDay.map(valueOf).reduce((a, b) => a + b) / onDay.length);
+      if (countMode) {
+        series.add(onDay.length.toDouble());
+      } else {
+        series.add(onDay.isEmpty ? 0 : onDay.map(valueOf).reduce((a, b) => a + b) / onDay.length);
+      }
     }
 
     final priorStart = days.first.subtract(const Duration(days: 7));
@@ -88,9 +179,16 @@ class _AnalyticsBody extends StatelessWidget {
       return d != null && !d.isBefore(days.first);
     }).toList();
 
-    final currentAvg = currentTickets.isEmpty ? 0.0 : currentTickets.map(valueOf).reduce((a, b) => a + b) / currentTickets.length;
-    final priorAvg = priorTickets.isEmpty ? 0.0 : priorTickets.map(valueOf).reduce((a, b) => a + b) / priorTickets.length;
-    final change = priorAvg == 0 ? (currentAvg == 0 ? 0.0 : 100.0) : ((currentAvg - priorAvg) / priorAvg) * 100;
+    final double currentValue;
+    final double priorValue;
+    if (countMode) {
+      currentValue = currentTickets.length.toDouble();
+      priorValue = priorTickets.length.toDouble();
+    } else {
+      currentValue = currentTickets.isEmpty ? 0.0 : currentTickets.map(valueOf).reduce((a, b) => a + b) / currentTickets.length;
+      priorValue = priorTickets.isEmpty ? 0.0 : priorTickets.map(valueOf).reduce((a, b) => a + b) / priorTickets.length;
+    }
+    final change = priorValue == 0 ? (currentValue == 0 ? 0.0 : 100.0) : ((currentValue - priorValue) / priorValue) * 100;
 
     return (series: series, total: currentTickets.length.toDouble(), percentChange: change);
   }
@@ -112,7 +210,7 @@ class _AnalyticsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolved = tickets.where((t) => t.resolvedAt != null).toList();
 
-    final resolvedTrend = _dailyTrend(resolved, (t) => t.resolvedAt, (_) => 1);
+    final resolvedTrend = _dailyTrend(resolved, (t) => t.resolvedAt, (_) => 1, countMode: true);
     final resolutionTimeTrend = _dailyTrend(
       resolved,
       (t) => t.resolvedAt,

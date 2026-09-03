@@ -56,6 +56,12 @@ class _SlaManagementScreenState extends ConsumerState<SlaManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('SLA policy saved.')));
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save SLA policy: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

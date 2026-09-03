@@ -129,9 +129,33 @@
        firebase_messaging's requestPermission(), same underlying browser
        permission. -->
   <script>
-    window.hyportShowNotification = function (title, body) {
+    // Show a real OS notification for a foreground FCM message. Goes through
+    // the service-worker registration (registration.showNotification) rather
+    // than `new Notification()` because the constructor THROWS on Android
+    // Chrome and is silent/deprecated on mobile — the SW path works
+    // everywhere, vibrates, and lets the OS play its notification sound.
+    window.hyportShowNotification = function (title, body, ticketId) {
       if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-      new Notification(title, { body: body, icon: 'icons/Icon-192.png' });
+      var options = {
+        body: body,
+        icon: 'icons/Icon-192.png',
+        badge: 'icons/Icon-192.png',
+        tag: 'gbms-support',
+        renotify: true,
+        silent: false,
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        data: { ticketId: ticketId || '', url: ticketId ? ('/#/tickets/' + ticketId) : '/' }
+      };
+      if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready
+          .then(function (reg) { return reg.showNotification(title, options); })
+          .catch(function () {
+            try { new Notification(title, options); } catch (e) {}
+          });
+      } else {
+        try { new Notification(title, options); } catch (e) {}
+      }
     };
   </script>
 

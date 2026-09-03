@@ -15,7 +15,10 @@ class DraftTicketRepository {
     }
   }
 
+  bool get _isAvailable => Hive.isBoxOpen(boxName);
+
   List<DraftTicket> getAllForUser(String userId) {
+    if (!_isAvailable) return const [];
     return _box.values
         .map((m) => DraftTicket.fromMap(m))
         .where((d) => d.createdBy == userId)
@@ -23,11 +26,18 @@ class DraftTicketRepository {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  Future<void> save(DraftTicket draft) => _box.put(draft.localId, draft.toMap());
+  Future<void> save(DraftTicket draft) {
+    if (!_isAvailable) return Future.value();
+    return _box.put(draft.localId, draft.toMap());
+  }
 
-  Future<void> delete(String localId) => _box.delete(localId);
+  Future<void> delete(String localId) {
+    if (!_isAvailable) return Future.value();
+    return _box.delete(localId);
+  }
 
   DraftTicket? get(String localId) {
+    if (!_isAvailable) return null;
     final map = _box.get(localId);
     return map == null ? null : DraftTicket.fromMap(map);
   }

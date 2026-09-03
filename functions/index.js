@@ -11,16 +11,27 @@
  *      name, email, phone, role, institution, active status — for the same
  *      reason: role/institutionId live in custom claims and email lives on
  *      the Auth account, neither of which the client can touch directly.
- *   3. Ticket-lifecycle notification triggers (received/assigned/escalated/
+ *   3. adminResetTwoFactor — clears another user's enrolled MFA factors so a
+ *      user who lost their phone isn't permanently locked out. The client
+ *      SDK can only unenroll the *signed-in* user's own factor, so this has
+ *      to go through the Admin SDK. Mirrors adminUpdateUser's
+ *      pfm_management-only check + audit-log pattern. Currently dormant —
+ *      mandatory 2FA is behind the `twoFactorMandatory` flag (off) — but
+ *      kept deployed so re-enabling is a one-constant flip. See DECISIONS.md.
+ *   4. Ticket-lifecycle notification triggers (received/assigned/escalated/
  *      resolved/commented) — Section 7 of the project brief. Each writes a
  *      Notification doc (bypassing firestore.rules via the Admin SDK, same
  *      as the rules file's comments already assume) and sends an FCM push
  *      (with sound — see notifyUser) to any device tokens on file for that
  *      user.
+ *   5. clearTrainingTickets — hourly scheduled sweep that wipes the practice
+ *      tickets a new MMDA account creates during its 2-day onboarding window
+ *      (users/{uid}.trainingTicketsClearAt), then leaves the account on live.
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated, onDocumentUpdated} = require("firebase-functions/v2/firestore");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {randomBytes} = require("crypto");
 const admin = require("firebase-admin");
 
@@ -54,7 +65,7 @@ exports.adminCreateUser = onCall(async (request) => {
   if (!request.auth || request.auth.token.role !== "pfm_management") {
     throw new HttpsError(
         "permission-denied",
-        "Only PFM-Systems Management can provision accounts.",
+        "Only the Head, Applications Systems Unit can provision accounts.",
     );
   }
 
@@ -139,7 +150,7 @@ exports.adminUpdateUser = onCall(async (request) => {
   if (!request.auth || request.auth.token.role !== "pfm_management") {
     throw new HttpsError(
         "permission-denied",
-        "Only PFM-Systems Management can manage user accounts.",
+        "Only the Head, Applications Systems Unit can manage user accounts.",
     );
   }
 
@@ -218,6 +229,47 @@ exports.adminUpdateUser = onCall(async (request) => {
 });
 
 /**
+ * Clears every enrolled multi-factor (phone MFA) factor on [uid]'s Auth
+ * account — lost-phone recovery for a mandatory-2FA setup. The client SDK's
+ * `unenroll()` only works on the *signed-in* user's own factors, so wiping
+ * someone else's has to go through the Admin SDK. That account is forced
+ * back through 2FA setup on its next sign-in.
+ *
+ * Restricted to callers whose own token carries role `pfm_management`, and
+ * audit-logged — same pattern as adminUpdateUser. Dormant while mandatory
+ * 2FA is flag-disabled (`twoFactorMandatory`), but kept so re-enabling is a
+ * one-constant flip. See DECISIONS.md ("Lost-phone recovery").
+ */
+exports.adminResetTwoFactor = onCall(async (request) => {
+  if (!request.auth || request.auth.token.role !== "pfm_management") {
+    throw new HttpsError(
+        "permission-denied",
+        "Only the Head, Applications Systems Unit can reset two-factor authentication.",
+    );
+  }
+
+  const {uid} = request.data || {};
+  if (!uid) {
+    throw new HttpsError("invalid-argument", "Missing uid.");
+  }
+
+  // `enrolledFactors: null` removes all enrolled factors (an empty array is
+  // rejected by the Admin SDK).
+  await admin.auth().updateUser(uid, {multiFactor: {enrolledFactors: null}});
+
+  await admin.firestore().collection("audit_logs").add({
+    actorId: request.auth.uid,
+    action: "two_factor_reset",
+    targetType: "user",
+    targetId: uid,
+    metadata: {},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {uid};
+});
+
+/**
  * Writes a Notification doc for [userId] and best-effort pushes it via FCM
  * to whatever device tokens are on file (`users/{uid}.fcmTokens`, written
  * by the Flutter app's PushNotificationService after requesting
@@ -238,55 +290,288 @@ async function notifyUser({userId, type, message, ticketId}) {
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  // Unread total for this user — drives the app-icon badge (iOS via aps.badge,
+  // web via the service worker / setAppBadge, Android via notificationCount).
+  let unreadCount = 0;
+  try {
+    const agg = await db.collection("notifications")
+        .where("userId", "==", userId)
+        .where("read", "==", false)
+        .count().get();
+    unreadCount = agg.data().count;
+  } catch (error) {
+    console.error(`unread count failed for ${userId}:`, error);
+  }
+
   const userDoc = await db.collection("users").doc(userId).get();
   const tokens = userDoc.data()?.fcmTokens || [];
   if (tokens.length === 0) return;
 
+  const link = ticketId ?
+    `https://gbmsupport.web.app/#/tickets/${ticketId}` :
+    "https://gbmsupport.web.app/";
+
   try {
-    await admin.messaging().sendEachForMulticast({
+    const res = await admin.messaging().sendEachForMulticast({
       tokens,
       notification: {title: "Hyperion Support", body: message},
-      data: {ticketId: ticketId || "", type},
+      data: {ticketId: ticketId || "", type, unreadCount: String(unreadCount)},
       // Neither Android nor iOS plays a sound for a background/terminated
       // push by default — both require an explicit sound field, otherwise
       // it's a silent tray/banner notification. "default" uses each
       // platform's own default notification sound.
       android: {
-        notification: {sound: "default", channelId: "hyport_default"},
+        notification: {
+          sound: "default",
+          channelId: "hyport_default",
+          notificationPriority: "PRIORITY_HIGH",
+          defaultVibrateTimings: true,
+          // Shown as the count badge on launchers that support numeric badges.
+          notificationCount: unreadCount,
+        },
       },
       apns: {
-        payload: {aps: {sound: "default"}},
+        payload: {aps: {sound: "default", badge: unreadCount}},
       },
-      // Android/iOS already show the app's own launcher/home-screen icon by
-      // default — this only matters for web push, which otherwise falls
-      // back to a generic browser icon since the payload above has none.
-      // Web notification sound isn't payload-configurable at all (the
-      // browser/OS plays its own default automatically when a system
-      // notification is shown), so there's no web equivalent of the two
-      // fields above to set.
+      // Full web notification options — icon + badge glyph, a stable tag so
+      // repeats re-alert (renotify) rather than stacking silently, and
+      // vibration. Sound isn't payload-configurable on web; the OS plays its
+      // own default whenever a system notification is shown. fcmOptions.link
+      // is where a tap takes the user.
       webpush: {
-        notification: {icon: "https://gbmsupport.web.app/icons/Icon-192.png"},
+        notification: {
+          title: "Hyperion Support",
+          body: message,
+          icon: "https://gbmsupport.web.app/icons/Icon-192.png",
+          badge: "https://gbmsupport.web.app/icons/Icon-192.png",
+          tag: "gbms-support",
+          renotify: true,
+          vibrate: [200, 100, 200],
+          requireInteraction: false,
+        },
+        data: {ticketId: ticketId || "", type, unreadCount: String(unreadCount)},
+        fcmOptions: {link},
       },
     });
+
+    // Drop tokens FCM has permanently rejected (app uninstalled, token
+    // rotated) — arrayUnion in addFcmToken never removes anything, so without
+    // this `fcmTokens` grows unbounded with dead entries that waste a send
+    // slot on every future notification.
+    // Only the two unambiguous "this token is dead" codes — NOT
+    // messaging/invalid-argument, which can signal a bad payload affecting
+    // every token and would wipe a user's whole token list on a code bug.
+    const dead = [];
+    res.responses.forEach((r, i) => {
+      const code = r.success ? null : (r.error && r.error.code);
+      if (
+        code === "messaging/registration-token-not-registered" ||
+        code === "messaging/invalid-registration-token"
+      ) {
+        dead.push(tokens[i]);
+      }
+    });
+    if (dead.length > 0) {
+      await db.collection("users").doc(userId).update({
+        fcmTokens: admin.firestore.FieldValue.arrayRemove(...dead),
+      });
+    }
   } catch (error) {
     console.error(`FCM send failed for user ${userId}:`, error);
   }
 }
 
+/**
+ * Fans a notification out to every active user holding [role] (equality-only
+ * query — no composite index needed). [exclude] skips one uid, normally the
+ * actor who triggered the event.
+ */
+async function notifyUsersWithRole(role, {type, message, ticketId, exclude}) {
+  const snap = await admin.firestore()
+      .collection("users")
+      .where("role", "==", role)
+      .where("isActive", "==", true)
+      .get();
+
+  let sent = 0;
+  for (const doc of snap.docs) {
+    if (doc.id === exclude) continue;
+    await notifyUser({userId: doc.id, type, message, ticketId});
+    sent++;
+  }
+  return sent;
+}
+
+const SUPPORT_ROLES = ["support_coordinator", "functional_lead", "technical_lead"];
+const DEFAULT_OPEN_STATUSES = ["assigned", "in_progress", "escalated", "reopened"];
+
+/**
+ * Auto-assigns a freshly created ticket to a member of the category's
+ * eligible pool (config/assignment_rules, seeded from
+ * "GBMSAPP user and roles.docx" by scripts/seed_assignment_rules.js).
+ *
+ * Selection: fewest currently-open assigned tickets, tie-broken by
+ * longest-idle (oldest assignment_state/{uid}.lastAssignedAt). Does NOT
+ * stamp firstRespondedAt — only a human action counts as first response, so
+ * the Analytics metric stays meaningful. Writes a `system` activity entry so
+ * the audit trail is intact; the resulting ticket update makes onTicketUpdated
+ * fire the "assigned to you" push, so no extra notification here.
+ *
+ * Returns true when the ticket ends up assigned (by this call or a
+ * concurrent manual assign), false when it should fall through to the
+ * "needs triage" coordinator ping.
+ */
+async function autoAssignTicket(ticketId, ticket) {
+  if (ticket.assignedTo) return true;
+
+  const db = admin.firestore();
+  const rulesSnap = await db.collection("config").doc("assignment_rules").get();
+  const rules = rulesSnap.data();
+  if (!rules || rules.enabled === false) return false;
+
+  const rule = (rules.categories || {})[ticket.category];
+  if (!rule) return false;
+  const openStatuses = rules.openStatuses || DEFAULT_OPEN_STATUSES;
+
+  // Resolve the candidate pool.
+  let candidateIds;
+  if (rule.pool === "ALL") {
+    const snap = await db.collection("users").where("role", "in", SUPPORT_ROLES).get();
+    candidateIds = snap.docs.filter((d) => d.data().isActive !== false).map((d) => d.id);
+  } else {
+    candidateIds = rule.userIds || [];
+    if (candidateIds.length > 0) {
+      const docs = await db.getAll(...candidateIds.map((id) => db.collection("users").doc(id)));
+      candidateIds = docs.filter((d) => d.exists && d.data().isActive !== false).map((d) => d.id);
+    }
+  }
+  if (candidateIds.length === 0) return false;
+
+  // Fewest open assigned tickets, then longest-idle.
+  const [openCounts, stateDocs] = await Promise.all([
+    Promise.all(candidateIds.map(async (uid) => {
+      const agg = await db.collection("tickets")
+          .where("assignedTo", "==", uid)
+          .where("status", "in", openStatuses)
+          .count().get();
+      return {uid, open: agg.data().count};
+    })),
+    db.getAll(...candidateIds.map((id) => db.collection("assignment_state").doc(id))),
+  ]);
+
+  const lastAssignedAt = {};
+  for (const d of stateDocs) {
+    lastAssignedAt[d.id] = d.exists && d.data().lastAssignedAt ? d.data().lastAssignedAt.toMillis() : 0;
+  }
+  openCounts.sort((a, b) => a.open - b.open || lastAssignedAt[a.uid] - lastAssignedAt[b.uid]);
+  const winner = openCounts[0].uid;
+
+  // Assign in a transaction so a manual assign landing at the same moment
+  // isn't clobbered.
+  const assignedByUs = await db.runTransaction(async (tx) => {
+    const tRef = db.collection("tickets").doc(ticketId);
+    const tSnap = await tx.get(tRef);
+    if (!tSnap.exists || tSnap.data().assignedTo) return false;
+
+    tx.update(tRef, {
+      assignedTo: winner,
+      status: "assigned",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    const actRef = tRef.collection("activity").doc();
+    tx.set(actRef, {
+      ticketId,
+      actorId: "system",
+      action: "assigned",
+      toValue: winner,
+      note: "Auto-assigned by category rules",
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return true;
+  });
+
+  if (assignedByUs) {
+    await db.collection("assignment_state").doc(winner).set(
+        {lastAssignedAt: admin.firestore.FieldValue.serverTimestamp()},
+        {merge: true},
+    );
+  }
+  return true;
+}
+
 exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) => {
   const ticket = event.data.data();
+  const ticketId = event.params.ticketId;
+
+  // Requester: acknowledgement.
   await notifyUser({
     userId: ticket.createdBy,
     type: "ticket_received",
     message: `Your ticket ${ticket.ticketReference} has been received.`,
-    ticketId: event.params.ticketId,
+    ticketId,
   });
+
+  // Auto-assign from the category pool. The ticket update triggers
+  // onTicketUpdated, which sends the assignee their "assigned to you" push.
+  let assigned = false;
+  try {
+    assigned = await autoAssignTicket(ticketId, ticket);
+  } catch (error) {
+    console.error(`Auto-assign failed for ticket ${ticketId}:`, error);
+  }
+
+  // Only when auto-assign didn't place it: a new ticket stays unassigned
+  // until a Support Coordinator triages it, so tell them it's waiting. If no
+  // active coordinator exists to receive it, fall back to the APPS Head
+  // (pfm_management) so an unassigned ticket is never silent.
+  if (!assigned) {
+    const msg = `New ticket ${ticket.ticketReference} logged — needs triage.`;
+    const coordinators = await notifyUsersWithRole("support_coordinator", {
+      type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
+    });
+    if (coordinators === 0) {
+      await notifyUsersWithRole("pfm_management", {
+        type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
+      });
+    }
+  }
 });
 
 exports.onTicketUpdated = onDocumentUpdated("tickets/{ticketId}", async (event) => {
   const before = event.data.before.data();
   const after = event.data.after.data();
   const ticketId = event.params.ticketId;
+
+  // First response = the assignee's first real action. Assignment itself
+  // (manual assignTicket or the onTicketCreated auto-assign) does NOT stamp
+  // firstRespondedAt, so this is the single place it's set: the first status
+  // move forward. Requester-only transitions (reopened / closed) don't count.
+  // This write re-fires this trigger once; the guard below then no-ops.
+  if (
+    !after.firstRespondedAt &&
+    before.status !== after.status &&
+    ["in_progress", "escalated", "resolved"].includes(after.status)
+  ) {
+    await admin.firestore().collection("tickets").doc(ticketId).update({
+      firstRespondedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Denormalize the assignee's display name onto the ticket. The requester
+  // can't read users/{uid} (firestore.rules — support-side only), so this is
+  // how their ticket-detail screen shows who's handling it. Covers manual
+  // assign, escalate, and category auto-assignment (all change assignedTo).
+  if (before.assignedTo !== after.assignedTo && after.assignedTo) {
+    try {
+      const uDoc = await admin.firestore().collection("users").doc(after.assignedTo).get();
+      const name = uDoc.exists ? (uDoc.data().name || null) : null;
+      if (name !== (after.assignedToName || null)) {
+        await admin.firestore().collection("tickets").doc(ticketId).update({assignedToName: name});
+      }
+    } catch (error) {
+      console.error(`assignedToName sync failed for ticket ${ticketId}:`, error);
+    }
+  }
 
   // Newly assigned (not an escalation — those get their own message below).
   if (
@@ -329,6 +614,27 @@ exports.onTicketUpdated = onDocumentUpdated("tickets/{ticketId}", async (event) 
       ticketId,
     });
   }
+
+  // Reopened — the requester did this; the assignee needs to know it's back
+  // on their plate.
+  if (before.status !== "reopened" && after.status === "reopened" && after.assignedTo) {
+    await notifyUser({
+      userId: after.assignedTo,
+      type: "pending_action",
+      message: `Ticket ${after.ticketReference} has been reopened by the requester.`,
+      ticketId,
+    });
+  }
+
+  // Closed — confirm to the requester, unless they closed it themselves.
+  if (before.status !== "closed" && after.status === "closed" && after.closedBy !== after.createdBy) {
+    await notifyUser({
+      userId: after.createdBy,
+      type: "resolved",
+      message: `Ticket ${after.ticketReference} has been closed.`,
+      ticketId,
+    });
+  }
 });
 
 /**
@@ -349,6 +655,14 @@ exports.onTicketActivityCreated = onDocumentCreated(
       if (!ticketSnap.exists) return;
       const ticket = ticketSnap.data();
 
+      // A comment from the support side counts as the first response for the
+      // Analytics metric if nothing else has yet.
+      if (!ticket.firstRespondedAt && activity.actorId !== ticket.createdBy && activity.actorId !== "system") {
+        await admin.firestore().collection("tickets").doc(ticketId).update({
+          firstRespondedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
       // Notify the other party in the conversation: the requester if the
       // commenter is (or isn't) the assignee, and vice versa. Excludes the
       // commenter themselves and any unset participant (e.g. an unassigned
@@ -363,6 +677,94 @@ exports.onTicketActivityCreated = onDocumentCreated(
           message: `New message on ticket ${ticket.ticketReference}.`,
           ticketId,
         });
+      }
+    },
+);
+
+/**
+ * 2-day practice window for newly onboarded MMDA accounts.
+ *
+ * The budget cycle is already open for MDA users, so they go straight to live.
+ * New MMDA users instead get two days to find their feet on the real app; the
+ * tickets they raise in that time are throwaway. Each such account is tagged
+ * (by scripts/mark_training_users.js, or the bulk-import script) with:
+ *
+ *   { isTrainingAccount: true,
+ *     trainingTicketsClearAt: <Timestamp, ~now + 48h>,
+ *     trainingCleared: false }
+ *
+ * This job runs hourly. Once an account's trainingTicketsClearAt has passed it
+ * deletes every ticket that account CREATED up to that instant — the ticket
+ * doc, its `activity` subcollection (recursiveDelete), and any notification
+ * (to anyone, including the auto-assigned APPS agent) that referenced it —
+ * then flips trainingCleared so the account is never swept again. Tickets the
+ * user raises AFTER the cutoff are ordinary live tickets and are left intact.
+ *
+ * The cutoff is compared client-side (not in the query) so a late run can't
+ * reach past the window into real work, and so no composite index is needed.
+ */
+exports.clearTrainingTickets = onSchedule(
+    {schedule: "every 1 hours", timeZone: "Africa/Accra"},
+    async () => {
+      const db = admin.firestore();
+      const now = Date.now();
+
+      const snap = await db.collection("users")
+          .where("isTrainingAccount", "==", true)
+          .get();
+
+      for (const userDoc of snap.docs) {
+        const data = userDoc.data();
+        if (data.trainingCleared === true) continue;
+        const clearAt = data.trainingTicketsClearAt;
+        if (!clearAt || typeof clearAt.toMillis !== "function") continue;
+        if (clearAt.toMillis() > now) continue;
+
+        const uid = userDoc.id;
+        const cutoff = clearAt.toMillis();
+
+        // Isolate each account: a transient failure on one shouldn't strand
+        // the others until the next hourly run. trainingCleared makes a retry
+        // next hour a no-op for anyone already done.
+        try {
+          // Fetch by creator (auto single-field index) and filter the cutoff
+          // here — a ticket raised after the window has a later createdAt and
+          // is deliberately spared.
+          const created = await db.collection("tickets")
+              .where("createdBy", "==", uid)
+              .get();
+          const stale = created.docs.filter((d) => {
+            const c = d.data().createdAt;
+            return !c || !c.toMillis || c.toMillis() <= cutoff;
+          });
+
+          let deletedNotifs = 0;
+          for (const t of stale) {
+            const notifs = await db.collection("notifications")
+                .where("ticketId", "==", t.id)
+                .get();
+            for (let i = 0; i < notifs.docs.length; i += 400) {
+              const batch = db.batch();
+              for (const n of notifs.docs.slice(i, i + 400)) batch.delete(n.ref);
+              await batch.commit();
+            }
+            deletedNotifs += notifs.size;
+            await db.recursiveDelete(t.ref);
+          }
+
+          await userDoc.ref.update({
+            trainingCleared: true,
+            trainingClearedAt: admin.firestore.FieldValue.serverTimestamp(),
+            trainingClearedTicketCount: stale.length,
+          });
+
+          console.log(
+              `clearTrainingTickets: ${data.email || uid} — removed ` +
+              `${stale.length} ticket(s), ${deletedNotifs} notification(s)`,
+          );
+        } catch (error) {
+          console.error(`clearTrainingTickets failed for ${data.email || uid}:`, error);
+        }
       }
     },
 );

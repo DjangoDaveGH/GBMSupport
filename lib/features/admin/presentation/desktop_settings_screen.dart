@@ -43,6 +43,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
                 children: [
                   _NavTile(label: 'General', selected: true, onTap: () {}),
                   _NavTile(label: 'SLA Management', selected: false, onTap: () => context.push('/admin-settings/sla')),
+                  _NavTile(label: 'Auto-Assignment', selected: false, onTap: () => context.push('/admin-settings/assignment')),
                   _NavTile(label: 'Ticket Settings', selected: false, onTap: () => context.push('/admin-settings/tickets')),
                   _NavTile(
                     label: 'Security',

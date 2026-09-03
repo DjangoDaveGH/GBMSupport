@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0B3578">
   <title>Get GBMS Support</title>
   <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <!-- Same manifest as the app root so this page is itself installable —
+       tapping "Install app" below fires the browser's real install prompt
+       and drops the GBMS icon on the home screen (no APK, no store). -->
+  <link rel="manifest" href="manifest.json">
   <style>
     :root {
       color-scheme: light;
@@ -58,18 +64,27 @@
       width: 100%;
       height: 100%;
     }
-    a.btn {
+    button.btn, a.btn {
       display: block;
+      width: 100%;
+      box-sizing: border-box;
       text-decoration: none;
       padding: 13px 20px;
+      border: none;
       border-radius: 14px;
       font-weight: 700;
       font-size: 14px;
+      font-family: inherit;
       margin-bottom: 10px;
+      cursor: pointer;
     }
-    a.btn.primary {
+    button.btn.primary {
       background: #0B3578;
       color: #ffffff;
+    }
+    button.btn.primary:disabled {
+      opacity: 0.55;
+      cursor: default;
     }
     a.btn.secondary {
       background: #F4F7FB;
@@ -82,32 +97,125 @@
       margin-top: 18px;
       margin-bottom: 0;
     }
+    a.apk {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #8592A8;
+    }
+    #ios-steps { display: none; }
   </style>
 </head>
 <body>
   <div class="card">
     <img class="logo" src="splash_logo.png" alt="" />
     <h1>Get GBMS Support</h1>
-    <p class="subtitle">Scan with your phone, or choose your platform below.</p>
+    <p class="subtitle">Install it on your device — no app store needed.</p>
     <div class="qr">
       <img src="get-app-qr.png" alt="QR code linking to this page" />
     </div>
-    <a class="btn primary" href="downloads/gbms-support.apk">Download for Android</a>
-    <a class="btn secondary" href="/">Open the web app (iOS / desktop)</a>
-    <p class="hint">iPhone/iPad users: open the web app, then use Share &rarr; "Add to Home Screen" to install it.</p>
+
+    <button id="install-btn" class="btn primary" disabled>Preparing…</button>
+    <a class="btn secondary" href="/">Open the web app</a>
+
+    <p class="hint" id="generic-hint">
+      Your browser will ask to add the GBMS icon to your home screen.
+    </p>
+    <p class="hint" id="ios-steps">
+      On iPhone/iPad: tap the <strong>Share</strong> icon in Safari, then
+      choose <strong>“Add to Home Screen”</strong>.
+    </p>
+
+    <a class="apk" href="downloads/gbms-support.apk">Advanced: download the Android APK instead</a>
   </div>
+
   <script>
-    // Auto-redirect only on an actual phone visiting this link directly
-    // (i.e. someone who just scanned the QR code) — not on desktop, where
-    // the fallback buttons/QR above are the whole point of the page.
-    var ua = navigator.userAgent || '';
-    var isAndroid = /Android/i.test(ua);
-    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
-    if (isAndroid) {
-      window.location.replace('downloads/gbms-support.apk');
-    } else if (isIOS) {
-      window.location.replace('/');
-    }
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/i.test(ua) ||
+                  (ua.includes('Macintosh') && 'ontouchend' in document);
+      var btn = document.getElementById('install-btn');
+      var iosSteps = document.getElementById('ios-steps');
+      var genericHint = document.getElementById('generic-hint');
+      var deferredPrompt = null;
+
+      var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                       window.navigator.standalone === true;
+      if (standalone) {
+        btn.textContent = 'Already installed';
+        btn.disabled = true;
+        genericHint.textContent = 'GBMS Support is installed on this device.';
+        return;
+      }
+
+      // Register the shared service worker so this page meets the browser's
+      // installability criteria (manifest + SW + HTTPS).
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(function () {});
+      }
+
+      function showIosMode() {
+        btn.textContent = 'How to install';
+        btn.disabled = false;
+        genericHint.style.display = 'none';
+        iosSteps.style.display = 'block';
+        btn.addEventListener('click', function () {
+          iosSteps.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+
+      function showManualMode() {
+        // Chromium browser that hasn't fired beforeinstallprompt yet (or
+        // Firefox). Point the user at the browser menu; also let the button
+        // open the app where the in-app Install button lives.
+        btn.textContent = 'Install app';
+        btn.disabled = false;
+        genericHint.textContent =
+          'Open your browser menu and choose “Install app” / “Add to Home Screen”. ' +
+          'Or tap here to open the app.';
+        btn.addEventListener('click', function () {
+          if (deferredPrompt) return runPrompt();
+          window.location.href = '/';
+        });
+      }
+
+      function runPrompt() {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (choice) {
+          deferredPrompt = null;
+          if (choice.outcome === 'accepted') {
+            btn.textContent = 'Installing…';
+            btn.disabled = true;
+          } else {
+            btn.textContent = 'Install app';
+          }
+        });
+      }
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        btn.textContent = 'Install app';
+        btn.disabled = false;
+        genericHint.textContent =
+          'Your browser will ask to add the GBMS icon to your home screen.';
+        btn.onclick = runPrompt;
+      });
+
+      window.addEventListener('appinstalled', function () {
+        btn.textContent = 'Installed ✓';
+        btn.disabled = true;
+      });
+
+      if (isIOS) {
+        showIosMode();
+      } else {
+        // Give beforeinstallprompt a moment; if it never comes, fall back.
+        setTimeout(function () {
+          if (!deferredPrompt && btn.disabled) showManualMode();
+        }, 2500);
+      }
+    })();
   </script>
 </body>
 </html>

@@ -57,6 +57,12 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
       );
       await ref.read(knowledgeBaseRepositoryProvider).create(article);
       if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save article: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

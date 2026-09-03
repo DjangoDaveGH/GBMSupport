@@ -68,6 +68,27 @@ class AppUser {
       lastActiveAt != null &&
       DateTime.now().difference(lastActiveAt!) < const Duration(minutes: 5);
 
+  /// Account state (enabled vs. deactivated) — a different axis from
+  /// presence. Shared by the mobile and desktop user lists so the same
+  /// account never reads differently between the two.
+  String get accountStatusLabel => isActive ? 'Active' : 'Inactive';
+
+  /// "Last seen" phrasing shared by the mobile and desktop user lists.
+  /// Relative and self-contained (no intl) so both platforms render it
+  /// identically.
+  String get lastSeenLabel {
+    if (isRecentlyActive) return 'Online now';
+    final seen = lastActiveAt;
+    if (seen == null) return 'Not signed in yet';
+    final diff = DateTime.now().difference(seen);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hr ago';
+    if (diff.inDays < 30) {
+      return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+    }
+    return '${(diff.inDays / 30).floor()} mo ago';
+  }
+
   AppUser copyWith({
     String? name,
     String? phone,

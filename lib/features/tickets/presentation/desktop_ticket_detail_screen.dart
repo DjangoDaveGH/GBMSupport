@@ -6,6 +6,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
@@ -60,6 +61,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
 
   Widget _buildBody(BuildContext context, Ticket ticket, AppUser viewer) {
     final isAssignee = viewer.id == ticket.assignedTo;
+    final isOwner = viewer.id == ticket.createdBy;
     final canAssign = viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed;
     final canEscalate = (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed) ||
         ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
@@ -88,7 +90,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               IntrinsicWidth(
                 child: FilledButton.icon(
                   key: _actionsButtonKey,
-                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate),
+                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, isOwner, canAssign, canEscalate),
                   icon: const Icon(Icons.more_horiz_rounded, size: 18),
                   label: const Text('Actions'),
                 ),
@@ -116,6 +118,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     Ticket ticket,
     AppUser viewer,
     bool isAssignee,
+    bool isOwner,
     bool canAssign,
     bool canEscalate,
   ) {
@@ -157,8 +160,50 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
             onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
             child: const Text('Close Ticket'),
           ),
+        // Requester (ticket owner): confirm-close a resolved ticket, or
+        // reopen a resolved/closed one. Mirrors the mobile requester
+        // actions so a laptop user isn't stuck.
+        if (isOwner && ticket.status == TicketStatus.resolved)
+          PopupMenuItem(
+            onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
+            child: const Text('Confirm & Close'),
+          ),
+        if (isOwner && (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed))
+          PopupMenuItem(
+            onTap: () => _showReopenDialog(context, ticket, viewer),
+            child: const Text('Reopen'),
+          ),
         PopupMenuItem(onTap: () => _showCommentDialog(context, ticket, viewer), child: const Text('Add Chat Message')),
       ],
+    );
+  }
+
+  void _showReopenDialog(BuildContext context, Ticket ticket, AppUser viewer) {
+    final noteController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reopen ticket'),
+        content: TextField(
+          controller: noteController,
+          decoration: const InputDecoration(labelText: 'Why are you reopening this?'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              await ref.read(ticketRepositoryProvider).reopen(
+                    ticketId: ticket.id,
+                    actorId: viewer.id,
+                    note: noteController.text.trim(),
+                  );
+              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Reopen'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -178,14 +223,17 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
       builder: (dialogContext) => Consumer(builder: (dialogContext, ref, _) {
         final usersAsync = ref.watch(assignableUsersProvider);
         return AlertDialog(
-          title: Text(targetLevel == 1 ? 'Escalate to Functional/Technical Lead' : 'Escalate to Vendor/Specialist'),
+          title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
           content: usersAsync.when(
             loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
             error: (e, _) => Text('Could not load users: $e'),
             data: (users) {
               final eligible = users.where((u) {
                 if (targetLevel == 1) {
-                  return ticket.category.isFunctional ? u.role == UserRole.functionalLead : u.role == UserRole.technicalLead;
+                  // One Applications Systems Unit now — the functional/
+                  // technical split no longer maps to distinct people, so
+                  // level-1 escalation targets any active APPS member.
+                  return u.role == UserRole.functionalLead || u.role == UserRole.technicalLead;
                 }
                 return u.role == UserRole.vendorSupport;
               }).toList();
@@ -196,7 +244,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
                   children: eligible
                       .map((u) => ListTile(
                             title: Text(u.name),
-                            subtitle: Text(u.role.label),
+                            subtitle: Text(u.role.shortLabel),
                             onTap: () async {
                               await ref.read(ticketRepositoryProvider).escalate(
                                     ticketId: ticket.id,
@@ -615,14 +663,18 @@ class _SidebarColumn extends ConsumerWidget {
         if (viewer?.role.hasBackOfficeAccess ?? false) ...[
           _SidebarCard(
             title: 'Requested By',
-            child: _AssigneeInfo(userId: ticket.createdBy),
+            child: _AssigneeInfo(userId: ticket.createdBy, showInstitution: true),
           ),
           const SizedBox(height: 16),
         ],
         if (ticket.assignedTo != null)
           _SidebarCard(
             title: 'Assigned To',
-            child: _AssigneeInfo(userId: ticket.assignedTo!),
+            child: (viewer?.role.isSupportSide ?? false)
+                ? _AssigneeInfo(userId: ticket.assignedTo!)
+                // Requester can't read the assignee's users/{uid} doc — show
+                // the denormalized name from the ticket.
+                : Text(ticket.assignedToName ?? 'A support agent', style: Theme.of(context).textTheme.bodyMedium),
           ),
         const SizedBox(height: 16),
         _SidebarCard(
@@ -671,7 +723,13 @@ class _SidebarCard extends StatelessWidget {
 class _AssigneeInfo extends ConsumerWidget {
   final String userId;
 
-  const _AssigneeInfo({required this.userId});
+  /// When true, show the user's specific assembly/MDA (resolved from
+  /// institutionId) beside their role instead of just the role — used for the
+  /// "Requested By" card so back-office staff see which institution the
+  /// end user belongs to, not merely "MDA/MMDA User".
+  final bool showInstitution;
+
+  const _AssigneeInfo({required this.userId, this.showInstitution = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -681,6 +739,18 @@ class _AssigneeInfo extends ConsumerWidget {
       error: (e, _) => Text('Could not load: $e'),
       data: (user) {
         if (user == null) return const Text('Not found.');
+        var subtitle = user.role.shortLabel;
+        if (showInstitution) {
+          final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+          var institutionLabel = user.institutionType.wireValue;
+          for (final i in institutions) {
+            if (i.id == user.institutionId) {
+              institutionLabel = i.name;
+              break;
+            }
+          }
+          subtitle = '${user.role.shortLabel} · $institutionLabel';
+        }
         return Row(
           children: [
             CircleAvatar(
@@ -694,7 +764,7 @@ class _AssigneeInfo extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(user.name, style: Theme.of(context).textTheme.titleSmall),
-                  Text(user.role.label, style: Theme.of(context).textTheme.bodySmall),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
             ),

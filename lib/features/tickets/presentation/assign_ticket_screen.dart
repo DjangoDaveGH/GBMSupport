@@ -173,7 +173,7 @@ class _AssignTicketScreenState extends ConsumerState<AssignTicketScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(u.name, style: Theme.of(context).textTheme.titleSmall),
-                    Text(u.role.label, style: Theme.of(context).textTheme.bodySmall),
+                    Text(u.role.shortLabel, style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),

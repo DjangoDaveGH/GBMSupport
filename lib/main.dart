@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,9 +18,6 @@ import 'package:hyport/firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Hive.initFlutter();
-  await DraftTicketRepository.openBox();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await LocalNotificationService.init();
   // Web's IndexedDB-backed persistence is unreliable on Safari/iOS (private
@@ -27,10 +26,26 @@ Future<void> main() async {
   // every Firestore read/write — including ticket submission. Native
   // platforms don't have this failure mode, so only skip it on web.
   if (!kIsWeb) {
-    FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+    );
   }
 
   runApp(const ProviderScope(child: HyportApp()));
+
+  // Hive uses IndexedDB on the web. A stale/corrupt browser database can
+  // leave initialization pending forever, so it must never block the first
+  // Flutter frame or Firebase Auth from starting.
+  unawaited(_initializeLocalStorage());
+}
+
+Future<void> _initializeLocalStorage() async {
+  try {
+    await Hive.initFlutter().timeout(const Duration(seconds: 3));
+    await DraftTicketRepository.openBox().timeout(const Duration(seconds: 3));
+  } catch (error) {
+    debugPrint('Local draft storage unavailable: $error');
+  }
 }
 
 class HyportApp extends ConsumerWidget {

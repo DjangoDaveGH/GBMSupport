@@ -66,6 +66,7 @@ class _AddUserScreenState extends ConsumerState<AddUserScreen> {
       // sendPasswordResetEmail triggers that, and it works for any email
       // regardless of who's currently signed in. See functions/index.js.
       await ref.read(authServiceProvider).sendPasswordResetEmail(email);
+      if (!mounted) return;
       setState(() => _success = 'User created. A password reset link has been sent to their email.');
       _formKey.currentState!.reset();
       _nameController.clear();
@@ -73,9 +74,9 @@ class _AddUserScreenState extends ConsumerState<AddUserScreen> {
       _phoneController.clear();
       _institutionIdController.clear();
     } on FirebaseFunctionsException catch (e) {
-      setState(() => _error = e.message ?? 'Could not create user (${e.code}).');
+      if (mounted) setState(() => _error = e.message ?? 'Could not create user (${e.code}).');
     } catch (e) {
-      setState(() => _error = 'Could not create user: $e');
+      if (mounted) setState(() => _error = 'Could not create user: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -110,7 +111,13 @@ class _AddUserScreenState extends ConsumerState<AddUserScreen> {
             DropdownButtonFormField<UserRole>(
               initialValue: _role,
               decoration: const InputDecoration(labelText: 'Role'),
-              items: UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(r.label))).toList(),
+              // technical_lead is retired — it behaves identically to
+              // functional_lead now (one Applications Systems Unit), so
+              // don't offer it for new accounts.
+              items: UserRole.values
+                  .where((r) => r != UserRole.technicalLead)
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
+                  .toList(),
               onChanged: (v) => setState(() => _role = v!),
             ),
             const SizedBox(height: 16),

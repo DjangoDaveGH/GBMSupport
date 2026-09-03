@@ -7,17 +7,30 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/config/data/sla_providers.dart';
+import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart' show categoryIcon;
 import 'package:intl/intl.dart';
 
-enum _StatusTab { all, open, inProgress, pending, resolved, closed }
-
 const _pendingStatuses = {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened};
+
+/// Multi-select status groups — the same idea as the mobile Filters screen,
+/// so a laptop user can now narrow to several statuses at once (e.g. Open +
+/// Pending) instead of one tab. An empty selection = all statuses.
+const _statusGroups = <(String, Set<TicketStatus>)>[
+  ('Open', {TicketStatus.open}),
+  ('In Progress', {TicketStatus.inProgress}),
+  ('Pending', _pendingStatuses),
+  ('Resolved', {TicketStatus.resolved}),
+  ('Closed', {TicketStatus.closed}),
+];
 
 /// Phase 5 mockup screen 31 — same `ticketListProvider` data as the mobile
 /// Ticket Queue, rendered as a filterable/sortable table instead of cards.
@@ -31,11 +44,25 @@ class DesktopTicketListScreen extends ConsumerStatefulWidget {
 class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScreen> {
   final _searchController = TextEditingController();
   String _search = '';
-  _StatusTab _tab = _StatusTab.all;
+  Set<TicketStatus> _statuses = {};
   TicketPriority? _priority;
   TicketCategory? _category;
+  String? _institutionId;
+  InstitutionType? _institutionType;
+  DateTimeRange? _dateRange;
+  bool _overdueOnly = false;
   int _page = 0;
   static const _pageSize = 10;
+
+  /// Filters applied in memory over the already-loaded list (institution,
+  /// created-date range, overdue) — see [TicketFilter.matchesClientSide].
+  TicketFilter get _advancedFilter => TicketFilter(
+        institutionId: _institutionId,
+        institutionType: _institutionType,
+        createdAfter: _dateRange?.start,
+        createdBefore: _dateRange?.end,
+        overdueOnly: _overdueOnly,
+      );
 
   @override
   void dispose() {
@@ -43,19 +70,23 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
     super.dispose();
   }
 
-  bool _matchesTab(Ticket t) => switch (_tab) {
-        _StatusTab.all => true,
-        _StatusTab.open => t.status == TicketStatus.open,
-        _StatusTab.inProgress => t.status == TicketStatus.inProgress,
-        _StatusTab.pending => _pendingStatuses.contains(t.status),
-        _StatusTab.resolved => t.status == TicketStatus.resolved,
-        _StatusTab.closed => t.status == TicketStatus.closed,
-      };
+  bool _matchesTab(Ticket t) => _statuses.isEmpty || _statuses.contains(t.status);
+
+  void _toggleGroup(Set<TicketStatus> group, bool on) {
+    setState(() {
+      if (on) {
+        _statuses.addAll(group);
+      } else {
+        _statuses.removeAll(group);
+      }
+      _page = 0;
+    });
+  }
 
   void _exportCsv(List<Ticket> tickets, Map<String, AppUser> usersById) {
     final buffer = StringBuffer('Reference,Title,Category,Priority,Assigned To,Status,Created\n');
     for (final t in tickets) {
-      final assignee = t.assignedTo == null ? '' : (usersById[t.assignedTo]?.name ?? '');
+      final assignee = t.assignedTo == null ? '' : (usersById[t.assignedTo]?.name ?? t.assignedToName ?? '');
       buffer.writeln(
         '"${t.ticketReference}","${t.title.replaceAll('"', '""')}","${t.category.label}","${t.priority.label}","$assignee","${t.status.label}","${DateFormat.yMd().format(t.createdAt)}"',
       );
@@ -72,16 +103,27 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
     if (appUser == null) return const BrandedLoaderCenter();
 
     final ticketsAsync = ref.watch(
-      ticketListProvider((appUser, TicketFilter(priorities: _priority == null ? const {} : {_priority!}, category: _category))),
+      ticketAnalyticsProvider((appUser, TicketFilter(priorities: _priority == null ? const {} : {_priority!}, category: _category))),
     );
-    final usersAsync = ref.watch(allUsersProvider);
+    // Requesters can't read other users' docs (firestore.rules) — only fetch
+    // the roster for support-side viewers; requesters fall back to the
+    // denormalized ticket.assignedToName in the table.
+    final usersAsync = appUser.role.isSupportSide ? ref.watch(allUsersProvider) : null;
+    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]..sort((a, b) => a.name.compareTo(b.name));
+    final institutionNameById = {for (final i in institutions) i.id: i.name};
+    final institutionTypes = {for (final i in institutions) i.id: i.type};
+    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load tickets: $e')),
-      data: (allTickets) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
+      data: (rawTickets) {
+        final usersById = <String, AppUser>{for (final u in usersAsync?.valueOrNull ?? const <AppUser>[]) u.id: u};
         final search = _search.toLowerCase();
+        // Advanced (in-memory) filters first, so the tab counts reflect them.
+        final allTickets = rawTickets
+            .where((t) => _advancedFilter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+            .toList();
         final filtered = allTickets.where(_matchesTab).where((t) {
           if (search.isEmpty) return true;
           return t.title.toLowerCase().contains(search) || t.ticketReference.toLowerCase().contains(search);
@@ -109,6 +151,19 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
                     ),
                   ),
                   const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: filtered.isEmpty ? null : () => _exportCsv(filtered, usersById),
+                    icon: const Icon(Icons.download_outlined, size: 18),
+                    label: const Text('Export'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
                   _FilterDropdown<TicketPriority>(
                     hint: 'Priority',
                     value: _priority,
@@ -119,7 +174,6 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
                       _page = 0;
                     }),
                   ),
-                  const SizedBox(width: 12),
                   _FilterDropdown<TicketCategory>(
                     hint: 'Category',
                     value: _category,
@@ -130,11 +184,65 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
                       _page = 0;
                     }),
                   ),
-                  const SizedBox(width: 12),
+                  _FilterDropdown<String>(
+                    hint: 'Institution',
+                    value: institutionNameById.containsKey(_institutionId) ? _institutionId : null,
+                    items: institutions.map((i) => i.id).toList(),
+                    labelOf: (id) => institutionNameById[id] ?? id,
+                    onChanged: (v) => setState(() {
+                      _institutionId = v;
+                      _page = 0;
+                    }),
+                  ),
+                  _FilterDropdown<InstitutionType>(
+                    hint: 'Type',
+                    value: _institutionType,
+                    items: InstitutionType.values,
+                    labelOf: (t) => t.wireValue,
+                    onChanged: (v) => setState(() {
+                      _institutionType = v;
+                      _page = 0;
+                    }),
+                  ),
                   OutlinedButton.icon(
-                    onPressed: filtered.isEmpty ? null : () => _exportCsv(filtered, usersById),
-                    icon: const Icon(Icons.download_outlined, size: 18),
-                    label: const Text('Export'),
+                    onPressed: () async {
+                      final now = DateTime.now();
+                      final picked = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime(2023),
+                        lastDate: DateTime(now.year + 1, 12, 31),
+                        initialDateRange: _dateRange,
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _dateRange = picked;
+                          _page = 0;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.date_range_outlined, size: 18),
+                    label: Text(
+                      _dateRange == null
+                          ? 'Date range'
+                          : '${DateFormat.MMMd().format(_dateRange!.start)} – ${DateFormat.MMMd().format(_dateRange!.end)}',
+                    ),
+                  ),
+                  if (_dateRange != null)
+                    IconButton(
+                      tooltip: 'Clear dates',
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      onPressed: () => setState(() {
+                        _dateRange = null;
+                        _page = 0;
+                      }),
+                    ),
+                  FilterChip(
+                    label: const Text('Overdue'),
+                    selected: _overdueOnly,
+                    onSelected: (v) => setState(() {
+                      _overdueOnly = v;
+                      _page = 0;
+                    }),
                   ),
                 ],
               ),
@@ -142,20 +250,26 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
               Wrap(
                 spacing: 8,
                 children: [
-                  _tabChip('All (${allTickets.length})', _StatusTab.all, allTickets),
-                  _tabChip('Open (${allTickets.where((t) => t.status == TicketStatus.open).length})', _StatusTab.open, allTickets),
-                  _tabChip(
-                    'In Progress (${allTickets.where((t) => t.status == TicketStatus.inProgress).length})',
-                    _StatusTab.inProgress,
-                    allTickets,
+                  ChoiceChip(
+                    label: Text('All (${allTickets.length})'),
+                    selected: _statuses.isEmpty,
+                    showCheckmark: false,
+                    selectedColor: AppTheme.navy,
+                    labelStyle: TextStyle(
+                      color: _statuses.isEmpty ? Colors.white : AppTheme.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                    onSelected: (_) => setState(() {
+                      _statuses = {};
+                      _page = 0;
+                    }),
                   ),
-                  _tabChip('Pending (${allTickets.where((t) => _pendingStatuses.contains(t.status)).length})', _StatusTab.pending, allTickets),
-                  _tabChip(
-                    'Resolved (${allTickets.where((t) => t.status == TicketStatus.resolved).length})',
-                    _StatusTab.resolved,
-                    allTickets,
-                  ),
-                  _tabChip('Closed (${allTickets.where((t) => t.status == TicketStatus.closed).length})', _StatusTab.closed, allTickets),
+                  for (final group in _statusGroups)
+                    _statusChip(
+                      '${group.$1} (${allTickets.where((t) => group.$2.contains(t.status)).length})',
+                      group.$2,
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -173,8 +287,7 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
                           children: [
                             Expanded(
                               child: SingleChildScrollView(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
+                                child: ScrollableTable(
                                   child: DataTable(
                                     headingRowHeight: 44,
                                     dataRowMinHeight: 56,
@@ -201,7 +314,7 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
                                             Text(t.category.label),
                                           ])),
                                           DataCell(TicketPriorityChip(priority: t.priority)),
-                                          DataCell(Text(assignee?.name ?? 'Unassigned')),
+                                          DataCell(Text(assignee?.name ?? t.assignedToName ?? 'Unassigned')),
                                           DataCell(TicketStatusChip(status: t.status)),
                                           DataCell(Text(DateFormat.MMMd().add_jm().format(t.createdAt))),
                                         ],
@@ -227,19 +340,16 @@ class _DesktopTicketListScreenState extends ConsumerState<DesktopTicketListScree
     );
   }
 
-  Widget _tabChip(String label, _StatusTab tab, List<Ticket> allTickets) {
-    final selected = tab == _tab;
-    return ChoiceChip(
+  Widget _statusChip(String label, Set<TicketStatus> group) {
+    final selected = group.every(_statuses.contains);
+    return FilterChip(
       label: Text(label),
       selected: selected,
       showCheckmark: false,
       selectedColor: AppTheme.navy,
       labelStyle: TextStyle(color: selected ? Colors.white : AppTheme.ink, fontWeight: FontWeight.w600),
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-      onSelected: (_) => setState(() {
-        _tab = tab;
-        _page = 0;
-      }),
+      onSelected: (on) => _toggleGroup(group, on),
     );
   }
 }

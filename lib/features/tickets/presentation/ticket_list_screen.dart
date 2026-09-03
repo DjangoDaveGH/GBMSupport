@@ -6,8 +6,11 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
+import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/config/data/sla_providers.dart';
+import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/draft_ticket.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
@@ -42,8 +45,33 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   Set<TicketStatus> _statuses = {};
   TicketCategory? _category;
   Set<TicketPriority> _priorities = {};
+  String? _institutionId;
+  InstitutionType? _institutionType;
+  DateTime? _createdAfter;
+  DateTime? _createdBefore;
+  bool _overdueOnly = false;
 
-  bool get _hasAdvancedFilters => _category != null || _priorities.isNotEmpty;
+  bool get _hasAdvancedFilters =>
+      _category != null ||
+      _priorities.isNotEmpty ||
+      _institutionId != null ||
+      _institutionType != null ||
+      _createdAfter != null ||
+      _createdBefore != null ||
+      _overdueOnly;
+
+  /// Current filter state — re-seeds the Filters screen and drives
+  /// [TicketFilter.matchesClientSide]. Search is applied separately.
+  TicketFilter get _filter => TicketFilter(
+        statuses: _statuses,
+        category: _category,
+        priorities: _priorities,
+        institutionId: _institutionId,
+        institutionType: _institutionType,
+        createdAfter: _createdAfter,
+        createdBefore: _createdBefore,
+        overdueOnly: _overdueOnly,
+      );
 
   @override
   void dispose() {
@@ -58,15 +86,17 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   }
 
   Future<void> _openFilters() async {
-    final result = await context.push<TicketFilter>(
-      '/tickets/filters',
-      extra: TicketFilter(statuses: _statuses, category: _category, priorities: _priorities),
-    );
+    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
     if (result != null && mounted) {
       setState(() {
         _statuses = result.statuses;
         _category = result.category;
         _priorities = result.priorities;
+        _institutionId = result.institutionId;
+        _institutionType = result.institutionType;
+        _createdAfter = result.createdAfter;
+        _createdBefore = result.createdBefore;
+        _overdueOnly = result.overdueOnly;
       });
     }
   }
@@ -168,10 +198,19 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   Widget _buildDraftsAndTickets(AppUser appUser, bool isSupportSide) {
     // Fetched without a status filter so the tab chips above can show a
     // count per status; the active status set is then applied client-side.
-    // Counts are only as complete as the underlying page (ticketPageSize),
-    // same approximation the rest of this list already lives with.
+    // Uses the unbounded ticketAnalyticsProvider (not ticketListProvider,
+    // which pages at ticketPageSize) so both the tab counts and the list
+    // itself reflect every matching ticket, not just the most recent page.
+    //
+    // Only the query-backed filters go to the provider; institution / date /
+    // overdue are applied in memory below (TicketFilter.matchesClientSide) so
+    // they never change the Firestore query or its family cache key.
     final countsFilter = TicketFilter(category: _category, priorities: _priorities);
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, countsFilter)));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, countsFilter)));
+    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final institutionTypes = {
+      for (final i in [...?ref.watch(institutionListProvider).valueOrNull]) i.id: i.type,
+    };
     final draftRepo = ref.watch(draftTicketRepositoryProvider);
     final drafts = draftRepo.getAllForUser(appUser.id).where((d) => d.pendingSync).toList();
     final usersAsync = isSupportSide ? ref.watch(allUsersProvider) : null;
@@ -179,7 +218,12 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load tickets: $e')),
-      data: (allTickets) {
+      data: (rawTickets) {
+        // Narrow by the advanced filters first so the status tab counts
+        // below reflect them too.
+        final allTickets = rawTickets
+            .where((t) => _filter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+            .toList();
         final tabs = _buildTabs(allTickets);
         final tickets = allTickets
             .where((t) => _statuses.isEmpty || _statuses.contains(t.status))

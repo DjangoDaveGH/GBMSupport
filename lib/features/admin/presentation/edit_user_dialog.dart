@@ -76,9 +76,9 @@ class _EditUserDialogState extends State<_EditUserDialog> {
       await callable.call(data);
       if (mounted) Navigator.of(context).pop();
     } on FirebaseFunctionsException catch (e) {
-      setState(() => _error = e.message ?? 'Could not update user (${e.code}).');
+      if (mounted) setState(() => _error = e.message ?? 'Could not update user (${e.code}).');
     } catch (e) {
-      setState(() => _error = 'Could not update user: $e');
+      if (mounted) setState(() => _error = 'Could not update user: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -138,7 +138,13 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                 DropdownButtonFormField<UserRole>(
                   initialValue: _role,
                   decoration: const InputDecoration(labelText: 'Role'),
-                  items: UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(r.label))).toList(),
+                  // technical_lead is retired (behaves like functional_lead
+                  // now); only offer it if this user already has it, so the
+                  // dropdown's current value still resolves.
+                  items: UserRole.values
+                      .where((r) => r != UserRole.technicalLead || widget.user.role == UserRole.technicalLead)
+                      .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
+                      .toList(),
                   onChanged: _submitting ? null : (v) => setState(() => _role = v!),
                 ),
                 const SizedBox(height: 8),

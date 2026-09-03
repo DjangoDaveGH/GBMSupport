@@ -18,13 +18,24 @@ class LocalNotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
+  /// Set by PushNotificationListener — routes a tap on a foreground-shown
+  /// local notification to its ticket (FCM's own onMessageOpenedApp doesn't
+  /// fire for notifications we render ourselves).
+  static void Function(String ticketId)? onTicketTap;
+
   static const _androidChannel = AndroidNotificationChannel(
     'hyport_default',
     'Ticket & chat notifications',
     description: 'Ticket updates and chat messages',
     importance: Importance.high,
     playSound: true,
+    enableVibration: true,
   );
+
+  static void _handleResponse(NotificationResponse response) {
+    final ticketId = response.payload;
+    if (ticketId != null && ticketId.isNotEmpty) onTicketTap?.call(ticketId);
+  }
 
   static Future<void> init() async {
     if (kIsWeb || _initialized) return;
@@ -42,15 +53,24 @@ class LocalNotificationService {
 
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      onDidReceiveNotificationResponse: _handleResponse,
     );
     await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_androidChannel);
   }
 
-  static Future<void> show({required String title, required String body}) async {
+  /// [badgeCount] — the recipient's unread total, shown on the app-icon
+  /// badge (iOS natively; some Android launchers use the notification's
+  /// `number`). [ticketId] routes a tap.
+  static Future<void> show({
+    required String title,
+    required String body,
+    String? ticketId,
+    int? badgeCount,
+  }) async {
     if (kIsWeb) {
-      showWebNotification(title: title, body: body);
+      showWebNotification(title: title, body: body, ticketId: ticketId);
       return;
     }
     await _plugin.show(
@@ -65,9 +85,17 @@ class LocalNotificationService {
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
+          enableVibration: true,
+          number: badgeCount,
         ),
-        iOS: const DarwinNotificationDetails(presentSound: true, presentAlert: true, presentBadge: true),
+        iOS: DarwinNotificationDetails(
+          presentSound: true,
+          presentAlert: true,
+          presentBadge: true,
+          badgeNumber: badgeCount,
+        ),
       ),
+      payload: ticketId,
     );
   }
 }

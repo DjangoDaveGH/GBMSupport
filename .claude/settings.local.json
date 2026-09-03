@@ -15,7 +15,14 @@
       "Bash(flutter build *)",
       "Bash(npm --version)",
       "Bash(dart --version)",
-      "Bash(dart pub *)"
+      "Bash(dart pub *)",
+      "Bash(dart pub *)",
+      "Bash(firebase deploy)",
+      "Bash(firebase deploy *)",
+      "Bash(firebase.cmd deploy)",
+      "Bash(firebase.cmd deploy *)",
+      "Bash(npx firebase deploy *)",
+      "Bash(npx firebase-tools deploy *)"
     ]
   }
 }

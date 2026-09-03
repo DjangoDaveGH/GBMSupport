@@ -134,7 +134,7 @@ class _ClosedTicketsScreenState extends ConsumerState<ClosedTicketsScreen> {
 
   Widget _buildList(AppUser appUser, bool isSupportSide) {
     final filter = const TicketFilter(statuses: {TicketStatus.closed});
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, filter)));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, filter)));
     final usersAsync = isSupportSide ? ref.watch(allUsersProvider) : null;
 
     return ticketsAsync.when(

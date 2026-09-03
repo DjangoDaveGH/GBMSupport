@@ -8,6 +8,7 @@ import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
+import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
@@ -60,7 +61,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final ticketsAsync = ref.watch(ticketListProvider((appUser, const TicketFilter())));
+    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
     final usersAsync = ref.watch(allUsersProvider);
     final institutionsAsync = ref.watch(institutionListProvider);
     final articlesAsync = ref.watch(articleListProvider(null));
@@ -551,8 +552,7 @@ class _RecentTicketsTable extends StatelessWidget {
         child: Center(child: Text('No tickets yet.', style: Theme.of(context).textTheme.bodyMedium)),
       );
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return ScrollableTable(
       child: DataTable(
         headingRowHeight: 40,
         dataRowMinHeight: 52,
