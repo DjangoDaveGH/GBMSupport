@@ -55,9 +55,11 @@ class UserRepository {
     return _users.doc(uid).update({'profilePhotoUrl': photoUrl});
   }
 
-  /// Stamped once per sign-in (see app_router.dart's auth-state listener) —
-  /// a coarse, real "last seen" rather than a full presence/heartbeat
-  /// system. Powers the online/offline dot on the admin Users screen.
+  /// Called on sign-in and then every ~2 minutes for the rest of a
+  /// foregrounded session by PresenceHeartbeatListener (main.dart) — a
+  /// genuine "last seen" rather than a one-off stamp. Powers the
+  /// online/offline dot on the admin Users screen and the ticket chat
+  /// header.
   Future<void> touchLastActive(String uid) {
     return _users.doc(uid).set({
       'lastActiveAt': FieldValue.serverTimestamp(),

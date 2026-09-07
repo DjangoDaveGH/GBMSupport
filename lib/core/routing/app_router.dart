@@ -16,7 +16,6 @@ import 'package:hyport/features/auth/presentation/request_access_screen.dart';
 import 'package:hyport/features/auth/presentation/reset_password_screen.dart';
 import 'package:hyport/features/auth/presentation/splash_screen.dart';
 import 'package:hyport/features/auth/presentation/welcome_screen.dart';
-import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/admin/presentation/admin_settings_screen.dart';
 import 'package:hyport/features/admin/presentation/assignment_rules_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_settings_screen.dart';
@@ -60,13 +59,10 @@ class GoRouterRefreshNotifier extends ChangeNotifier {
 
 final _goRouterRefreshProvider = ChangeNotifierProvider<GoRouterRefreshNotifier>((ref) {
   final notifier = GoRouterRefreshNotifier();
-  ref.listen(authStateChangesProvider, (previous, next) {
-    notifier.notify();
-    final uid = next.valueOrNull?.uid;
-    if (uid != null) {
-      ref.read(userRepositoryProvider).touchLastActive(uid);
-    }
-  });
+  // touchLastActive on sign-in used to be stamped here too; it now lives
+  // solely in PresenceHeartbeatListener (main.dart), which also keeps it
+  // moving forward for the rest of the session — see its doc comment.
+  ref.listen(authStateChangesProvider, (previous, next) => notifier.notify());
   ref.listen(currentAppUserProvider, (_, _) => notifier.notify());
   return notifier;
 });

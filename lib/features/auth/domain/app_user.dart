@@ -61,9 +61,11 @@ class AppUser {
     'profilePhotoUrl': profilePhotoUrl,
   };
 
-  /// Coarse presence: "recently active" rather than a real live heartbeat
-  /// (see UserRepository.touchLastActive) — good enough for an admin list's
-  /// online/offline dot without a full presence system.
+  /// Presence: true while lastActiveAt is within the last 5 minutes.
+  /// PresenceHeartbeatListener keeps lastActiveAt moving forward every ~2
+  /// minutes for the lifetime of a foregrounded session (not just at
+  /// sign-in), so this is a genuine "online right now" rather than a
+  /// one-off sign-in stamp — see UserRepository.touchLastActive.
   bool get isRecentlyActive =>
       lastActiveAt != null &&
       DateTime.now().difference(lastActiveAt!) < const Duration(minutes: 5);
