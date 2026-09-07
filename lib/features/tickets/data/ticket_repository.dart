@@ -20,6 +20,9 @@ class TicketRepository {
   CollectionReference<Map<String, dynamic>> _activityFor(String ticketId) =>
       _tickets.doc(ticketId).collection('activity');
 
+  CollectionReference<Map<String, dynamic>> _chatReceiptsFor(String ticketId) =>
+      _tickets.doc(ticketId).collection('chatReceipts');
+
   /// Builds the base query scoped to what [viewer] is allowed to see. Per
   /// Section 3's role table, a plain MDA/MMDA User only sees tickets they
   /// personally logged; a Focal Person sees every ticket from their
@@ -308,6 +311,37 @@ class TicketRepository {
       action: TicketActivityAction.commented,
       note: note,
       attachmentUrl: attachmentUrl,
+    );
+  }
+
+  /// Live map of uid -> when that participant last viewed this ticket's
+  /// chat (tickets/{id}/chatReceipts/{uid}, written by markChatRead below).
+  /// TicketChatScreen compares the *other* participant's timestamp here
+  /// against each of your own sent messages to decide its Delivered/Read tick.
+  Stream<Map<String, DateTime>> watchChatReceipts(String ticketId) {
+    return _chatReceiptsFor(ticketId).snapshots().map((snap) {
+      final receipts = <String, DateTime>{};
+      for (final doc in snap.docs) {
+        final ts = doc.data()['lastReadAt'] as Timestamp?;
+        if (ts != null) receipts[doc.id] = ts.toDate();
+      }
+      return receipts;
+    });
+  }
+
+  /// One-off read of [uid]'s own receipt — used to capture "where they left
+  /// off" *before* markChatRead below moves it forward, so the chat screen
+  /// can still show an unread-messages divider at the right spot.
+  Future<DateTime?> getChatReceipt(String ticketId, String uid) async {
+    final doc = await _chatReceiptsFor(ticketId).doc(uid).get();
+    final ts = doc.data()?['lastReadAt'] as Timestamp?;
+    return ts?.toDate();
+  }
+
+  Future<void> markChatRead(String ticketId, String uid) {
+    return _chatReceiptsFor(ticketId).doc(uid).set(
+      {'lastReadAt': FieldValue.serverTimestamp()},
+      SetOptions(merge: true),
     );
   }
 

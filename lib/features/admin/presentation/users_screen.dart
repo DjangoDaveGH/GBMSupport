@@ -23,10 +23,11 @@ const _supportOfficerRoles = {
 const _mdaRoles = {UserRole.mdaUser, UserRole.focalPerson};
 
 /// Admin app screen 25 — PFM Management only (see adminOnlyPaths). Every
-/// count and online dot here is real: online/offline is a coarse
-/// "active within the last 5 minutes" derived from AppUser.lastActiveAt
-/// (stamped once per sign-in — see UserRepository.touchLastActive), not a
-/// live presence system.
+/// count and online dot here is real: online/offline is "active within the
+/// last 5 minutes" derived from AppUser.lastActiveAt, which
+/// PresenceHeartbeatListener keeps current for the lifetime of a
+/// foregrounded session (not just stamped once at sign-in) — see
+/// UserRepository.touchLastActive.
 class UsersScreen extends ConsumerStatefulWidget {
   const UsersScreen({super.key});
 

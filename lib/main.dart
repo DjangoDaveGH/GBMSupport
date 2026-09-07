@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hyport/core/routing/app_router.dart';
 import 'package:hyport/core/services/global_keys.dart';
 import 'package:hyport/core/services/local_notification_service.dart';
+import 'package:hyport/core/services/presence_heartbeat_listener.dart';
 import 'package:hyport/core/services/push_notification_listener.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/tickets/data/draft_ticket_repository.dart';
@@ -56,13 +57,15 @@ class HyportApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return OfflineSyncListener(
-      child: PushNotificationListener(
-        child: MaterialApp.router(
-          title: 'GBMS Support',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          scaffoldMessengerKey: scaffoldMessengerKey,
-          routerConfig: router,
+      child: PresenceHeartbeatListener(
+        child: PushNotificationListener(
+          child: MaterialApp.router(
+            title: 'GBMS Support',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            routerConfig: router,
+          ),
         ),
       ),
     );

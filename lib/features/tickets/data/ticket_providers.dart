@@ -151,3 +151,10 @@ final ticketActivityProvider =
     StreamProvider.autoDispose.family<List<TicketActivity>, String>((ref, ticketId) {
   return ref.watch(ticketRepositoryProvider).watchActivity(ticketId);
 });
+
+/// uid -> last time that participant viewed this ticket's chat. Drives the
+/// Delivered/Read ticks in TicketChatScreen.
+final chatReceiptsProvider =
+    StreamProvider.autoDispose.family<Map<String, DateTime>, String>((ref, ticketId) {
+  return ref.watch(ticketRepositoryProvider).watchChatReceipts(ticketId);
+});

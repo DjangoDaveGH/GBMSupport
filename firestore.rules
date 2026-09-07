@@ -67,6 +67,22 @@ service cloud.firestore {
       return isSignedIn() && role() in ['support_coordinator', 'pfm_management'];
     }
 
+    // Mirrors the tickets/{id}/activity read rule below exactly — anyone who
+    // can read a ticket's activity/chat trail is also who's allowed to read
+    // or write their own read receipt on it (tickets/{id}/chatReceipts/{uid}).
+    // A separate function (not a shared constant with the activity rule)
+    // because it needs the ticket doc fetched once via [ticketId], usable
+    // from chatReceipts' own match block.
+    function canViewTicketChat(ticketId) {
+      let t = get(/databases/$(database)/documents/tickets/$(ticketId)).data;
+      return canViewAllTickets()
+        || (isFunctionalLead() && t.assignedTo == request.auth.uid)
+        || (isTechnicalLead() && t.assignedTo == request.auth.uid)
+        || (isVendor() && t.assignedTo == request.auth.uid)
+        || (isFocalPerson() && t.institutionId == institutionId())
+        || (isRequesterSide() && t.createdBy == request.auth.uid);
+    }
+
     function isRequesterSide() {
       return isSignedIn() && role() in ['mda_user', 'focal_person'];
     }
@@ -227,6 +243,17 @@ service cloud.firestore {
           && request.resource.data.actorId == request.auth.uid
           && request.resource.data.ticketId == ticketId;
         allow update, delete: if false;
+      }
+
+      // ----- chat read receipts (WhatsApp-style ticks) -----
+      // One doc per participant: { lastReadAt }. Written only by that
+      // participant, for themselves, whenever they view the chat — the
+      // Delivered/Read ticks on a message you sent compare its timestamp
+      // against the *other* participant's lastReadAt here.
+      match /chatReceipts/{uid} {
+        allow read: if canViewTicketChat(ticketId);
+        allow create, update: if isSignedIn() && request.auth.uid == uid && canViewTicketChat(ticketId);
+        allow delete: if false;
       }
     }
 

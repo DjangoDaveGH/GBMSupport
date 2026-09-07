@@ -35,6 +35,49 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
   PlatformFile? _pickedImage;
   bool _sending = false;
 
+  /// Where the viewer's own read receipt stood *before* this screen marked
+  /// it forward just now — captured once, up front, so the "Unread
+  /// messages" divider still has something to compare against. Null while
+  /// still loading (no divider shown yet) or once there's nothing to mark
+  /// (e.g. viewer unknown).
+  DateTime? _readBeforeOpening;
+  bool _capturedReadBefore = false;
+  String? _lastMarkedReadForCommentId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _captureAndMarkRead());
+  }
+
+  Future<void> _captureAndMarkRead() async {
+    final viewer = ref.read(currentAppUserProvider).valueOrNull;
+    if (viewer == null) return;
+    final repo = ref.read(ticketRepositoryProvider);
+    final previous = await repo.getChatReceipt(widget.ticketId, viewer.id);
+    if (mounted) {
+      setState(() {
+        _readBeforeOpening = previous;
+        _capturedReadBefore = true;
+      });
+    }
+    await repo.markChatRead(widget.ticketId, viewer.id);
+  }
+
+  /// Called whenever the comment list changes while this screen stays open
+  /// (e.g. the other party sends a message live) — keeps the receipt moving
+  /// forward so ticks on *their* view of your messages update in real time,
+  /// without re-touching it once per rebuild for the same latest comment.
+  void _markReadIfNewComment(List<TicketActivity> comments) {
+    if (comments.isEmpty) return;
+    final latestId = comments.last.id;
+    if (latestId == _lastMarkedReadForCommentId) return;
+    _lastMarkedReadForCommentId = latestId;
+    final viewer = ref.read(currentAppUserProvider).valueOrNull;
+    if (viewer == null) return;
+    ref.read(ticketRepositoryProvider).markChatRead(widget.ticketId, viewer.id);
+  }
+
   @override
   void dispose() {
     _textController.dispose();
@@ -141,6 +184,9 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
             onPickImage: _pickImage,
             onRemoveImage: () => setState(() => _pickedImage = null),
             onSend: _send,
+            readBeforeOpening: _readBeforeOpening,
+            capturedReadBefore: _capturedReadBefore,
+            onCommentsChanged: _markReadIfNewComment,
           );
         },
       ),
@@ -158,6 +204,13 @@ class _ChatBody extends ConsumerWidget {
   final VoidCallback onPickImage;
   final VoidCallback onRemoveImage;
   final Future<void> Function(AppUser viewer) onSend;
+  /// Where the viewer's receipt stood before this screen opened — null until
+  /// [capturedReadBefore] is true, then possibly still null for a
+  /// never-before-opened chat (everything from the other party counts as
+  /// unread).
+  final DateTime? readBeforeOpening;
+  final bool capturedReadBefore;
+  final void Function(List<TicketActivity> comments) onCommentsChanged;
 
   const _ChatBody({
     required this.ticket,
@@ -169,6 +222,9 @@ class _ChatBody extends ConsumerWidget {
     required this.onPickImage,
     required this.onRemoveImage,
     required this.onSend,
+    required this.readBeforeOpening,
+    required this.capturedReadBefore,
+    required this.onCommentsChanged,
   });
 
   /// The other party in this conversation: if the viewer is the requester,
@@ -188,6 +244,8 @@ class _ChatBody extends ConsumerWidget {
         ? (ticket.assignedToName ?? 'Support agent')
         : null;
     final activityAsync = ref.watch(ticketActivityProvider(ticket.id));
+    final receipts = ref.watch(chatReceiptsProvider(ticket.id)).valueOrNull ?? const {};
+    final partnerReadAt = partnerId != null ? receipts[partnerId] : null;
 
     return Scaffold(
       // Mockup screen's chat body uses a distinct muted slate background
@@ -222,15 +280,48 @@ class _ChatBody extends ConsumerWidget {
                   if (scrollController.hasClients) {
                     scrollController.jumpTo(scrollController.position.maxScrollExtent);
                   }
+                  onCommentsChanged(comments);
                 });
+
+                // First message from the other party that arrived after
+                // where the viewer's receipt stood when this screen opened
+                // — WhatsApp-style "Unread messages" divider goes right
+                // before it. Nothing shown until the receipt read finishes
+                // (capturedReadBefore) so it never flashes in the wrong spot.
+                int? unreadDividerIndex;
+                if (capturedReadBefore) {
+                  for (var i = 0; i < comments.length; i++) {
+                    final c = comments[i];
+                    if (c.actorId != viewer.id &&
+                        (readBeforeOpening == null || c.timestamp.isAfter(readBeforeOpening!))) {
+                      unreadDividerIndex = i;
+                      break;
+                    }
+                  }
+                }
+
                 return ListView.builder(
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: comments.length,
-                  itemBuilder: (context, i) => _MessageBubble(
-                    activity: comments[i],
-                    isSelf: comments[i].actorId == viewer.id,
-                  ),
+                  itemBuilder: (context, i) {
+                    final comment = comments[i];
+                    final isSelf = comment.actorId == viewer.id;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (i == unreadDividerIndex) const _UnreadDivider(),
+                        _MessageBubble(
+                          activity: comment,
+                          isSelf: isSelf,
+                          // Ticks only mean something on your own sent
+                          // messages — WhatsApp never shows them on
+                          // incoming ones either.
+                          readByPartner: isSelf && partnerReadAt != null && !partnerReadAt.isBefore(comment.timestamp),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
             ),
@@ -340,11 +431,55 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// WhatsApp-style separator dropped in once, right before the first message
+/// from the other party that arrived since the viewer last opened this chat.
+class _UnreadDivider extends StatelessWidget {
+  const _UnreadDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(color: Colors.white54)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                'Unread messages',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+          ),
+          const Expanded(child: Divider(color: Colors.white54)),
+        ],
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final TicketActivity activity;
   final bool isSelf;
+  /// Only meaningful when [isSelf] — whether the *other* party's read
+  /// receipt has caught up to this message. Drives the Delivered (double
+  /// gray check) vs Read (double blue check) tick; incoming messages never
+  /// show a tick at all, same as WhatsApp. There's no separate "Sent"
+  /// (single check) state: addComment() awaits the Firestore write before
+  /// the message can ever render, so every bubble you see already reflects
+  /// a successful send.
+  final bool readByPartner;
 
-  const _MessageBubble({required this.activity, required this.isSelf});
+  const _MessageBubble({required this.activity, required this.isSelf, required this.readByPartner});
 
   @override
   Widget build(BuildContext context) {
@@ -398,11 +533,24 @@ class _MessageBubble extends StatelessWidget {
                     ),
               ),
             const SizedBox(height: 4),
-            Text(
-              DateFormat.jm().format(activity.timestamp),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isSelf ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.white70,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  DateFormat.jm().format(activity.timestamp),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isSelf ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.white70,
+                      ),
+                ),
+                if (isSelf) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.done_all_rounded,
+                    size: 15,
+                    color: readByPartner ? AppTheme.accentBlue : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                ],
+              ],
             ),
           ],
         ),
