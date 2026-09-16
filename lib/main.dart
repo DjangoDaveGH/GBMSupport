@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hyport/core/routing/app_router.dart';
 import 'package:hyport/core/services/global_keys.dart';
+import 'package:hyport/core/services/last_route_service.dart';
 import 'package:hyport/core/services/local_notification_service.dart';
 import 'package:hyport/core/services/presence_heartbeat_listener.dart';
 import 'package:hyport/core/services/push_notification_listener.dart';
@@ -21,6 +22,10 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await LocalNotificationService.init();
+  // Cheap disk read (unlike Hive/IndexedDB below) — safe to await before the
+  // first frame so app_router.dart's redirect can rely on it being ready by
+  // the time auth resolves, even on a very fast cached sign-in.
+  await LastRouteService.init();
   // Web's IndexedDB-backed persistence is unreliable on Safari/iOS (private
   // browsing, backgrounded tabs, and PWA+tab lock conflicts can leave the
   // IndexedDB connection hung instead of erroring), which silently stalls
