@@ -22,10 +22,6 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await LocalNotificationService.init();
-  // Cheap disk read (unlike Hive/IndexedDB below) — safe to await before the
-  // first frame so app_router.dart's redirect can rely on it being ready by
-  // the time auth resolves, even on a very fast cached sign-in.
-  await LastRouteService.init();
   // Web's IndexedDB-backed persistence is unreliable on Safari/iOS (private
   // browsing, backgrounded tabs, and PWA+tab lock conflicts can leave the
   // IndexedDB connection hung instead of erroring), which silently stalls
@@ -43,6 +39,11 @@ Future<void> main() async {
   // leave initialization pending forever, so it must never block the first
   // Flutter frame or Firebase Auth from starting.
   unawaited(_initializeLocalStorage());
+  // In practice this finishes well before app_router.dart's redirect ever
+  // checks it — Firebase Auth has to restore its own persisted session
+  // first, which is a slower disk/platform-channel round trip than this —
+  // but it must never be what the first frame waits on.
+  unawaited(_initializeLastRoute());
 }
 
 Future<void> _initializeLocalStorage() async {
@@ -51,6 +52,14 @@ Future<void> _initializeLocalStorage() async {
     await DraftTicketRepository.openBox().timeout(const Duration(seconds: 3));
   } catch (error) {
     debugPrint('Local draft storage unavailable: $error');
+  }
+}
+
+Future<void> _initializeLastRoute() async {
+  try {
+    await LastRouteService.init().timeout(const Duration(seconds: 3));
+  } catch (error) {
+    debugPrint('Last-route persistence unavailable: $error');
   }
 }
 
