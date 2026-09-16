@@ -232,6 +232,12 @@ class _ChatBody extends ConsumerWidget {
   /// the requester.
   String? get _partnerId => viewer.id == ticket.createdBy ? ticket.assignedTo : ticket.createdBy;
 
+  /// Once a ticket is resolved or closed, the conversation is over — the
+  /// requester can still Reopen from the ticket detail screen (header menu
+  /// icon) if support left something unfinished, but the chat itself stops
+  /// accepting new messages so it can't turn into an unmonitored channel.
+  bool get _chatClosed => ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final partnerId = _partnerId;
@@ -326,14 +332,17 @@ class _ChatBody extends ConsumerWidget {
               },
             ),
           ),
-          _ChatInputBar(
-            controller: textController,
-            pickedImage: pickedImage,
-            sending: sending,
-            onPickImage: onPickImage,
-            onRemoveImage: onRemoveImage,
-            onSend: () => onSend(viewer),
-          ),
+          if (_chatClosed)
+            _ChatClosedBanner(canCreateTicket: viewer.id == ticket.createdBy)
+          else
+            _ChatInputBar(
+              controller: textController,
+              pickedImage: pickedImage,
+              sending: sending,
+              onPickImage: onPickImage,
+              onRemoveImage: onRemoveImage,
+              onSend: () => onSend(viewer),
+            ),
         ],
       ),
     );
@@ -552,6 +561,63 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Replaces the input bar once [TicketChatScreen] considers the chat closed
+/// (ticket resolved/closed) — tells the requester to raise a new ticket
+/// instead of continuing an unmonitored conversation; the other party just
+/// sees that the conversation has ended.
+class _ChatClosedBanner extends StatelessWidget {
+  final bool canCreateTicket;
+
+  const _ChatClosedBanner({required this.canCreateTicket});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    canCreateTicket
+                        ? 'This ticket has been resolved and the chat is now closed. Need more help? Open a new ticket.'
+                        : 'This ticket has been resolved and the chat is now closed.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            if (canCreateTicket) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push('/tickets/new'),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Open a new ticket'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

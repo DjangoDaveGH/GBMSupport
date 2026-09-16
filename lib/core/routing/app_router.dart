@@ -5,6 +5,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/routing/app_shell.dart';
 import 'package:hyport/core/routing/desktop_shell.dart';
+import 'package:hyport/core/services/last_route_service.dart';
 import 'package:hyport/features/admin/presentation/add_user_screen.dart';
 import 'package:hyport/features/admin/presentation/announcements_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_institutions_screen.dart';
@@ -122,6 +123,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final firebaseUser = authState.valueOrNull;
       if (firebaseUser == null) {
+        // Wipe any resumable location so a later sign-in on this device
+        // (same person or someone else) never drops into a screen left over
+        // from this session.
+        LastRouteService.clear();
         return onPreAuthPath ? null : '/welcome';
       }
 
@@ -133,7 +138,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         return onPreAuthPath ? null : '/login';
       }
 
-      if (onSplash || onPreAuthPath) return '/home';
+      if (onSplash) {
+        // Landing on splash while already signed in means either the very
+        // first launch, or Android reclaimed the process in the background
+        // and this is really a cold start rather than a deliberate relaunch
+        // — those look identical to the app. Resume wherever the user last
+        // was instead of always dropping them back on the dashboard.
+        final resumed = LastRouteService.restore();
+        if (resumed != null && resumed != location && !preAuthPaths.contains(resumed)) {
+          return resumed;
+        }
+        return '/home';
+      }
+      if (onPreAuthPath) return '/home';
 
       if (supportSideOnlyPaths.any(location.startsWith) && !appUser.role.hasBackOfficeAccess) {
         return '/home';
@@ -164,6 +181,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (location == '/tickets/new' && appUser.role != UserRole.mdaUser && appUser.role != UserRole.focalPerson) {
         return '/home';
       }
+      // Reached only once this location has cleared every guard above, i.e.
+      // it's actually about to be shown — safe to remember as where to
+      // resume on the next cold start.
+      LastRouteService.save(location);
       return null;
     },
     routes: [
