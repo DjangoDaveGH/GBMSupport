@@ -49,7 +49,7 @@ class ReportsScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  onTap: () => context.push('/reports/$type', extra: label),
+                  onTap: () => context.push('/reports/$type'),
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Row(

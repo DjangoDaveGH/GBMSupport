@@ -39,10 +39,11 @@ Future<void> main() async {
   // leave initialization pending forever, so it must never block the first
   // Flutter frame or Firebase Auth from starting.
   unawaited(_initializeLocalStorage());
-  // In practice this finishes well before app_router.dart's redirect ever
-  // checks it — Firebase Auth has to restore its own persisted session
-  // first, which is a slower disk/platform-channel round trip than this —
-  // but it must never be what the first frame waits on.
+  // Kicked off here so it's usually already done by the time app_router.
+  // dart's redirect needs it, but not relied on for that — the redirect
+  // awaits LastRouteService.ensureInitialized() itself before resuming on
+  // splash, so a slow disk/first run can't silently fall back to /home.
+  // Must never be what the first frame waits on, hence unawaited here.
   unawaited(_initializeLastRoute());
 }
 
@@ -55,13 +56,7 @@ Future<void> _initializeLocalStorage() async {
   }
 }
 
-Future<void> _initializeLastRoute() async {
-  try {
-    await LastRouteService.init().timeout(const Duration(seconds: 3));
-  } catch (error) {
-    debugPrint('Last-route persistence unavailable: $error');
-  }
-}
+Future<void> _initializeLastRoute() => LastRouteService.ensureInitialized();
 
 class HyportApp extends ConsumerWidget {
   const HyportApp({super.key});

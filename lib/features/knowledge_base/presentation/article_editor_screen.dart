@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
 import 'package:hyport/features/knowledge_base/domain/knowledge_article.dart';
 import 'package:uuid/uuid.dart';
@@ -56,7 +56,7 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
         status: status,
       );
       await ref.read(knowledgeBaseRepositoryProvider).create(article);
-      if (mounted) context.pop();
+      if (mounted) context.popOrGo('/knowledge-base');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/offline/connectivity_provider.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/tickets/data/draft_ticket.dart';
@@ -96,6 +97,21 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   void _back() {
     if (_step > 0) setState(() => _step--);
+  }
+
+  /// Back to a blank wizard from the "Ticket Created" screen. Re-pushing
+  /// /tickets/new wouldn't do it — same location, same page key, so the
+  /// existing State (and its submitted screen) would just be kept.
+  void _startAnother() {
+    _descriptionController.clear();
+    setState(() {
+      _step = 0;
+      _category = null;
+      _affectsMultipleUsers = false;
+      _attachments.clear();
+      _submitting = false;
+      _submittedTicket = null;
+    });
   }
 
   // The optimized flow's Step 1 (mockup) shows an explicit "Next" button
@@ -191,7 +207,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(message)));
-          context.pop();
+          context.popOrGo('/tickets');
         }
       }
     } catch (e) {
@@ -225,7 +241,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     final isOnline = ref.watch(isOnlineProvider).valueOrNull ?? true;
 
     if (_submittedTicket != null) {
-      return _TicketSubmittedScreen(ticket: _submittedTicket!);
+      return _TicketSubmittedScreen(ticket: _submittedTicket!, onCreateAnother: _startAnother);
     }
 
     return Scaffold(
@@ -233,7 +249,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
         title: const Text('Create New Ticket'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/home'),
         ),
       ),
       // Centered/width-capped rather than stretched full-width — this wizard
@@ -315,8 +331,9 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
 class _TicketSubmittedScreen extends StatefulWidget {
   final Ticket ticket;
+  final VoidCallback onCreateAnother;
 
-  const _TicketSubmittedScreen({required this.ticket});
+  const _TicketSubmittedScreen({required this.ticket, required this.onCreateAnother});
 
   @override
   State<_TicketSubmittedScreen> createState() => _TicketSubmittedScreenState();
@@ -328,8 +345,15 @@ class _TicketSubmittedScreenState extends State<_TicketSubmittedScreen> {
   @override
   void initState() {
     super.initState();
-    _autoCloseTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) context.go('/home');
+    // Dismisses back to wherever "New Ticket" was opened from (Tickets tab,
+    // Home, wherever) rather than forcing the dashboard specifically —
+    // context.go('/home') here used to unconditionally jump every user to
+    // the dashboard after 3s regardless of where they started, which read
+    // as the app randomly kicking them out mid-flow if they didn't tap one
+    // of the two buttons below in time. A longer delay also gives more
+    // time to actually read the confirmation before it goes away on its own.
+    _autoCloseTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) context.popOrGo('/tickets');
     });
   }
 
@@ -379,7 +403,10 @@ class _TicketSubmittedScreenState extends State<_TicketSubmittedScreen> {
                 child: FilledButton(
                   onPressed: () {
                     _autoCloseTimer?.cancel();
-                    context.push('/tickets/${widget.ticket.id}');
+                    // Replace the wizard rather than stacking on it, so back
+                    // from the ticket returns to where "New Ticket" was
+                    // opened, not to this (now timer-less) success screen.
+                    context.pushReplacement('/tickets/${widget.ticket.id}');
                   },
                   child: const Text('View My Ticket'),
                 ),
@@ -387,7 +414,7 @@ class _TicketSubmittedScreenState extends State<_TicketSubmittedScreen> {
               TextButton(
                 onPressed: () {
                   _autoCloseTimer?.cancel();
-                  context.go('/tickets');
+                  widget.onCreateAnother();
                 },
                 child: const Text('Create Another Ticket'),
               ),

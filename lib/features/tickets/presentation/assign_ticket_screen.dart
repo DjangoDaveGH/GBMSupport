@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
@@ -55,7 +55,7 @@ class _AssignTicketScreenState extends ConsumerState<AssignTicketScreen> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ticket assigned.')));
-        context.pop();
+        context.popOrGo('/tickets/${widget.ticketId}');
       }
     } catch (e) {
       if (mounted) {

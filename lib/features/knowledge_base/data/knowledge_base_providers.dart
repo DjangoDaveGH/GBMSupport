@@ -10,10 +10,17 @@ final knowledgeBaseRepositoryProvider = Provider<KnowledgeBaseRepository>((ref) 
 
 // autoDispose: see the comment on ticketDetailProvider — same class of bug
 // (a listener keyed independent of viewer identity outlives its creator's
-// session otherwise).
+// session otherwise). Keyed on (category, canEdit) rather than just
+// category — canEdit decides whether the query can even ask for
+// unpublished articles at all (see watchAll's publishedOnly doc comment),
+// not just how the result is displayed.
+typedef ArticleListQuery = ({TicketCategory? category, bool canEdit});
+
 final articleListProvider =
-    StreamProvider.autoDispose.family<List<KnowledgeArticle>, TicketCategory?>((ref, category) {
-  return ref.watch(knowledgeBaseRepositoryProvider).watchAll(category: category);
+    StreamProvider.autoDispose.family<List<KnowledgeArticle>, ArticleListQuery>((ref, query) {
+  return ref
+      .watch(knowledgeBaseRepositoryProvider)
+      .watchAll(category: query.category, publishedOnly: !query.canEdit);
 });
 
 final articleDetailProvider = StreamProvider.autoDispose.family<KnowledgeArticle?, String>((ref, articleId) {

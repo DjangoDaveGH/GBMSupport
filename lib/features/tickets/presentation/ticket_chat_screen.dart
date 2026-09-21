@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
@@ -122,6 +123,20 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
         // ticket attachments elsewhere in this app.
         attachmentFailed = true;
       }
+    }
+
+    // An image-only message (no caption) whose upload just failed has
+    // nothing left to send — posting anyway would write a real, permanent,
+    // content-less chat bubble with no indication a picture was ever
+    // intended. Bail out and let the user retry instead.
+    if (attachmentFailed && text.isEmpty) {
+      if (mounted) {
+        setState(() => _sending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not attach the image (attachment storage isn't available yet). Add a caption or try again.")),
+        );
+      }
+      return;
     }
 
     try {
@@ -372,7 +387,7 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded),
-        onPressed: () => context.pop(),
+        onPressed: () => context.popOrGo('/tickets'),
       ),
       title: Row(
         children: [

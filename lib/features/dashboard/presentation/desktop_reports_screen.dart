@@ -135,7 +135,7 @@ class _ReportCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => context.push('/reports/$type', extra: title),
+              onPressed: () => context.push('/reports/$type'),
               child: const Text('Generate'),
             ),
           ),

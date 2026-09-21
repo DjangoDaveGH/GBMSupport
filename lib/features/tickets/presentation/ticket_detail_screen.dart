@@ -456,7 +456,6 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
               if (requireNote && noteController.text.trim().isEmpty) return;
               await ref.read(ticketRepositoryProvider).changeStatus(
                     ticketId: ticket.id,
-                    from: ticket.status,
                     to: newStatus,
                     actorId: viewer.id,
                     note: noteController.text.trim(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
@@ -78,7 +79,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
         children: [
           Row(
             children: [
-              TextButton(onPressed: () => context.pop(), child: const Text('← Tickets')),
+              TextButton(onPressed: () => context.popOrGo('/tickets'), child: const Text('← Tickets')),
               Text(' / #${ticket.ticketReference}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
               const Spacer(),
               // Plain FilledButton/FilledButton.icon silently fails to paint
@@ -175,7 +176,12 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
             onTap: () => _showReopenDialog(context, ticket, viewer),
             child: const Text('Reopen'),
           ),
-        PopupMenuItem(onTap: () => _showCommentDialog(context, ticket, viewer), child: const Text('Add Chat Message')),
+        // Mirrors TicketChatScreen's _chatClosed: once resolved/closed, the
+        // chat stops accepting new messages from either side — otherwise a
+        // desktop agent could post into a conversation the requester was
+        // just told had ended.
+        if (ticket.status != TicketStatus.resolved && ticket.status != TicketStatus.closed)
+          PopupMenuItem(onTap: () => _showCommentDialog(context, ticket, viewer), child: const Text('Add Chat Message')),
       ],
     );
   }
@@ -212,7 +218,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
   Future<void> _changeStatus(Ticket ticket, AppUser viewer, TicketStatus status) {
     return ref.read(ticketRepositoryProvider).changeStatus(
           ticketId: ticket.id,
-          from: ticket.status,
           to: status,
           actorId: viewer.id,
         );
@@ -282,7 +287,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               if (noteController.text.trim().isEmpty) return;
               await ref.read(ticketRepositoryProvider).changeStatus(
                     ticketId: ticket.id,
-                    from: ticket.status,
                     to: TicketStatus.resolved,
                     actorId: viewer.id,
                     note: noteController.text.trim(),
@@ -387,34 +391,50 @@ class _MainColumn extends ConsumerWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: noteController,
-                    decoration: const InputDecoration(hintText: 'Add internal note...'),
+          // This composer writes a plain TicketActivity comment — the same
+          // feed rendered to the requester in _ConversationView/the mobile
+          // chat screen, not a private note and not a status change. Locked
+          // once resolved/closed, mirroring TicketChatScreen's _chatClosed
+          // so this screen can't be used to post into a conversation the
+          // requester was told had ended.
+          if (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+              child: Text(
+                'This ticket is ${ticket.status == TicketStatus.closed ? 'closed' : 'resolved'} — chat is now closed.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: noteController,
+                      decoration: const InputDecoration(hintText: 'Add chat message...'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: () async {
-                    final viewer = ref.read(currentAppUserProvider).valueOrNull;
-                    if (viewer == null || noteController.text.trim().isEmpty) return;
-                    await ref.read(ticketRepositoryProvider).addComment(
-                          ticketId: ticket.id,
-                          actorId: viewer.id,
-                          note: noteController.text.trim(),
-                        );
-                    noteController.clear();
-                  },
-                  child: const Text('Update Status'),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  FilledButton(
+                    onPressed: () async {
+                      final viewer = ref.read(currentAppUserProvider).valueOrNull;
+                      if (viewer == null || noteController.text.trim().isEmpty) return;
+                      await ref.read(ticketRepositoryProvider).addComment(
+                            ticketId: ticket.id,
+                            actorId: viewer.id,
+                            note: noteController.text.trim(),
+                          );
+                      noteController.clear();
+                    },
+                    child: const Text('Send'),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

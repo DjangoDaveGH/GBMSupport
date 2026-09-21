@@ -772,7 +772,7 @@ class _SupportHome extends ConsumerWidget {
     final allUsers = hasBackOfficeAccess ? ref.watch(allUsersProvider).valueOrNull ?? const <AppUser>[] : const <AppUser>[];
     final activeUserCount = allUsers.where((u) => u.isActive).length;
     final institutionCount = ref.watch(institutionListProvider).valueOrNull?.length ?? 0;
-    final articleCount = ref.watch(articleListProvider(null)).valueOrNull?.length ?? 0;
+    final articleCount = ref.watch(articleListProvider((category: null, canEdit: hasBackOfficeAccess))).valueOrNull?.length ?? 0;
     final recentAdminActions = hasBackOfficeAccess
         ? ref.watch(adminActionsAuditLogProvider).valueOrNull?.take(5).toList() ?? const <AuditLog>[]
         : const <AuditLog>[];
