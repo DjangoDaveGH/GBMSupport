@@ -106,6 +106,18 @@ List<ReportSectionData> monthlyTrendReportData(List<Ticket> tickets) {
   ];
 }
 
+/// Every valid `/reports/:type` and its title. The one place a report type
+/// gets its name — the route derives the title from this rather than trusting
+/// a label passed as `extra` (lost on resume/deep link, and mobile vs.
+/// desktop used to pass different wording for the same report).
+const reportTypeLabels = {
+  'summary': 'Tickets Summary Report',
+  'sla': 'SLA Compliance Report',
+  'officer_performance': 'Officer Performance Report',
+  'category_breakdown': 'Category Breakdown',
+  'monthly_trend': 'Monthly Trend Report',
+};
+
 List<ReportSectionData> reportSectionDataFor(
   String reportType,
   List<Ticket> tickets,

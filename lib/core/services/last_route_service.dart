@@ -17,23 +17,44 @@ class LastRouteService {
   /// fine to reopen directly; the redirect's own role checks still run
   /// against the restored location before it's granted, in case the
   /// account's access changed while the app was gone.
-  static const _excludedPrefixes = [
+  ///
+  /// Exact paths, not prefixes: '/tickets/:id' shares a first segment with
+  /// these, and a Firestore auto-ID can start with any letters — a prefix
+  /// match would silently stop remembering a ticket whose id begins "new…".
+  static const _excludedPaths = {
     '/tickets/new',
     '/tickets/filters',
     '/tickets/closed',
     '/knowledge-base/new',
     '/admin/users/new',
-  ];
+  };
   static const _excludedSuffixes = ['/assign'];
 
   static SharedPreferences? _prefs;
+  static Future<void>? _initFuture;
 
-  static Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+  /// Kicked off unawaited from main() so it never blocks the first frame —
+  /// but app_router.dart's redirect must still be able to wait for it
+  /// specifically at the one moment it actually needs the result (resuming
+  /// on splash), rather than silently treating "not ready yet" the same as
+  /// "nothing saved" and falling back to /home. Safe to call from both
+  /// places: the second caller just awaits the same in-flight future.
+  static Future<void> ensureInitialized() {
+    return _initFuture ??= _init();
+  }
+
+  static Future<void> _init() async {
+    try {
+      _prefs = await SharedPreferences.getInstance().timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Bounded wait: a hung/unavailable SharedPreferences must never hang
+      // the router's redirect forever. restore() below just returns null
+      // (same as "nothing saved yet") if this never populates _prefs.
+    }
   }
 
   static void save(String location) {
-    if (_excludedPrefixes.any(location.startsWith)) return;
+    if (_excludedPaths.contains(location)) return;
     if (_excludedSuffixes.any(location.endsWith)) return;
     _prefs?.setString(_key, location);
   }

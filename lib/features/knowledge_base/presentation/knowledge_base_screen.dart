@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
@@ -56,9 +57,9 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final articlesAsync = ref.watch(articleListProvider(_category));
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     final canEdit = appUser?.role.hasBackOfficeAccess ?? false;
+    final articlesAsync = ref.watch(articleListProvider((category: _category, canEdit: canEdit)));
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -67,7 +68,7 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.popOrGo('/home'),
         ),
         centerTitle: true,
         title: Text(

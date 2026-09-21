@@ -297,7 +297,7 @@ class _TopBar extends StatelessWidget {
           const Spacer(),
           const PwaInstallButton(compact: true),
           IconButton(
-            onPressed: () => context.push('/notifications'),
+            onPressed: () => context.go('/notifications'),
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -321,7 +321,7 @@ class _TopBar extends StatelessWidget {
           const SizedBox(width: 8),
           InkWell(
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            onTap: () => context.push('/profile'),
+            onTap: () => context.go('/profile'),
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: CircleAvatar(

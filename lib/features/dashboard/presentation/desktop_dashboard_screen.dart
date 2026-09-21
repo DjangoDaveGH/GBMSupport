@@ -64,7 +64,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
     final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
     final usersAsync = ref.watch(allUsersProvider);
     final institutionsAsync = ref.watch(institutionListProvider);
-    final articlesAsync = ref.watch(articleListProvider(null));
+    final articlesAsync = ref.watch(articleListProvider((category: null, canEdit: appUser.role.hasBackOfficeAccess)));
     final adminActionsAsync = ref.watch(adminActionsAuditLogProvider);
 
     return ticketsAsync.when(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
@@ -100,18 +101,23 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
   }
 
   void _apply() {
-    context.pop(
-      TicketFilter(
-        statuses: _statuses,
-        category: _category,
-        priorities: _priorities,
-        institutionId: _institutionId,
-        institutionType: _institutionType,
-        createdAfter: _createdAfter,
-        createdBefore: _createdBefore,
-        overdueOnly: _overdueOnly,
-      ),
+    final filter = TicketFilter(
+      statuses: _statuses,
+      category: _category,
+      priorities: _priorities,
+      institutionId: _institutionId,
+      institutionType: _institutionType,
+      createdAfter: _createdAfter,
+      createdBefore: _createdBefore,
+      overdueOnly: _overdueOnly,
     );
+    // Normally pushed for a result (Ticket Queue / Analytics / Reports); with
+    // nothing beneath to receive one (direct URL), apply it to the queue instead.
+    if (context.canPop()) {
+      context.pop(filter);
+    } else {
+      context.go('/tickets', extra: filter);
+    }
   }
 
   @override
@@ -127,7 +133,7 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
         title: const Text('Filters'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/tickets'),
         ),
       ),
       body: Center(

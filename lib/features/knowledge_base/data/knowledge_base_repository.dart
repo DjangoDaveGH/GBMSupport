@@ -9,8 +9,17 @@ class KnowledgeBaseRepository {
 
   CollectionReference<Map<String, dynamic>> get _articles => _db.collection('knowledge_articles');
 
-  Stream<List<KnowledgeArticle>> watchAll({TicketCategory? category}) {
+  /// [publishedOnly] must be true for any non-editor caller: firestore.rules
+  /// restricts knowledge_articles reads to published-only for non-support
+  /// roles, and a collection query has to be provably scoped to satisfy
+  /// that server-side (an unscoped query would just fail with
+  /// permission-denied) — this also means drafts are never downloaded to a
+  /// requester's client at all, not just hidden client-side afterward.
+  Stream<List<KnowledgeArticle>> watchAll({TicketCategory? category, bool publishedOnly = false}) {
     Query<Map<String, dynamic>> query = _articles;
+    if (publishedOnly) {
+      query = query.where('status', isEqualTo: ArticleStatus.published.wireValue);
+    }
     if (category != null) {
       query = query.where('category', isEqualTo: category.wireValue);
     }

@@ -36,8 +36,8 @@ class _DesktopKnowledgeBaseScreenState extends ConsumerState<DesktopKnowledgeBas
   Widget build(BuildContext context) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     final canEdit = appUser?.role.hasBackOfficeAccess ?? false;
-    final allArticlesAsync = ref.watch(articleListProvider(null));
-    final scopedArticlesAsync = ref.watch(articleListProvider(_category));
+    final allArticlesAsync = ref.watch(articleListProvider((category: null, canEdit: canEdit)));
+    final scopedArticlesAsync = ref.watch(articleListProvider((category: _category, canEdit: canEdit)));
 
     return Padding(
       padding: const EdgeInsets.all(24),

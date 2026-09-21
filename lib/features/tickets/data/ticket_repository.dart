@@ -219,6 +219,12 @@ class TicketRepository {
       'assignedTo': assigneeId,
       'status': TicketStatus.assigned.wireValue,
       'updatedAt': FieldValue.serverTimestamp(),
+      // Reassigning a ticket back out of 'resolved' must clear its
+      // resolution stamp too (same as reopen()) — otherwise it reads as
+      // simultaneously "assigned" (open workload) and "resolved" (SLA
+      // compliance / resolution-time reports), double-counting it in both.
+      'resolvedAt': null,
+      'resolutionNotes': null,
     });
 
     final activityRef = _activityFor(ticketId).doc();
@@ -236,37 +242,46 @@ class TicketRepository {
     await batch.commit();
   }
 
+  /// The activity log's `fromValue` is read from the server inside this
+  /// transaction, not passed in by the caller — the caller's local `ticket`
+  /// object can be stale (a concurrent edit, a flaky connection), which
+  /// would otherwise record a wrong "Status changed: X -> Y" audit entry
+  /// even though the actual status write is correct.
   Future<void> changeStatus({
     required String ticketId,
-    required TicketStatus from,
     required TicketStatus to,
     required String actorId,
     String? note,
   }) async {
-    final batch = _db.batch();
-    final updates = <String, dynamic>{
-      'status': to.wireValue,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
-    if (note != null && note.isNotEmpty) updates['resolutionNotes'] = note;
-    batch.update(_tickets.doc(ticketId), updates);
-
+    final ticketRef = _tickets.doc(ticketId);
     final activityRef = _activityFor(ticketId).doc();
-    batch.set(activityRef, {
-      ...TicketActivity(
-        id: activityRef.id,
-        ticketId: ticketId,
-        actorId: actorId,
-        action: TicketActivityAction.statusChanged,
-        fromValue: from.wireValue,
-        toValue: to.wireValue,
-        note: note,
-        timestamp: DateTime.now(),
-      ).toMap(),
-      'timestamp': FieldValue.serverTimestamp(),
+
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ticketRef);
+      final from = TicketStatus.fromWire(snap.data()?['status'] as String? ?? '');
+
+      final updates = <String, dynamic>{
+        'status': to.wireValue,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
+      if (note != null && note.isNotEmpty) updates['resolutionNotes'] = note;
+      tx.update(ticketRef, updates);
+
+      tx.set(activityRef, {
+        ...TicketActivity(
+          id: activityRef.id,
+          ticketId: ticketId,
+          actorId: actorId,
+          action: TicketActivityAction.statusChanged,
+          fromValue: from.wireValue,
+          toValue: to.wireValue,
+          note: note,
+          timestamp: DateTime.now(),
+        ).toMap(),
+        'timestamp': FieldValue.serverTimestamp(),
+      });
     });
-    await batch.commit();
   }
 
   Future<void> escalate({
@@ -282,6 +297,11 @@ class TicketRepository {
       'assignedTo': assigneeId,
       'status': TicketStatus.escalated.wireValue,
       'updatedAt': FieldValue.serverTimestamp(),
+      // Same reasoning as assignTicket(): escalating a resolved ticket back
+      // into play must clear its resolution stamp so it stops double
+      // counting as both "escalated" and "resolved" at once.
+      'resolvedAt': null,
+      'resolutionNotes': null,
     });
     final activityRef = _activityFor(ticketId).doc();
     batch.set(activityRef, {
