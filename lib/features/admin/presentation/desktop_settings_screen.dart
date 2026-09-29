@@ -170,6 +170,7 @@ class _GeneralSettingsPanelState extends ConsumerState<_GeneralSettingsPanel> {
       return;
     }
 
+    if (!mounted) return;
     setState(() => _uploadingLogo = true);
     try {
       final extension = file.extension?.toLowerCase();

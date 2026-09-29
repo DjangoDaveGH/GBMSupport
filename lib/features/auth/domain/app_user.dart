@@ -34,7 +34,7 @@ class AppUser {
       name: map['name'] as String? ?? '',
       email: map['email'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
-      role: UserRole.fromWire(map['role'] as String),
+      role: UserRole.fromWire(map['role'] as String? ?? ''),
       institutionId: map['institutionId'] as String? ?? '',
       institutionType: InstitutionType.fromWire(
         map['institutionType'] as String? ?? 'MDA',

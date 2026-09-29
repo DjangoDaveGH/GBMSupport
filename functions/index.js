@@ -301,6 +301,15 @@ exports.adminResetTwoFactor = onCall(async (request) => {
 async function notifyUser({userId, type, message, ticketId, title = "Hyperion Support"}) {
   const db = admin.firestore();
 
+  // Ticket-lifecycle triggers (onTicketCreated/onTicketUpdated/etc.) call
+  // this directly with createdBy/assignedTo and, unlike notifyUsersWithRole
+  // and adminBroadcastNotification's audience queries, had no isActive
+  // check — a deactivated account (can no longer sign in) would otherwise
+  // keep accumulating in-app notifications and FCM pushes about a ticket
+  // until it's reassigned. Checked once here so every caller gets it.
+  const userDoc = await db.collection("users").doc(userId).get();
+  if (userDoc.data()?.isActive === false) return;
+
   await db.collection("notifications").add({
     userId,
     title,
@@ -324,8 +333,12 @@ async function notifyUser({userId, type, message, ticketId, title = "Hyperion Su
     console.error(`unread count failed for ${userId}:`, error);
   }
 
-  const userDoc = await db.collection("users").doc(userId).get();
-  const tokens = userDoc.data()?.fcmTokens || [];
+  // fcmTokens is owner-writable with no array/type constraint in
+  // firestore.rules, so it isn't guaranteed to be an array here — guard
+  // against a malformed value failing loudly (or silently iterating
+  // garbage) instead of just wasting an FCM call.
+  const rawTokens = userDoc.data()?.fcmTokens;
+  const tokens = Array.isArray(rawTokens) ? rawTokens : [];
   if (tokens.length === 0) return;
 
   const link = ticketId ?
@@ -486,7 +499,7 @@ exports.adminBroadcastNotification = onCall(
       const db = admin.firestore();
       const snap = await db.collection("users").where("isActive", "==", true).get();
       const userIds = snap.docs
-          .filter((d) => matchesBroadcastAudience(d.data(), audience))
+          .filter((d) => d.id !== request.auth.uid && matchesBroadcastAudience(d.data(), audience))
           .map((d) => d.id);
 
       const CONCURRENCY = 25;
@@ -556,31 +569,38 @@ async function autoAssignTicket(ticketId, ticket) {
   }
   if (candidateIds.length === 0) return false;
 
-  // Fewest open assigned tickets, then longest-idle.
-  const [openCounts, stateDocs] = await Promise.all([
-    Promise.all(candidateIds.map(async (uid) => {
-      const agg = await db.collection("tickets")
-          .where("assignedTo", "==", uid)
-          .where("status", "in", openStatuses)
-          .count().get();
-      return {uid, open: agg.data().count};
-    })),
-    db.getAll(...candidateIds.map((id) => db.collection("assignment_state").doc(id))),
-  ]);
-
-  const lastAssignedAt = {};
-  for (const d of stateDocs) {
-    lastAssignedAt[d.id] = d.exists && d.data().lastAssignedAt ? d.data().lastAssignedAt.toMillis() : 0;
-  }
-  openCounts.sort((a, b) => a.open - b.open || lastAssignedAt[a.uid] - lastAssignedAt[b.uid]);
-  const winner = openCounts[0].uid;
-
   // Assign in a transaction so a manual assign landing at the same moment
-  // isn't clobbered.
+  // isn't clobbered. Fewest-open-tickets selection is read INSIDE this
+  // transaction (not before it) so Firestore's optimistic concurrency
+  // control can catch two tickets racing to pick the same "least loaded"
+  // candidate: if a concurrent transaction assigns to our winner first
+  // (changing the very count() this transaction read), this transaction's
+  // commit fails on contention and the SDK automatically retries the
+  // whole function with fresh counts — instead of both tickets silently
+  // landing on the same agent while an actually-idle one gets neither.
+  let winner;
   const assignedByUs = await db.runTransaction(async (tx) => {
     const tRef = db.collection("tickets").doc(ticketId);
     const tSnap = await tx.get(tRef);
     if (!tSnap.exists || tSnap.data().assignedTo) return false;
+
+    const [openCounts, stateDocs] = await Promise.all([
+      Promise.all(candidateIds.map(async (uid) => {
+        const agg = await tx.get(db.collection("tickets")
+            .where("assignedTo", "==", uid)
+            .where("status", "in", openStatuses)
+            .count());
+        return {uid, open: agg.data().count};
+      })),
+      Promise.all(candidateIds.map((id) => tx.get(db.collection("assignment_state").doc(id)))),
+    ]);
+
+    const lastAssignedAt = {};
+    for (const d of stateDocs) {
+      lastAssignedAt[d.id] = d.exists && d.data().lastAssignedAt ? d.data().lastAssignedAt.toMillis() : 0;
+    }
+    openCounts.sort((a, b) => a.open - b.open || lastAssignedAt[a.uid] - lastAssignedAt[b.uid]);
+    winner = openCounts[0].uid;
 
     tx.update(tRef, {
       assignedTo: winner,
@@ -786,6 +806,21 @@ exports.onTicketActivityCreated = onDocumentCreated(
           message: `New message on ticket ${ticket.ticketReference}.`,
           ticketId,
         });
+
+        // Sent/Delivered/Read tick in TicketChatScreen: this trigger having
+        // run for [userId] is the best available proxy for "reached their
+        // device" without an actual client-side delivery ack — there's no
+        // separate check for isActive/fcmTokens here (unlike notifyUser
+        // above) since even a token-less recipient will still receive this
+        // via their own live Firestore listener next time they're online.
+        try {
+          await admin.firestore()
+              .collection("tickets").doc(ticketId)
+              .collection("chatReceipts").doc(userId)
+              .set({lastDeliveredAt: admin.firestore.FieldValue.serverTimestamp()}, {merge: true});
+        } catch (error) {
+          console.error(`chat delivered-receipt failed for ${userId} on ${ticketId}:`, error);
+        }
       }
     },
 );

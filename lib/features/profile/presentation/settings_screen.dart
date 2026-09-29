@@ -69,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => ref.read(authServiceProvider).signOut(),
+              onPressed: () => signOutAndCleanup(ref),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
                 side: BorderSide(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.4)),

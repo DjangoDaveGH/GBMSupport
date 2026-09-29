@@ -12,9 +12,13 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // Must match firestore.rules' isSupportSide() exactly — vendor_support
+    // is deliberately excluded there (vendors only see tickets explicitly
+    // escalated to them), and attachment/report access here is meant to
+    // approximate that same boundary, not grant vendors a wider one.
     function isSupportSide() {
       return isSignedIn() && request.auth.token.role in [
-        'support_coordinator', 'functional_lead', 'technical_lead', 'pfm_management', 'vendor_support'
+        'support_coordinator', 'functional_lead', 'technical_lead', 'pfm_management'
       ];
     }
 
@@ -22,6 +26,22 @@ service firebase.storage {
       allow read: if isSignedIn() && (request.auth.uid == uploaderUid || isSupportSide());
       allow write: if isSignedIn() && request.auth.uid == uploaderUid
         && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if false;
+    }
+
+    // Ticket chat image attachments (TicketChatScreen), at
+    // chat/{uploaderUid}/{filename} — same uid/support-side approximation as
+    // attachments above. In practice the Firestore activity doc's own read
+    // rules (canViewTicketChat) are what actually gate which participants
+    // ever see a given attachmentUrl at all; the download-token URL those
+    // participants then load bypasses these Storage rules entirely, same as
+    // any Firebase Storage download URL. This block only needs to exist so
+    // the upload itself isn't denied by the default no-match deny.
+    match /chat/{uploaderUid}/{fileName} {
+      allow read: if isSignedIn() && (request.auth.uid == uploaderUid || isSupportSide());
+      allow write: if isSignedIn() && request.auth.uid == uploaderUid
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
       allow delete: if false;
     }
 

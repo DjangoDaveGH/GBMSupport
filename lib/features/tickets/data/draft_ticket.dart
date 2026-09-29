@@ -22,6 +22,12 @@ class DraftTicket {
   final bool affectsMultipleUsers;
   final DateTime createdAt;
   final bool pendingSync;
+  // Set once createTicket() succeeds during sync, before the local record
+  // is deleted — if the app dies between those two steps, the next sync
+  // sees this already populated and just finishes the cleanup (deletes the
+  // draft) instead of calling createTicket() again and creating a
+  // duplicate ticket.
+  final String? submittedTicketId;
 
   const DraftTicket({
     required this.localId,
@@ -37,6 +43,7 @@ class DraftTicket {
     this.affectsMultipleUsers = false,
     required this.createdAt,
     this.pendingSync = true,
+    this.submittedTicketId,
   });
 
   factory DraftTicket.fromMap(Map<dynamic, dynamic> map) {
@@ -54,8 +61,26 @@ class DraftTicket {
       affectsMultipleUsers: map['affectsMultipleUsers'] as bool? ?? false,
       createdAt: DateTime.parse(map['createdAt'] as String),
       pendingSync: map['pendingSync'] as bool? ?? true,
+      submittedTicketId: map['submittedTicketId'] as String?,
     );
   }
+
+  DraftTicket copyWith({bool? pendingSync, String? submittedTicketId}) => DraftTicket(
+        localId: localId,
+        createdBy: createdBy,
+        institutionId: institutionId,
+        category: category,
+        subCategory: subCategory,
+        title: title,
+        description: description,
+        localAttachmentPaths: localAttachmentPaths,
+        priority: priority,
+        impact: impact,
+        affectsMultipleUsers: affectsMultipleUsers,
+        createdAt: createdAt,
+        pendingSync: pendingSync ?? this.pendingSync,
+        submittedTicketId: submittedTicketId ?? this.submittedTicketId,
+      );
 
   Map<String, dynamic> toMap() => {
         'localId': localId,
@@ -71,5 +96,6 @@ class DraftTicket {
         'affectsMultipleUsers': affectsMultipleUsers,
         'createdAt': createdAt.toIso8601String(),
         'pendingSync': pendingSync,
+        'submittedTicketId': submittedTicketId,
       };
 }

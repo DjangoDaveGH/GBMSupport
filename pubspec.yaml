@@ -73,9 +73,23 @@ dependencies:
   # Attachments
   file_picker: ^8.1.4
 
+  # Camera capture for chat image attachments (file_picker's system file
+  # browser doesn't reliably surface a "take photo" option on Android/iOS)
+  image_picker: ^1.1.2
+
   # Report PDF export
   pdf: ^3.11.1
   url_launcher: ^6.3.1
+
+  # In-app preview for ticket attachments (attachment_viewer_screen.dart):
+  # PDFs via pdfx, pinch-zoomable images via photo_view (already pulled in
+  # transitively by pdfx, promoted to direct since we use it ourselves).
+  pdfx: ^2.11.0
+  photo_view: ^0.15.0
+
+  # Downloading/saving ticket attachments to the device (attachment_viewer_screen.dart)
+  share_plus: ^12.0.2
+  http: ^1.2.0
 
   # Utilities
   intl: ^0.19.0

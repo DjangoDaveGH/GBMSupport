@@ -1,0 +1,2582 @@
+[
+  {
+    "id": "ablekuma-central-municipal",
+    "name": "Ablekuma Central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ablekuma-north-municipal",
+    "name": "Ablekuma North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ablekuma-west-municipal",
+    "name": "Ablekuma West Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "abuakwa-north-municipal",
+    "name": "Abuakwa North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "abuakwa-south-municipal",
+    "name": "Abuakwa South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "abura-asebu-kwamankese-district",
+    "name": "Abura/Asebu/Kwamankese District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "accra-metro",
+    "name": "Accra Metropolitan Assembly",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "accra-metropolis",
+    "name": "Accra Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "accra-psychiatric-hospital",
+    "name": "Accra Psychiatric Hospital",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "achiase-district",
+    "name": "Achiase District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ada-east-district",
+    "name": "Ada East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ada-west-district",
+    "name": "Ada West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "adaklu-district",
+    "name": "Adaklu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "adansi-north-district",
+    "name": "Adansi North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "adenta-municipal",
+    "name": "Adenta Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "afadzato-south-district",
+    "name": "Afadzato South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "agona-east-district",
+    "name": "Agona East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "agona-west-district",
+    "name": "Agona West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "agortime-ziope-district",
+    "name": "Agortime Ziope District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ahafo-rba",
+    "name": "Ahafo RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ahanta-west-municipal",
+    "name": "Ahanta West Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ahmadiyya-muslim-health-service-ghana",
+    "name": "Ahmadiyya Muslim Health Service Ghana",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ajumanku-enyan-essiam-district",
+    "name": "Ajumanku/Enyan/Essiam District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "akatsi-north-district",
+    "name": "Akatsi North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "akatsi-south-district",
+    "name": "Akatsi South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "akuapem-south-district",
+    "name": "Akuapem South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "akwapim-north-district",
+    "name": "Akwapim North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "akyemansa-district",
+    "name": "Akyemansa District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "allied-health-professions-council",
+    "name": "Allied Health Professions Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "amansie-central-district",
+    "name": "Amansie Central District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "amansie-west-district",
+    "name": "Amansie West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "amenfi-central-district",
+    "name": "Amenfi Central District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "anloga-district",
+    "name": "Anloga District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "aowin-municipal",
+    "name": "Aowin Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asante-akim-central-municipal",
+    "name": "Asante Akim Central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asante-akim-north-district",
+    "name": "Asante Akim North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asante-akim-south-district",
+    "name": "Asante Akim South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asene-manso-district",
+    "name": "Asene Manso District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ashaiman-municipal",
+    "name": "Ashaiman Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ashanti-arba",
+    "name": "Ashanti ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ashanti-rba",
+    "name": "Ashanti RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ashanti-regional-coordinating-council",
+    "name": "Ashanti Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asikuma-odoben-brakwa-breman",
+    "name": "Asikuma/Odoben /Brakwa/Breman",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asokore-mampong-municipal",
+    "name": "Asokore Mampong Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asokwa-municipal",
+    "name": "Asokwa Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "assin-fosu-municipal",
+    "name": "Assin Fosu Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "assin-north-district",
+    "name": "Assin North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "assin-south-district",
+    "name": "Assin South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "assit-rba",
+    "name": "Assit RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asunafo-north-municipal",
+    "name": "Asunafo North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asunafo-south-district",
+    "name": "Asunafo South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asuogyaman-district",
+    "name": "Asuogyaman District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asutifi-district",
+    "name": "Asutifi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "asutifi-south-district",
+    "name": "Asutifi South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atiwa-east-district",
+    "name": "Atiwa East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atiwa-west-district",
+    "name": "Atiwa West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atwima-kwanwoma-district",
+    "name": "Atwima Kwanwoma District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atwima-mponua-district",
+    "name": "Atwima Mponua District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atwima-nwabiagya-district",
+    "name": "Atwima Nwabiagya District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "atwima-nwabiagya-north-district",
+    "name": "Atwima Nwabiagya North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "audit-service",
+    "name": "Audit Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "awutu-senya-district",
+    "name": "Awutu Senya District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "awutu-senya-east-municipal",
+    "name": "Awutu Senya East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ayawaso-central-municipal",
+    "name": "Ayawaso Central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ayawaso-east-municipal",
+    "name": "Ayawaso East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ayawaso-north-municipal",
+    "name": "Ayawaso North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ayawaso-west-municipal",
+    "name": "Ayawaso West Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ayensuano-district",
+    "name": "Ayensuano District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "banda-district",
+    "name": "Banda District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bawku-municipal",
+    "name": "Bawku Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bawku-west-district",
+    "name": "Bawku West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bekwai-municipal",
+    "name": "Bekwai Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "berekum-east-municipal",
+    "name": "Berekum East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "berekum-west-district",
+    "name": "Berekum West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bia-east-district",
+    "name": "Bia East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bia-west-district",
+    "name": "Bia West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "biakoye-district",
+    "name": "Biakoye District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bibiani-anhwiaso-bekwai-municipal",
+    "name": "Bibiani-Anhwiaso Bekwai Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "binduri-district",
+    "name": "Binduri District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "birim-central-municipal",
+    "name": "Birim Central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "birim-north-district",
+    "name": "Birim North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "birim-south-district",
+    "name": "Birim South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "births-and-deaths-registry",
+    "name": "Births and Deaths Registry",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bodi-district",
+    "name": "Bodi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bole-district",
+    "name": "Bole District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bolgatanga-east-district",
+    "name": "Bolgatanga East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bolgatanga-municipal",
+    "name": "Bolgatanga Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bongo-district",
+    "name": "Bongo District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bono-rba",
+    "name": "Bono RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bono-regional-coordinating-council",
+    "name": "Bono Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bosumtwi-district",
+    "name": "Bosumtwi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "builsa-north-district",
+    "name": "Builsa North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "builsa-south-district",
+    "name": "Builsa South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bunkpurugu-nakpanduri-district",
+    "name": "Bunkpurugu Nakpanduri District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bureau-of-ghana-languages",
+    "name": "Bureau of Ghana Languages",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "bureau-of-national-investigations-bni",
+    "name": "Bureau of National Investigations (BNI)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "cape-coast-metropolis",
+    "name": "Cape Coast Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "central-regional-coordinating-council",
+    "name": "Central Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "central-tongu-district",
+    "name": "Central Tongu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "centre-for-national-distance-learning-and-open-schooling-cendlos",
+    "name": "Centre for National Distance Learning and Open Schooling (CENDLOS)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "centre-for-plant-medicine-research",
+    "name": "Centre for Plant Medicine Research",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "chereponi-district",
+    "name": "Chereponi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "christ-the-teacher-college-of-education",
+    "name": "Christ the Teacher College of Education",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "christian-health-association-of-ghana",
+    "name": "Christian Health Association of Ghana",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "commission-on-human-rights-and-administrative-justice",
+    "name": "Commission on Human Rights and Administrative Justice",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "community-22-polyclinic-ashaiman",
+    "name": "Community 22 Polyclinic, Ashaiman",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "community-water-and-sanitation-agency",
+    "name": "Community Water and Sanitation Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "complementary-education-agency",
+    "name": "Complementary Education Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "controller-and-accountant-general-s-department",
+    "name": "Controller and Accountant General's Department",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "council-for-scientific-and-industrial-research-csir",
+    "name": "Council for Scientific and Industrial Research (CSIR)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "council-of-state",
+    "name": "Council of State",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "creative-arts-agency",
+    "name": "Creative Arts Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "cyber-security-authority",
+    "name": "Cyber Security Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "data-protection-commission",
+    "name": "Data Protection Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "denkyembuor-district",
+    "name": "Denkyembuor District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-co-operatives",
+    "name": "Department of Co-operatives",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-community-development",
+    "name": "Department of Community Development",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-factories-inspectorate",
+    "name": "Department of Factories Inspectorate",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-feeder-roads",
+    "name": "Department of Feeder Roads",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-parks-and-gardens",
+    "name": "Department of Parks and Gardens",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-rural-housing",
+    "name": "Department of Rural Housing",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-social-welfare",
+    "name": "Department of Social Welfare",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "department-of-urban-roads",
+    "name": "Department of Urban Roads",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "diaspora-affairs-office",
+    "name": "Diaspora Affairs Office",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "district-assemblies-common-fund",
+    "name": "District Assemblies Common Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "dormaa-central-municipal",
+    "name": "Dormaa Central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "dormaa-east-district",
+    "name": "Dormaa East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "dormaa-west-district",
+    "name": "Dormaa West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "east-gonja-municipal",
+    "name": "East Gonja Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "eastern-arba",
+    "name": "Eastern ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "eastern-rba",
+    "name": "Eastern RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "eastern-regional-coordinating-council",
+    "name": "Eastern Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "effia-kwesimintsim-municipal",
+    "name": "Effia Kwesimintsim Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "effutu-municipal",
+    "name": "Effutu Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ejisu-municipal",
+    "name": "Ejisu Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ejura-sekyeredumasi-district",
+    "name": "Ejura Sekyeredumasi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ekumfi-district",
+    "name": "Ekumfi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "electoral-commission",
+    "name": "Electoral Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "electrical-and-electronic-waste-management-fund",
+    "name": "Electrical and Electronic Waste Management Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ellembelle-district",
+    "name": "Ellembelle District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "energy-commission",
+    "name": "Energy Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "environmental-protection-agency",
+    "name": "Environmental Protection Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "fair-wages-and-salaries-commission",
+    "name": "Fair Wages and Salaries Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "fanteakwa-north-district",
+    "name": "Fanteakwa North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "fanteakwa-south-district",
+    "name": "Fanteakwa South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "fisheries-commission",
+    "name": "Fisheries Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "forestry-commission",
+    "name": "Forestry Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ga-central-municipal",
+    "name": "Ga central Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ga-east-municipal",
+    "name": "Ga East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ga-north-municipal",
+    "name": "Ga North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ga-south-municipal",
+    "name": "Ga South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ga-west-municipal",
+    "name": "Ga West Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gaming-commission",
+    "name": "Gaming Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "garu-district",
+    "name": "Garu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-atomic-energy-commission",
+    "name": "Ghana Atomic Energy Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-book-development-council",
+    "name": "Ghana Book Development Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-boundary-commission",
+    "name": "Ghana Boundary Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-broadcasting-corporation",
+    "name": "Ghana Broadcasting Corporation",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-co-operative-college",
+    "name": "Ghana Co-operative College",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-commission-for-unesco",
+    "name": "Ghana Commission for UNESCO",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-domain-name-registry",
+    "name": "Ghana Domain Name Registry",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-education-service",
+    "name": "Ghana Education Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-enterprises-agency",
+    "name": "Ghana Enterprises Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-export-promotion-authority",
+    "name": "Ghana Export Promotion Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-free-zones-authority",
+    "name": "Ghana Free Zones Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-geological-survey-authority",
+    "name": "Ghana Geological Survey Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-health-service",
+    "name": "Ghana Health Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-health-service-achimota-hospital",
+    "name": "Ghana Health Service - Achimota Hospital",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-highway-authority",
+    "name": "Ghana Highway Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-hydrological-authority",
+    "name": "Ghana Hydrological Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-immigration-service",
+    "name": "Ghana Immigration Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-india-kofi-annan-centre-of-excellence-in-ict-gi-kace",
+    "name": "Ghana-India Kofi Annan Centre of Excellence in ICT (GI-KACE)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-integrated-aluminium-development-corporation-giadec",
+    "name": "Ghana Integrated Aluminium Development Corporation (GIADEC)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-international-trade-commission",
+    "name": "Ghana International Trade Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-investment-promotion-authority",
+    "name": "Ghana Investment Promotion Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-irrigation-development-authority",
+    "name": "Ghana Irrigation Development Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-meteorological-agency",
+    "name": "Ghana Meteorological Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-museums-and-monuments-board",
+    "name": "Ghana Museums and Monuments Board",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-muslim-mission-college-of-education",
+    "name": "Ghana Muslim Mission College of Education",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-national-fire-service",
+    "name": "Ghana National Fire Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-national-research-fund",
+    "name": "Ghana National Research Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-news-agency",
+    "name": "Ghana News Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-police-service",
+    "name": "Ghana Police Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-prisons-service",
+    "name": "Ghana Prisons Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-refugee-board",
+    "name": "Ghana Refugee Board",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-scholarships-authority",
+    "name": "Ghana Scholarships Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-school-of-survey-and-mapping",
+    "name": "Ghana School of Survey and Mapping",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-standards-authority",
+    "name": "Ghana Standards Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-statistical-service",
+    "name": "Ghana Statistical Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-tertiary-education-commission-gtec",
+    "name": "Ghana Tertiary Education Commission (GTEC)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-tourism-authority",
+    "name": "Ghana Tourism Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ghana-tvet-service",
+    "name": "Ghana TVET Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gomoa-central",
+    "name": "Gomoa Central",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gomoa-east-district",
+    "name": "Gomoa East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gomoa-west-district",
+    "name": "Gomoa West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gonja-central-district",
+    "name": "Gonja Central District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "government-secretarial-school",
+    "name": "Government Secretarial School",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gratis-foundation",
+    "name": "GRATIS Foundation",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "greater-accra-regional-coordinating-council",
+    "name": "Greater Accra Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "guan-district",
+    "name": "Guan District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "gushiegu-municipal",
+    "name": "Gushiegu Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "hemang-lower-denkyira-district",
+    "name": "Hemang Lower Denkyira District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ho-municipal",
+    "name": "Ho Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ho-west-district",
+    "name": "Ho West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "hohoe-municipal",
+    "name": "Hohoe Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "information-services-department",
+    "name": "Information Services Department",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "institute-of-accountancy-training",
+    "name": "Institute of Accountancy Training",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "internal-audit-agency",
+    "name": "Internal Audit Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "jaman-north-district",
+    "name": "Jaman North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "jaman-south-municipal",
+    "name": "Jaman South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "jasikan-district",
+    "name": "Jasikan District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "jomoro-municipal",
+    "name": "Jomoro Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "juaboso-district",
+    "name": "Juaboso District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "judicial-service",
+    "name": "Judicial Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kadjebi-district",
+    "name": "Kadjebi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "karaga-district",
+    "name": "Karaga District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kasena-nankana-east-municipal",
+    "name": "Kasena Nankana East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kasena-nankana-west-district",
+    "name": "Kasena Nankana West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "keta-municipal",
+    "name": "Keta Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ketu-north-municipal",
+    "name": "Ketu North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ketu-south-municipal",
+    "name": "Ketu South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "komenda-edina-eguafo-abrim-municipal",
+    "name": "Komenda/Edina/Eguafo/Abrim Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "korle-bu-teaching-hospital",
+    "name": "Korle Bu Teaching Hospital",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "korle-klottey-municipal",
+    "name": "Korle Klottey Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kpandai-district-assembly",
+    "name": "Kpandai District assembly",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kpando-municipal",
+    "name": "Kpando Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kpone-katamanso-municipal",
+    "name": "Kpone Katamanso Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "krachi-east-municipal",
+    "name": "Krachi East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "krachi-nchumuru-district",
+    "name": "Krachi Nchumuru District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "krachi-west-district",
+    "name": "Krachi West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "krowor-municipal",
+    "name": "Krowor Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kumasi-metropolis",
+    "name": "Kumasi - Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kumbungu-district",
+    "name": "Kumbungu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwabre-east-district",
+    "name": "Kwabre East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwadaso-municipal",
+    "name": "Kwadaso Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwaebibirem-district",
+    "name": "Kwaebibirem District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwahu-afram-plains-north-district",
+    "name": "Kwahu Afram Plains North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwahu-afram-plains-south-district",
+    "name": "Kwahu Afram Plains South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwahu-east-district",
+    "name": "Kwahu East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwahu-south-district",
+    "name": "Kwahu South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwahu-west-district",
+    "name": "Kwahu West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwame-nkrumah-memorial-park",
+    "name": "Kwame Nkrumah Memorial Park",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "kwsebibirem-district",
+    "name": "Kwsebibirem District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "la-dade-kotopon-municipal",
+    "name": "La Dade-kotopon Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "la-nkwantanang-municipal",
+    "name": "La Nkwantanang Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "labour-department",
+    "name": "Labour Department",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "lands-commission",
+    "name": "Lands Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ledzokuku-municipal",
+    "name": "Ledzokuku Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "legal-aid-commission",
+    "name": "Legal Aid Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "lower-manya-krobo-district",
+    "name": "Lower Manya Krobo District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "luspa-mlgcra",
+    "name": "LUSPA/MLGCRA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mampong-municipal",
+    "name": "Mampong Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mamprugu-moagduri-district",
+    "name": "Mamprugu Moagduri District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mamprusi-east-municipal",
+    "name": "Mamprusi East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "management-development-and-productivity-institute",
+    "name": "Management Development and Productivity Institute",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mental-health-authority",
+    "name": "Mental Health Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mfantsiman-municipal",
+    "name": "Mfantsiman Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "microfinance-and-small-loans-centre-masloc",
+    "name": "Microfinance and Small Loans Centre (MASLOC)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "millennium-development-authority-mida",
+    "name": "Millennium Development Authority (MiDA)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "minerals-commission",
+    "name": "Minerals Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-communication-and-decentralization",
+    "name": "Ministry of Communication and Decentralization",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-communications-digital-technology-and-innovations",
+    "name": "Ministry of Communications, Digital Technology and Innovations",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-defence",
+    "name": "Ministry of Defence",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-education",
+    "name": "Ministry of Education",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-employment-and-labour-relations",
+    "type": "MDA",
+    "focalPersonIds": [],
+    "name": "Ministry of Labour, Jobs and Employment"
+  },
+  {
+    "id": "ministry-of-energy",
+    "name": "Ministry of Energy",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-energy-and-green-transition",
+    "name": "Ministry of Energy and Green Transition",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-environment-science-technology-and-innovation",
+    "name": "Ministry of Environment, Science Technology and Innovation",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-finance",
+    "name": "Ministry of Finance",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-fisheries-aqua-culture-development",
+    "name": "Ministry of Fisheries &Aqua-Culture Development",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-food-and-agriculture",
+    "name": "Ministry of Food and Agriculture",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-foreign-affairs-and-regional-integration",
+    "name": "Ministry of Foreign Affairs and Regional Integration",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-gender-children-and-social-protection",
+    "name": "Ministry of Gender, Children and Social Protection",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-health",
+    "name": "Ministry of Health",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-lands-and-natural-resources",
+    "name": "Ministry of Lands and Natural Resources",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-local-government",
+    "type": "MDA",
+    "focalPersonIds": [],
+    "name": "Ministry of Local Government, Chieftaincy and Religious Affairs"
+  },
+  {
+    "id": "ministry-of-roads-and-highways",
+    "name": "Ministry of Roads and Highways",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-sports-and-recreation",
+    "name": "Ministry of Sports and Recreation",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-the-interior",
+    "name": "Ministry of the Interior",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-tourism-culture-and-creative-arts",
+    "name": "Ministry of Tourism, Culture and Creative Arts",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-trade-and-industry",
+    "type": "MDA",
+    "focalPersonIds": [],
+    "name": "Ministry of Trade, Agribusiness and Industry"
+  },
+  {
+    "id": "ministry-of-transport",
+    "name": "Ministry of Transport",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-works-and-housing",
+    "name": "Ministry of Works and Housing",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-youth-and-sports",
+    "name": "Ministry of Youth and Sports",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ministry-of-youth-development-and-empowerment",
+    "name": "Ministry of Youth Development and Empowerment",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mion-district",
+    "name": "Mion District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "mpohor-district",
+    "name": "Mpohor District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nabdam-district",
+    "name": "Nabdam District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nanton-district",
+    "name": "Nanton District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nanumba-north-municipal",
+    "name": "Nanumba North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nanumba-south-district",
+    "name": "Nanumba South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "narcotics-control-commission",
+    "name": "Narcotics Control Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-biosafety-authority",
+    "name": "National Biosafety Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-commission-on-civic-education",
+    "name": "National Commission on Civic Education",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-commission-on-culture",
+    "name": "National Commission on Culture",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-commission-on-small-arms-and-light-weapons",
+    "name": "National Commission on Small Arms and Light Weapons",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-communications-authority-nca",
+    "name": "National Communications Authority (NCA)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-council-for-curriculum-and-assessment",
+    "name": "National Council for Curriculum and Assessment",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-council-on-persons-with-disability",
+    "name": "National Council on Persons with Disability",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-development-planning-commission",
+    "name": "National Development Planning Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-disaster-management-organisation-nadmo",
+    "name": "National Disaster Management Organisation (NADMO)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-film-authority",
+    "name": "National Film Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-folklore-board",
+    "name": "National Folklore Board",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-health-fund",
+    "name": "National Health Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-health-insurance-authority-nhia",
+    "name": "National Health Insurance Authority (NHIA)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-identification-authority",
+    "name": "National Identification Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-information-technology-agency",
+    "name": "National Information Technology Agency",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-labour-commission",
+    "name": "National Labour Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-media-commission",
+    "name": "National Media Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-peace-council",
+    "name": "National Peace Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-population-council",
+    "name": "National Population Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-premix-fuel-secretariat",
+    "name": "National Premix Fuel Secretariat",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-road-safety-authority",
+    "name": "National Road Safety Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-schools-inspectorate-authority",
+    "name": "National Schools Inspectorate Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-security-council-secretariat",
+    "name": "National Security Council Secretariat",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-sports-authority",
+    "name": "National Sports Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-sports-college-winneba",
+    "name": "National Sports College, Winneba",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-teaching-council",
+    "name": "National Teaching Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-theatre-of-ghana",
+    "name": "National Theatre of Ghana",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "national-youth-authority",
+    "name": "National Youth Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nba",
+    "name": "NBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ncce",
+    "name": "NCCE",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "new-juaben-north-municipal",
+    "name": "New Juaben North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "new-juaben-south-municipal",
+    "name": "New Juaben South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "ningo-district",
+    "name": "Ningo District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nkwanta-north-district",
+    "name": "Nkwanta North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nkwanta-south-municipal",
+    "name": "Nkwanta South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "north-dayi-district",
+    "name": "North Dayi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "north-east-gonja-district",
+    "name": "North East Gonja District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "north-gonja-district",
+    "name": "North Gonja District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "north-tongu-district",
+    "name": "North Tongu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "northern-arba",
+    "name": "Northern ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "northern-development-authority",
+    "name": "Northern Development Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "northern-rba",
+    "name": "Northern RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "northern-regional-coordinating-council",
+    "name": "Northern Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nsawam-adoagyiri-municipal",
+    "name": "Nsawam Adoagyiri Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nuclear-regulatory-authority",
+    "name": "Nuclear Regulatory Authority",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nursing-and-midwifery-council",
+    "name": "Nursing and Midwifery Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "nzema-east-municipal",
+    "name": "Nzema East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "obuasi-east-district",
+    "name": "Obuasi East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "obuasi-municipal",
+    "name": "Obuasi Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-government-machinery",
+    "name": "Office of Government Machinery",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-administrator-general",
+    "name": "Office of the Administrator-General",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-attorney-general-and-ministry-of-justice",
+    "name": "Office of the Attorney General and Ministry of Justice",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-head-of-civil-service",
+    "name": "Office of the Head of Civil Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-head-of-local-government-service",
+    "name": "Office of the Head of Local Government Service",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-president",
+    "name": "Office of the President",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-registrar-of-companies",
+    "name": "Office of the Registrar of Companies",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "office-of-the-special-prosecutor",
+    "name": "Office of The Special Prosecutor",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "offinso-municipal",
+    "name": "Offinso Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "offinso-north-district",
+    "name": "Offinso North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "oforikrom-municipal",
+    "name": "Oforikrom Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "okaikwei-north-municipal",
+    "name": "Okaikwei North Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "okere-district",
+    "name": "Okere District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "old-tafo-municipal",
+    "name": "Old Tafo Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "parliament-of-ghana",
+    "name": "Parliament of Ghana",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "pfm-systems",
+    "name": "PFM-Systems Division (Ministry of Finance)",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "postal-and-courier-services-regulatory-commission",
+    "name": "Postal and Courier Services Regulatory Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "prestea-huni-valley-municipal",
+    "name": "Prestea-Huni-Valley Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "public-sector-reform-secretariat",
+    "name": "Public Sector Reform Secretariat",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "public-services-commission",
+    "name": "Public Services Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "pusiga-district",
+    "name": "Pusiga District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "rba",
+    "name": "RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "right-to-information-commission",
+    "name": "Right to Information Commission",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "road-maintenance-trust-fund",
+    "name": "Road Maintenance Trust Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "saboba-district",
+    "name": "Saboba District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sagnerigu-municipal",
+    "name": "Sagnerigu Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "savannah-arba",
+    "name": "Savannah ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "savannah-rba",
+    "name": "Savannah RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "savannah-regional-coordinating-council",
+    "name": "Savannah Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "savelugu-district",
+    "name": "Savelugu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sawla-tuna-kalba-district",
+    "name": "Sawla Tuna Kalba District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sefwi-akontombra-district",
+    "name": "Sefwi Akontombra District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sefwi-wiawso-municipal",
+    "name": "Sefwi Wiawso Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekondi-takoradi-metropolis",
+    "name": "Sekondi Takoradi Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekyere-afram-plains-district",
+    "name": "Sekyere Afram Plains District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekyere-central-district",
+    "name": "Sekyere Central District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekyere-east-district",
+    "name": "Sekyere East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekyere-kumawu-district",
+    "name": "Sekyere Kumawu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sekyere-south-district",
+    "name": "Sekyere South District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "shai-osudoku-district",
+    "name": "Shai-Osudoku District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "shama-district",
+    "name": "Shama District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "south-dayi-district",
+    "name": "South Dayi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "south-tongu-district",
+    "name": "South Tongu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "suaman-district",
+    "name": "Suaman District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "suame-municipal",
+    "name": "Suame Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "suhum-district",
+    "name": "Suhum District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sunyani-municipal",
+    "name": "Sunyani Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "sunyani-west-district",
+    "name": "Sunyani West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tain-district",
+    "name": "Tain District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "talensi-district",
+    "name": "Talensi District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tamale-metropolis",
+    "name": "Tamale Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tano-north-district",
+    "name": "Tano North District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tano-south-municipal",
+    "name": "Tano South Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tarkwa-nsuaem-municipal",
+    "name": "Tarkwa Nsuaem Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tatale-sanguli-district",
+    "name": "Tatale Sanguli District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tema-metropolis",
+    "name": "Tema Metropolis",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tema-west-municipal",
+    "name": "Tema West Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tempane-district",
+    "name": "Tempane District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "tolon-district",
+    "name": "Tolon District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "twifo-ati-morkwa-district",
+    "name": "Twifo Ati Morkwa District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "university-of-engineering-and-agricultural-sciences",
+    "name": "University of Engineering and Agricultural Sciences",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-denkyira-east-municipal",
+    "name": "Upper Denkyira East Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-denkyira-west-district",
+    "name": "Upper Denkyira West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-east-assit-rba",
+    "name": "Upper East Assit RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-east-rba",
+    "name": "Upper East RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-east-regional-coordinating-council",
+    "name": "Upper East Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-manya-krobo-district",
+    "name": "Upper Manya Krobo District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "upper-west-akyem-district",
+    "name": "Upper West Akyem District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "volta-rba",
+    "name": "Volta RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "volta-regional-coordinating-council",
+    "name": "Volta Regional Coordinating Council",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "wassa-amenfi-east-district",
+    "name": "Wassa Amenfi East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "wassa-amenfi-west-district",
+    "name": "Wassa Amenfi West District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "wassa-east-district",
+    "name": "Wassa East District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "weija-gbawe-municipal",
+    "name": "Weija (Gbawe) Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "weija-gbawe-municipal-hospital",
+    "name": "Weija-Gbawe Municipal Hospital",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "wenchi-municipal",
+    "name": "Wenchi Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "west-akim-municipal",
+    "name": "West Akim Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "west-gonja-district",
+    "name": "West Gonja District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "west-mamprusi-municipal-assembly",
+    "name": "West Mamprusi Municipal Assembly",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "western-arba",
+    "name": "Western ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "western-north-arba",
+    "name": "Western North ARBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "western-north-rba",
+    "name": "Western North RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "western-rba",
+    "name": "Western RBA",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "yendi-municipal",
+    "name": "Yendi Municipal",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "yilo-krobo-district",
+    "name": "Yilo Krobo District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "yunyoo-nasuan-district",
+    "name": "Yunyoo Nasuan District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "zabzugu-district",
+    "name": "Zabzugu District",
+    "type": "MMDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "zongo-and-inner-city-development-secretariat",
+    "name": "Zongo and Inner-City Development Secretariat",
+    "type": "MDA",
+    "focalPersonIds": []
+  },
+  {
+    "id": "zongo-development-fund",
+    "name": "Zongo Development Fund",
+    "type": "MDA",
+    "focalPersonIds": []
+  }
+]
