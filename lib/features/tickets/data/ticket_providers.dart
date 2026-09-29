@@ -5,6 +5,7 @@ import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/draft_ticket_repository.dart';
 import 'package:hyport/features/tickets/data/ticket_repository.dart';
+import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
@@ -152,9 +153,9 @@ final ticketActivityProvider =
   return ref.watch(ticketRepositoryProvider).watchActivity(ticketId);
 });
 
-/// uid -> last time that participant viewed this ticket's chat. Drives the
-/// Delivered/Read ticks in TicketChatScreen.
+/// uid -> that participant's delivery/read state on this ticket's chat.
+/// Drives the Sent/Delivered/Read ticks in TicketChatScreen.
 final chatReceiptsProvider =
-    StreamProvider.autoDispose.family<Map<String, DateTime>, String>((ref, ticketId) {
+    StreamProvider.autoDispose.family<Map<String, ChatReceipt>, String>((ref, ticketId) {
   return ref.watch(ticketRepositoryProvider).watchChatReceipts(ticketId);
 });

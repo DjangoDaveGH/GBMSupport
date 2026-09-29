@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/routing/safe_pop.dart';
@@ -12,6 +14,7 @@ import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
+import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 import 'package:intl/intl.dart';
@@ -86,13 +89,32 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      withData: true,
-    );
-    if (result != null && result.files.isNotEmpty && mounted) {
-      setState(() => _pickedImage = result.files.first);
+  Future<void> _takePhoto() => _selectImage(ImageSource.camera);
+
+  Future<void> _uploadMedia() => _selectImage(ImageSource.gallery);
+
+  /// Opens the native picker directly for the requested action. Keeping the
+  /// camera and gallery actions separate is important on web and mobile:
+  /// neither platform guarantees that a secondary "take photo" option is
+  /// exposed by a generic file-picker dialog.
+  Future<void> _selectImage(ImageSource source) async {
+    try {
+      final xFile = await ImagePicker().pickImage(source: source, imageQuality: 85);
+      if (xFile == null) return;
+      final bytes = await xFile.readAsBytes();
+      if (!mounted) return;
+      setState(() => _pickedImage = PlatformFile(name: xFile.name, size: bytes.length, bytes: bytes));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            source == ImageSource.camera
+                ? 'Could not open the camera. Check camera permission and try again.'
+                : 'Could not open your media library. Check permission and try again.',
+          ),
+        ),
+      );
     }
   }
 
@@ -103,8 +125,28 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     final storageRef = storage.ref(
       'chat/$userId/${DateTime.now().millisecondsSinceEpoch}_${file.name}',
     );
-    final snapshot = await storageRef.putData(file.bytes!);
+    // storage.rules requires an image/* contentType on this path — putData
+    // leaves it unset otherwise, which the rule would then reject outright.
+    final snapshot = await storageRef.putData(
+      file.bytes!,
+      SettableMetadata(contentType: _imageContentType(file.name)),
+    );
     return snapshot.ref.getDownloadURL();
+  }
+
+  String _imageContentType(String fileName) {
+    switch (fileName.toLowerCase().split('.').last) {
+      case 'png':
+        return 'image/png';
+      case 'heic':
+        return 'image/heic';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg';
+    }
   }
 
   Future<void> _send(AppUser viewer) async {
@@ -196,7 +238,8 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
             scrollController: _scrollController,
             pickedImage: _pickedImage,
             sending: _sending,
-            onPickImage: _pickImage,
+            onTakePhoto: _takePhoto,
+            onUploadMedia: _uploadMedia,
             onRemoveImage: () => setState(() => _pickedImage = null),
             onSend: _send,
             readBeforeOpening: _readBeforeOpening,
@@ -216,7 +259,8 @@ class _ChatBody extends ConsumerWidget {
   final ScrollController scrollController;
   final PlatformFile? pickedImage;
   final bool sending;
-  final VoidCallback onPickImage;
+  final VoidCallback onTakePhoto;
+  final VoidCallback onUploadMedia;
   final VoidCallback onRemoveImage;
   final Future<void> Function(AppUser viewer) onSend;
   /// Where the viewer's receipt stood before this screen opened — null until
@@ -234,7 +278,8 @@ class _ChatBody extends ConsumerWidget {
     required this.scrollController,
     required this.pickedImage,
     required this.sending,
-    required this.onPickImage,
+    required this.onTakePhoto,
+    required this.onUploadMedia,
     required this.onRemoveImage,
     required this.onSend,
     required this.readBeforeOpening,
@@ -253,6 +298,16 @@ class _ChatBody extends ConsumerWidget {
   /// accepting new messages so it can't turn into an unmonitored channel.
   bool get _chatClosed => ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed;
 
+  /// Sent/Delivered/Read for one of *your own* messages, from the partner's
+  /// receipt on this chat — Read implies Delivered, so it's checked first.
+  _MessageStatus _statusFor(TicketActivity comment, ChatReceipt? partnerReceipt) {
+    final readAt = partnerReceipt?.lastReadAt;
+    if (readAt != null && !readAt.isBefore(comment.timestamp)) return _MessageStatus.read;
+    final deliveredAt = partnerReceipt?.lastDeliveredAt;
+    if (deliveredAt != null && !deliveredAt.isBefore(comment.timestamp)) return _MessageStatus.delivered;
+    return _MessageStatus.sent;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final partnerId = _partnerId;
@@ -266,7 +321,7 @@ class _ChatBody extends ConsumerWidget {
         : null;
     final activityAsync = ref.watch(ticketActivityProvider(ticket.id));
     final receipts = ref.watch(chatReceiptsProvider(ticket.id)).valueOrNull ?? const {};
-    final partnerReadAt = partnerId != null ? receipts[partnerId] : null;
+    final partnerReceipt = partnerId != null ? receipts[partnerId] : null;
 
     return Scaffold(
       // Mockup screen's chat body uses a distinct muted slate background
@@ -338,7 +393,7 @@ class _ChatBody extends ConsumerWidget {
                           // Ticks only mean something on your own sent
                           // messages — WhatsApp never shows them on
                           // incoming ones either.
-                          readByPartner: isSelf && partnerReadAt != null && !partnerReadAt.isBefore(comment.timestamp),
+                          status: isSelf ? _statusFor(comment, partnerReceipt) : null,
                         ),
                       ],
                     );
@@ -354,7 +409,8 @@ class _ChatBody extends ConsumerWidget {
               controller: textController,
               pickedImage: pickedImage,
               sending: sending,
-              onPickImage: onPickImage,
+              onTakePhoto: onTakePhoto,
+              onUploadMedia: onUploadMedia,
               onRemoveImage: onRemoveImage,
               onSend: () => onSend(viewer),
             ),
@@ -491,19 +547,22 @@ class _UnreadDivider extends StatelessWidget {
   }
 }
 
+/// WhatsApp-style tri-state tick for one of *your own* sent messages.
+/// [delivered] is set server-side (onTicketActivityCreated Cloud Function)
+/// the moment it's processed the message for the partner — the best proxy
+/// available for "reached their device" without a client-side delivery ack.
+/// [read] is set by the partner's own client when they actually view the
+/// chat and implies delivered.
+enum _MessageStatus { sent, delivered, read }
+
 class _MessageBubble extends StatelessWidget {
   final TicketActivity activity;
   final bool isSelf;
-  /// Only meaningful when [isSelf] — whether the *other* party's read
-  /// receipt has caught up to this message. Drives the Delivered (double
-  /// gray check) vs Read (double blue check) tick; incoming messages never
-  /// show a tick at all, same as WhatsApp. There's no separate "Sent"
-  /// (single check) state: addComment() awaits the Firestore write before
-  /// the message can ever render, so every bubble you see already reflects
-  /// a successful send.
-  final bool readByPartner;
+  /// Only set when [isSelf] — incoming messages never show a tick at all,
+  /// same as WhatsApp.
+  final _MessageStatus? status;
 
-  const _MessageBubble({required this.activity, required this.isSelf, required this.readByPartner});
+  const _MessageBubble({required this.activity, required this.isSelf, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -566,12 +625,14 @@ class _MessageBubble extends StatelessWidget {
                         color: isSelf ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.white70,
                       ),
                 ),
-                if (isSelf) ...[
+                if (status != null) ...[
                   const SizedBox(width: 4),
                   Icon(
-                    Icons.done_all_rounded,
+                    status == _MessageStatus.sent ? Icons.done_rounded : Icons.done_all_rounded,
                     size: 15,
-                    color: readByPartner ? AppTheme.accentBlue : Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: status == _MessageStatus.read
+                        ? AppTheme.accentBlue
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ],
               ],
@@ -644,7 +705,8 @@ class _ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
   final PlatformFile? pickedImage;
   final bool sending;
-  final VoidCallback onPickImage;
+  final VoidCallback onTakePhoto;
+  final VoidCallback onUploadMedia;
   final VoidCallback onRemoveImage;
   final VoidCallback onSend;
 
@@ -652,7 +714,8 @@ class _ChatInputBar extends StatelessWidget {
     required this.controller,
     required this.pickedImage,
     required this.sending,
-    required this.onPickImage,
+    required this.onTakePhoto,
+    required this.onUploadMedia,
     required this.onRemoveImage,
     required this.onSend,
   });
@@ -682,9 +745,16 @@ class _ChatInputBar extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.attach_file_rounded),
+                  icon: const Icon(Icons.photo_camera_outlined),
                   color: AppTheme.accentBlue,
-                  onPressed: sending ? null : onPickImage,
+                  tooltip: 'Take photo',
+                  onPressed: sending ? null : onTakePhoto,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.photo_library_outlined),
+                  color: AppTheme.accentBlue,
+                  tooltip: 'Upload media',
+                  onPressed: sending ? null : onUploadMedia,
                 ),
                 Expanded(
                   child: TextField(

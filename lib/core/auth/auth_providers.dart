@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_service.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
+import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -41,3 +42,24 @@ final currentAppUserProvider = StreamProvider.autoDispose<AppUser?>((ref) {
     error: (_, _) => Stream.value(null),
   );
 });
+
+/// Signs out, first best-effort removing this device's FCM token from the
+/// user's doc so a shared/kiosk device doesn't keep receiving pushes meant
+/// for the account that just logged out. Must run before
+/// AuthService.signOut() — afterward there's no signed-in uid left to write
+/// the removal under. Use this instead of authServiceProvider.signOut()
+/// directly from any "Log out" action.
+Future<void> signOutAndCleanup(WidgetRef ref) async {
+  final uid = ref.read(currentAppUserProvider).valueOrNull?.id;
+  if (uid != null) {
+    try {
+      final token = await ref.read(pushNotificationServiceProvider).getToken();
+      if (token != null) {
+        await ref.read(userRepositoryProvider).removeFcmToken(uid, token);
+      }
+    } catch (_) {
+      // Best-effort: a token-cleanup failure must never block sign-out.
+    }
+  }
+  await ref.read(authServiceProvider).signOut();
+}

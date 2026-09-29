@@ -28,4 +28,24 @@ class NotificationRepository {
     }
     await batch.commit();
   }
+
+  /// Marks every unread notification about [ticketId] as read for [userId].
+  /// Used when a push/local notification is tapped and takes the user
+  /// straight to the ticket, bypassing the Notifications screen (whose
+  /// own tile tap is the only other place `read` gets flipped) — without
+  /// this, the app-icon badge count never comes down for anyone who only
+  /// ever opens tickets from the tray notification.
+  Future<void> markReadForTicket(String userId, String ticketId) async {
+    final snap = await _notifications
+        .where('userId', isEqualTo: userId)
+        .where('ticketId', isEqualTo: ticketId)
+        .where('read', isEqualTo: false)
+        .get();
+    if (snap.docs.isEmpty) return;
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.update(doc.reference, {'read': true});
+    }
+    await batch.commit();
+  }
 }

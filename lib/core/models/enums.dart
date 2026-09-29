@@ -22,16 +22,17 @@ enum UserRole {
         UserRole.vendorSupport => 'vendor_support',
       };
 
-  static UserRole fromWire(String value) => switch (value) {
-        'mda_user' => UserRole.mdaUser,
-        'focal_person' => UserRole.focalPerson,
-        'support_coordinator' => UserRole.supportCoordinator,
-        'functional_lead' => UserRole.functionalLead,
-        'technical_lead' => UserRole.technicalLead,
-        'pfm_management' => UserRole.pfmManagement,
-        'vendor_support' => UserRole.vendorSupport,
-        _ => throw ArgumentError('Unknown UserRole: $value'),
-      };
+  // Falls back to the least-privileged role rather than throwing, like every
+  // other wire enum in this file — the real access boundary is Firebase
+  // Auth custom claims (see firestore.rules), not this field, so a
+  // blank/typo'd/legacy value here should degrade the UI gracefully rather
+  // than take down the whole currentAppUserProvider stream (which otherwise
+  // reads as "no user" with no diagnostic and bounces the account to
+  // /login in a loop it can never escape without a direct Firestore edit).
+  static UserRole fromWire(String value) => UserRole.values.firstWhere(
+        (r) => r.wireValue == value,
+        orElse: () => UserRole.mdaUser,
+      );
 
   /// Human-readable label only — the wire value (`functional_lead`,
   /// `pfm_management`, …) is what firestore.rules, the Cloud Functions and
@@ -226,6 +227,15 @@ enum TicketStatus {
       };
 
   bool get isOpenState => this != TicketStatus.closed;
+
+  /// Narrower than [isOpenState]: excludes `resolved` too, not just
+  /// `closed`. Use this for SLA/overdue math specifically — [isOpenState]
+  /// deliberately still counts a resolved-but-unconfirmed ticket as part of
+  /// an agent's workload elsewhere, but "still awaiting SLA-bound action"
+  /// must stop being true the moment a ticket is resolved, or every
+  /// Overdue/At-risk figure keeps advancing against DateTime.now() forever,
+  /// long after the ticket is done.
+  bool get isPendingSlaAction => this != TicketStatus.closed && this != TicketStatus.resolved;
 }
 
 /// escalationLevel: 0 = none, 1 = functional/technical lead, 2 = vendor/specialist

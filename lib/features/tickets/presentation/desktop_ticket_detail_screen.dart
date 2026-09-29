@@ -16,6 +16,7 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
+import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
 import 'package:intl/intl.dart';
 
 /// Phase 5 mockup screen 32 — same ticket/activity/SLA data as the mobile
@@ -62,7 +63,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
 
   Widget _buildBody(BuildContext context, Ticket ticket, AppUser viewer) {
     final isAssignee = viewer.id == ticket.assignedTo;
-    final isOwner = viewer.id == ticket.createdBy;
     final canAssign =
         (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
         ticket.status != TicketStatus.closed;
@@ -93,7 +93,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               IntrinsicWidth(
                 child: FilledButton.icon(
                   key: _actionsButtonKey,
-                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, isOwner, canAssign, canEscalate),
+                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate),
                   icon: const Icon(Icons.more_horiz_rounded, size: 18),
                   label: const Text('Actions'),
                 ),
@@ -121,7 +121,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     Ticket ticket,
     AppUser viewer,
     bool isAssignee,
-    bool isOwner,
     bool canAssign,
     bool canEscalate,
   ) {
@@ -152,29 +151,16 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
             child: const Text('Start Work'),
           ),
           PopupMenuItem(
-            onTap: () => _showResolveDialog(context, ticket, viewer),
+            onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
             child: const Text('Resolve'),
           ),
         ],
         if (viewer.role == UserRole.vendorSupport && isAssignee && ticket.status != TicketStatus.closed)
-          PopupMenuItem(onTap: () => _showResolveDialog(context, ticket, viewer), child: const Text('Resolve')),
-        if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved && viewer.role != UserRole.pfmManagement)
+          PopupMenuItem(onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved), child: const Text('Resolve')),
+        if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved)
           PopupMenuItem(
             onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
             child: const Text('Close Ticket'),
-          ),
-        // Requester (ticket owner): confirm-close a resolved ticket, or
-        // reopen a resolved/closed one. Mirrors the mobile requester
-        // actions so a laptop user isn't stuck.
-        if (isOwner && ticket.status == TicketStatus.resolved)
-          PopupMenuItem(
-            onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
-            child: const Text('Confirm & Close'),
-          ),
-        if (isOwner && (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed))
-          PopupMenuItem(
-            onTap: () => _showReopenDialog(context, ticket, viewer),
-            child: const Text('Reopen'),
           ),
         // Mirrors TicketChatScreen's _chatClosed: once resolved/closed, the
         // chat stops accepting new messages from either side — otherwise a
@@ -183,35 +169,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
         if (ticket.status != TicketStatus.resolved && ticket.status != TicketStatus.closed)
           PopupMenuItem(onTap: () => _showCommentDialog(context, ticket, viewer), child: const Text('Add Chat Message')),
       ],
-    );
-  }
-
-  void _showReopenDialog(BuildContext context, Ticket ticket, AppUser viewer) {
-    final noteController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Reopen ticket'),
-        content: TextField(
-          controller: noteController,
-          decoration: const InputDecoration(labelText: 'Why are you reopening this?'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              await ref.read(ticketRepositoryProvider).reopen(
-                    ticketId: ticket.id,
-                    actorId: viewer.id,
-                    note: noteController.text.trim(),
-                  );
-              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Reopen'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -273,33 +230,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     );
   }
 
-  void _showResolveDialog(BuildContext context, Ticket ticket, AppUser viewer) {
-    final noteController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Resolve Ticket'),
-        content: TextField(controller: noteController, decoration: const InputDecoration(labelText: 'Resolution notes'), maxLines: 3),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              if (noteController.text.trim().isEmpty) return;
-              await ref.read(ticketRepositoryProvider).changeStatus(
-                    ticketId: ticket.id,
-                    to: TicketStatus.resolved,
-                    actorId: viewer.id,
-                    note: noteController.text.trim(),
-                  );
-              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showCommentDialog(BuildContext context, Ticket ticket, AppUser viewer) {
     final noteController = TextEditingController();
     showDialog(
@@ -355,6 +285,10 @@ class _MainColumn extends ConsumerWidget {
                 ]),
                 const SizedBox(height: 16),
                 Text(ticket.description, style: Theme.of(context).textTheme.bodyMedium),
+                if (ticket.attachmentUrls.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
+                ],
               ],
             ),
           ),

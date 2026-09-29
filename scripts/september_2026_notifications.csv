@@ -1,0 +1,188 @@
+createdAt,notificationId,recipientId,type,ticketId,ticketReference,title,body,read
+2026-09-04T09:25:56.963Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.964Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.966Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.966Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.966Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.966Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.967Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.968Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.969Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.969Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.971Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.974Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.974Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.974Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.974Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.974Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:56.975Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.975Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:56.976Z,,,maintenance,,,Test,,true
+2026-09-04T09:25:57.001Z,,,maintenance,,,Test,,false
+2026-09-04T09:25:57.001Z,,,maintenance,,,Test,,false
+2026-09-09T13:04:26.105Z,,,ticket_received,TOQmSW51YA0yYfqAye6q,PFMSD-2026-000081,Hyperion Support,,false
+2026-09-09T13:04:30.716Z,,,assigned,TOQmSW51YA0yYfqAye6q,PFMSD-2026-000081,Hyperion Support,,false
+2026-09-09T15:48:11.743Z,,,ticket_received,dkJzexOkgdvDE3bfkdBD,PFMSD-2026-000082,Hyperion Support,,false
+2026-09-09T15:48:15.386Z,,,assigned,dkJzexOkgdvDE3bfkdBD,PFMSD-2026-000082,Hyperion Support,,true
+2026-09-11T09:27:35.838Z,,,commented,dkJzexOkgdvDE3bfkdBD,PFMSD-2026-000082,Hyperion Support,,false
+2026-09-11T09:27:36.064Z,,,commented,dkJzexOkgdvDE3bfkdBD,PFMSD-2026-000082,Hyperion Support,,true
+2026-09-11T09:29:07.077Z,,,commented,TOQmSW51YA0yYfqAye6q,PFMSD-2026-000081,Hyperion Support,,false
+2026-09-11T09:29:07.442Z,,,commented,TOQmSW51YA0yYfqAye6q,PFMSD-2026-000081,Hyperion Support,,false
+2026-09-14T11:14:31.809Z,,,ticket_received,AMj5p9cEscX0xuNM04ht,PFMSD-2026-000113,Hyperion Support,,true
+2026-09-14T11:14:36.016Z,,,assigned,AMj5p9cEscX0xuNM04ht,PFMSD-2026-000113,Hyperion Support,,false
+2026-09-16T06:21:29.052Z,,,ticket_received,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-16T06:21:33.163Z,,,assigned,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-16T10:54:42.643Z,,,ticket_received,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,false
+2026-09-16T10:54:46.962Z,,,assigned,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,true
+2026-09-16T11:58:29.280Z,,,commented,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,true
+2026-09-16T12:02:49.786Z,,,commented,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,true
+2026-09-16T12:16:46.994Z,,,ticket_received,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T12:16:51.342Z,,,assigned,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,true
+2026-09-16T12:38:41.165Z,,,ticket_received,dFwbd7dtraW5BpM06wwS,PFMSD-2026-000157,Hyperion Support,,false
+2026-09-16T12:38:45.285Z,,,assigned,dFwbd7dtraW5BpM06wwS,PFMSD-2026-000157,Hyperion Support,,true
+2026-09-16T14:41:45.946Z,,,ticket_received,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T14:41:50.592Z,,,assigned,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T15:11:07.772Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T15:11:38.669Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T15:16:32.023Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T15:26:04.228Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T16:47:26.277Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T16:54:56.346Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T16:55:33.821Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T16:56:29.772Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T16:57:07.306Z,,,commented,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,false
+2026-09-16T16:59:43.266Z,,,commented,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,false
+2026-09-16T17:01:00.271Z,,,resolved,HZh8rUijTI3yDbEWLzrM,PFMSD-2026-000155,Hyperion Support,,false
+2026-09-16T17:03:31.200Z,,,commented,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T17:05:37.761Z,,,commented,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T17:08:57.980Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T17:13:03.229Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T17:14:01.624Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T17:14:08.560Z,,,commented,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T17:14:33.148Z,,,commented,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T17:14:52.341Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T17:15:06.864Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-16T17:15:37.380Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-16T17:16:56.474Z,,,resolved,8KQQhw9HW53hpiGnJaSS,PFMSD-2026-000156,Hyperion Support,,false
+2026-09-16T17:20:43.709Z,,,resolved,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-16T22:42:54.663Z,,,escalated,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-16T22:42:55.423Z,,,escalated,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-17T09:59:48.605Z,,,resolved,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-17T10:02:01.132Z,,,resolved,ECeH68kzKAinF3ZmNCMu,PFMSD-2026-000153,Hyperion Support,,true
+2026-09-17T10:34:43.567Z,,,ticket_received,HbBpbgV3OG4pbtQ0zC8g,PFMSD-2026-000160,Hyperion Support,,false
+2026-09-17T10:34:48.144Z,,,assigned,HbBpbgV3OG4pbtQ0zC8g,PFMSD-2026-000160,Hyperion Support,,true
+2026-09-17T11:01:42.278Z,,,ticket_received,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:01:46.675Z,,,assigned,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:35:20.475Z,,,assigned,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,true
+2026-09-17T11:39:50.403Z,,,commented,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:41:43.436Z,,,commented,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:42:45.864Z,,,commented,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:45:54.882Z,,,commented,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:46:09.731Z,,,commented,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T11:50:49.468Z,,,resolved,8aj7XH0I1ZwgM2UZN7J9,PFMSD-2026-000161,Hyperion Support,,false
+2026-09-17T12:01:54.616Z,,,ticket_received,vPty1vNBBDzhGbo626Bg,PFMSD-2026-000162,Hyperion Support,,false
+2026-09-17T12:01:56.894Z,,,assigned,vPty1vNBBDzhGbo626Bg,PFMSD-2026-000162,Hyperion Support,,false
+2026-09-17T12:07:46.176Z,,,ticket_received,oPUPuvaa2CBI7VjMC0GP,PFMSD-2026-000163,Hyperion Support,,false
+2026-09-17T12:07:47.750Z,,,assigned,oPUPuvaa2CBI7VjMC0GP,PFMSD-2026-000163,Hyperion Support,,true
+2026-09-17T12:08:35.317Z,,,commented,oPUPuvaa2CBI7VjMC0GP,PFMSD-2026-000163,Hyperion Support,,true
+2026-09-17T12:53:33.155Z,,,ticket_received,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,true
+2026-09-17T12:53:37.384Z,,,assigned,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,true
+2026-09-17T12:54:03.773Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,true
+2026-09-17T21:07:41.655Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-17T21:07:47.967Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-17T21:07:51.341Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-18T12:12:04.157Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-18T12:16:15.888Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-18T14:29:01.694Z,,,commented,oPUPuvaa2CBI7VjMC0GP,PFMSD-2026-000163,Hyperion Support,,false
+2026-09-18T16:49:27.654Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-21T10:13:00.387Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,true
+2026-09-21T17:09:17.320Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-21T17:12:16.751Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-21T17:12:51.934Z,,,commented,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,false
+2026-09-21T17:13:21.023Z,,,resolved,PfMeHLP75SaFs3GNdEo2,PFMSD-2026-000164,Hyperion Support,,true
+2026-09-22T10:02:12.065Z,,,commented,dFwbd7dtraW5BpM06wwS,PFMSD-2026-000157,Hyperion Support,,true
+2026-09-22T10:06:28.016Z,,,resolved,dFwbd7dtraW5BpM06wwS,PFMSD-2026-000157,Hyperion Support,,false
+2026-09-22T10:12:18.145Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-22T11:55:37.692Z,,,commented,vPty1vNBBDzhGbo626Bg,PFMSD-2026-000162,Hyperion Support,,false
+2026-09-22T11:55:38.282Z,,,commented,vPty1vNBBDzhGbo626Bg,PFMSD-2026-000162,Hyperion Support,,false
+2026-09-22T11:56:11.699Z,,,assigned,vPty1vNBBDzhGbo626Bg,PFMSD-2026-000162,Hyperion Support,,false
+2026-09-22T11:56:55.506Z,,,assigned,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-22T11:57:06.035Z,,,assigned,AMj5p9cEscX0xuNM04ht,PFMSD-2026-000113,Hyperion Support,,false
+2026-09-22T12:06:49.853Z,,,resolved,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-22T12:10:22.634Z,,,assigned,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-22T12:12:23.611Z,,,resolved,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,true
+2026-09-22T12:51:06.882Z,,,pending_action,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-22T15:36:29.220Z,,,commented,tdIHiTFC6E4QCGopUlII,PFMSD-2026-000158,Hyperion Support,,false
+2026-09-22T16:33:34.136Z,,,ticket_received,fnrxdbZZ3VEYZAn0uWW0,PFMSD-2026-000182,Hyperion Support,,false
+2026-09-22T16:33:37.836Z,,,assigned,fnrxdbZZ3VEYZAn0uWW0,PFMSD-2026-000182,Hyperion Support,,false
+2026-09-23T09:59:05.134Z,,,ticket_received,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-23T09:59:10.241Z,,,assigned,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-23T10:27:22.996Z,,,ticket_received,Zti1CZGgGbkCSF185Xtq,PFMSD-2026-000213,Hyperion Support,,false
+2026-09-23T10:27:26.968Z,,,assigned,Zti1CZGgGbkCSF185Xtq,PFMSD-2026-000213,Hyperion Support,,true
+2026-09-23T10:28:46.020Z,,,commented,Zti1CZGgGbkCSF185Xtq,PFMSD-2026-000213,Hyperion Support,,false
+2026-09-23T11:04:20.806Z,,,commented,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-23T11:12:45.764Z,,,commented,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-23T11:15:05.287Z,,,commented,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-23T12:24:34.374Z,,,ticket_received,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,true
+2026-09-23T12:24:38.969Z,,,assigned,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,true
+2026-09-23T12:36:27.517Z,,,commented,fnrxdbZZ3VEYZAn0uWW0,PFMSD-2026-000182,Hyperion Support,,false
+2026-09-23T17:09:50.915Z,,,commented,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,false
+2026-09-23T17:10:45.138Z,,,commented,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,false
+2026-09-23T17:10:49.231Z,,,commented,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,false
+2026-09-23T17:17:07.271Z,,,ticket_received,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-23T17:17:09.475Z,,,assigned,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,true
+2026-09-23T17:33:47.829Z,,,commented,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-23T17:33:58.217Z,,,commented,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-23T17:34:49.178Z,,,commented,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-23T17:35:19.260Z,,,commented,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-23T17:39:55.661Z,,,resolved,2uItTQEMaokLX8kvwhXA,PFMSD-2026-000214,Hyperion Support,,false
+2026-09-23T17:41:21.496Z,,,resolved,oFcfemDWGdX9Tx34MsHe,PFMSD-2026-000215,Hyperion Support,,false
+2026-09-24T07:22:24.576Z,,,commented,Zti1CZGgGbkCSF185Xtq,PFMSD-2026-000213,Hyperion Support,,false
+2026-09-24T07:38:30.820Z,,,ticket_received,8DskPFX5coikNIvuEGRx,PFMSD-2026-000216,Hyperion Support,,true
+2026-09-24T07:38:33.982Z,,,assigned,8DskPFX5coikNIvuEGRx,PFMSD-2026-000216,Hyperion Support,,false
+2026-09-24T08:52:25.349Z,,,ticket_received,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T08:52:29.405Z,,,assigned,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,true
+2026-09-24T12:40:02.670Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T12:46:05.239Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T12:46:54.189Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T12:47:42.266Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T12:48:17.309Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T12:48:55.621Z,,,commented,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T13:09:17.128Z,,,resolved,DgGxPmLumQcjBoeEN5z4,PFMSD-2026-000217,Hyperion Support,,false
+2026-09-24T13:29:36.360Z,,,ticket_received,34p4oCjD5XLC6gJr1Pch,PFMSD-2026-000218,Hyperion Support,,false
+2026-09-24T13:29:39.960Z,,,assigned,34p4oCjD5XLC6gJr1Pch,PFMSD-2026-000218,Hyperion Support,,false
+2026-09-24T13:29:55.445Z,,,commented,34p4oCjD5XLC6gJr1Pch,PFMSD-2026-000218,Hyperion Support,,false
+2026-09-24T13:34:43.301Z,,,resolved,AMj5p9cEscX0xuNM04ht,PFMSD-2026-000113,Hyperion Support,,false
+2026-09-25T08:42:45.772Z,,,resolved,Zti1CZGgGbkCSF185Xtq,PFMSD-2026-000213,Hyperion Support,,false
+2026-09-25T09:28:39.562Z,,,ticket_received,NSfBneg1i1q1FnKNeOFn,PFMSD-2026-000219,Hyperion Support,,false
+2026-09-25T09:28:43.359Z,,,assigned,NSfBneg1i1q1FnKNeOFn,PFMSD-2026-000219,Hyperion Support,,false
+2026-09-25T20:57:49.033Z,,,ticket_received,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T20:57:52.787Z,,,assigned,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:24:26.572Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:24:53.106Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:31:30.141Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:32:34.958Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:32:48.790Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:34:07.754Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:34:19.134Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:36:16.038Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:37:20.764Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:38:48.120Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:41:50.498Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:42:30.856Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:42:49.781Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:47:05.904Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:49:13.082Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:49:16.980Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:49:58.240Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:51:03.741Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:51:59.771Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T21:55:02.320Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-25T21:55:15.448Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T22:04:17.523Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-25T22:04:32.052Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,true
+2026-09-26T00:37:02.683Z,,,commented,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-26T12:22:07.002Z,,,resolved,OqzGfNxF3HYcn5iiQAaL,PFMSD-2026-000220,Hyperion Support,,false
+2026-09-26T18:18:46.455Z,,,commented,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-26T18:19:07.714Z,,,resolved,8pGmXhRXvpD4Xznf9R1v,PFMSD-2026-000212,Hyperion Support,,false
+2026-09-28T09:37:33.313Z,,,commented,NSfBneg1i1q1FnKNeOFn,PFMSD-2026-000219,Hyperion Support,,false

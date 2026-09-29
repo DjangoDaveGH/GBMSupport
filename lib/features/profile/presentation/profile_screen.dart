@@ -41,6 +41,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
+    if (!mounted) return;
     setState(() => _uploadingPhoto = true);
     try {
       final extension = file.extension?.toLowerCase();
@@ -205,7 +206,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 24),
           OutlinedButton(
-            onPressed: () => ref.read(authServiceProvider).signOut(),
+            onPressed: () => signOutAndCleanup(ref),
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),

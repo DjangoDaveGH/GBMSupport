@@ -54,19 +54,40 @@ import 'package:hyport/features/tickets/presentation/ticket_detail_screen.dart';
 import 'package:hyport/features/tickets/presentation/ticket_filters_screen.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart';
 
-/// Ticks whenever auth or profile state changes, so go_router re-evaluates
-/// its redirect logic (go_router doesn't watch providers on its own).
+/// Ticks whenever auth or profile state changes in a way the redirect cares
+/// about, so go_router re-evaluates it (go_router doesn't watch providers on
+/// its own).
 class GoRouterRefreshNotifier extends ChangeNotifier {
   void notify() => notifyListeners();
 }
 
-final _goRouterRefreshProvider = ChangeNotifierProvider<GoRouterRefreshNotifier>((ref) {
+/// A plain Provider, deliberately not a ChangeNotifierProvider: that would
+/// tell its dependents to rebuild on every notifyListeners(), and routerProvider
+/// depends on this — so each tick would build a brand-new GoRouter at
+/// '/splash', throwing away the whole navigation stack (the "randomly jumps
+/// back to the dashboard" glitch). The router only needs to *listen* to this
+/// via refreshListenable, never rebuild from it.
+final _goRouterRefreshProvider = Provider<GoRouterRefreshNotifier>((ref) {
   final notifier = GoRouterRefreshNotifier();
+  ref.onDispose(notifier.dispose);
   // touchLastActive on sign-in used to be stamped here too; it now lives
   // solely in PresenceHeartbeatListener (main.dart), which also keeps it
   // moving forward for the rest of the session — see its doc comment.
   ref.listen(authStateChangesProvider, (previous, next) => notifier.notify());
-  ref.listen(currentAppUserProvider, (_, _) => notifier.notify());
+  // The profile doc re-emits on every write to it — the presence heartbeat
+  // (~2 min), FCM token registration, an admin edit — none of which change
+  // what the redirect reads. Only tick when loading state, identity, role or
+  // active status actually differ.
+  ref.listen(currentAppUserProvider, (previous, next) {
+    final before = previous?.valueOrNull;
+    final after = next.valueOrNull;
+    final redirectInputsChanged = previous == null ||
+        previous.isLoading != next.isLoading ||
+        before?.id != after?.id ||
+        before?.role != after?.role ||
+        before?.isActive != after?.isActive;
+    if (redirectInputsChanged) notifier.notify();
+  });
   return notifier;
 });
 
@@ -125,9 +146,10 @@ CustomTransitionPage _slideUpPage(GoRouterState state, Widget child) {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final refreshNotifier = ref.watch(_goRouterRefreshProvider);
+  // read, not watch — see _goRouterRefreshProvider.
+  final refreshNotifier = ref.read(_goRouterRefreshProvider);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: refreshNotifier,
     errorBuilder: (context, state) => const NotFoundScreen(),
@@ -543,4 +565,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(router.dispose);
+  return router;
 });

@@ -8,7 +8,7 @@ class SlaCalculator {
   SlaCalculator._();
 
   static bool isOverdue(Ticket ticket, SlaPolicy policy) {
-    if (!ticket.status.isOpenState) return false;
+    if (!ticket.status.isPendingSlaAction) return false;
     final targetHours = policy.targetHoursFor(ticket.priority);
     return DateTime.now().difference(ticket.createdAt).inHours > targetHours;
   }

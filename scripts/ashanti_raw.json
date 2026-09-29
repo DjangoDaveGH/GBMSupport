@@ -1,0 +1,830 @@
+{
+  "main": [
+    [
+      "Kwaku Opoku",
+      "Ashanti",
+      "Offinso Municipal",
+      "0248430535",
+      "kweku.opoku@ofma.gov.gh"
+    ],
+    [
+      "Akwasi Yeboah",
+      "Ashanti",
+      "Offinso Municipal",
+      "0241056837",
+      "darkoakwasiyeboah@gmail.com"
+    ],
+    [
+      "Hannah Afful",
+      "Ashanti",
+      "Offinso Municipal",
+      "0241346989",
+      ""
+    ],
+    [
+      "Abigail Boamah",
+      "Ashanti",
+      "Offinso Municipal",
+      "0241228652",
+      "abigail.boamah@ofma.gov.gh"
+    ],
+    [
+      "Gariba Alhassan",
+      "Ashanti",
+      "Offinso North District",
+      "0246023860",
+      "galhassan10@gmail.com"
+    ],
+    [
+      "Joshua Gyamena Mensah",
+      "Ashanti",
+      "Offinso North District",
+      "0249214606",
+      "joshua.mensah@onda.gov.gh"
+    ],
+    [
+      "Nana Osei Owusu",
+      "Ashanti",
+      "Offinso North District",
+      "0545755923",
+      "wususika@gmail.com"
+    ],
+    [
+      "Mavis Nkrumah",
+      "Ashanti",
+      "Offinso North District",
+      "0540754236",
+      "mavisnkrumah43@gmail.com"
+    ],
+    [
+      "Angela Osei-Tutu",
+      "Ashanti",
+      "Oforikrom Municipal",
+      "0244116705",
+      "angela.osei-tutu@ofkma.gov.gh"
+    ],
+    [
+      "Linda Sencherey",
+      "Ashanti",
+      "Oforikrom Municipal",
+      "0242825362",
+      "linda.senccherey@ofkma.gov.gh"
+    ],
+    [
+      "Emmanuel Senior Osei",
+      "Ashanti",
+      "Oforikrom Municipal",
+      "0544444619",
+      "emmanuel.osei@ofkma.gov.gh"
+    ],
+    [
+      "Daniel Ampong",
+      "Ashanti",
+      "Oforikrom Municipal",
+      "0244476301",
+      "daniel.agyekum@ofkma.gov.gh"
+    ],
+    [
+      "Nana Yaw Sekyere-Ababio",
+      "Ashanti",
+      "Old Tafo Municipal",
+      "0543545259",
+      "nysekyereababio@gmail.com"
+    ],
+    [
+      "Rafatu Mohammed",
+      "Ashanti",
+      "Old Tafo Municipal",
+      "0246022522",
+      "rafatu.mohammed@otma.gov.gh"
+    ],
+    [
+      "Kingsley Osei Manu",
+      "Ashanti",
+      "Old Tafo Municipal",
+      "0541603034",
+      "kingsley.oseimanu@otma.gov.gh"
+    ],
+    [
+      "Anna Opoku",
+      "Ashanti",
+      "Old Tafo Municipal",
+      "0247880572",
+      "michael.ofori@otma.gov.gh"
+    ],
+    [
+      "Godfred Loung",
+      "Ashanti",
+      "Sekyere Afram Plains District",
+      "0208780924",
+      "godfredloung@gmail.com"
+    ],
+    [
+      "Frank Bonsu Asamoah",
+      "Ashanti",
+      "Sekyere Afram Plains District",
+      "0542597144",
+      "frank.bonsu@sapda.gov.gh"
+    ],
+    [
+      "Seth Tawiah",
+      "Ashanti",
+      "Sekyere Central District",
+      "0242102360",
+      "seth.tawiah@scda.gov.gh"
+    ],
+    [
+      "Douglas Osei Kontoh",
+      "Ashanti",
+      "Sekyere Central District",
+      "0249285463",
+      "douglas.osei@scda.gov.gh"
+    ],
+    [
+      "Mabel Owusu Kankam",
+      "Ashanti",
+      "Sekyere Central District",
+      "0542024651",
+      "mabel.kankam@scda.gov.gh"
+    ],
+    [
+      "Paul Boadu",
+      "Ashanti",
+      "Sekyere East District",
+      "0242903958",
+      "paul.boadu@seda.gov.gh"
+    ],
+    [
+      "Isaac Amponsah",
+      "Ashanti",
+      "Sekyere East District",
+      "0243561368",
+      "Isaac.amponsah@seda.gov.gh"
+    ],
+    [
+      "Ruth Kallai",
+      "Ashanti",
+      "Sekyere East District",
+      "0547742598",
+      "kallai@seda.gov.gh"
+    ],
+    [
+      "Patrick Dwamena",
+      "Ashanti",
+      "Sekyere East District",
+      "0545242208",
+      "patrick.dwamena@seda.gov.gh"
+    ],
+    [
+      "Brian Afriyie",
+      "Ashanti",
+      "Sekyere Kumawu District",
+      "0246825658",
+      "Brian.afriyie@skda.gov.gh"
+    ],
+    [
+      "Richard Darkwa",
+      "Ashanti",
+      "Sekyere Kumawu District",
+      "0553685121",
+      "richard.darkwa@skda.gov.gh"
+    ],
+    [
+      "Richard Ofosuhene",
+      "Ashanti",
+      "Sekyere Kumawu District",
+      "0542539164",
+      "richard.ofosuhene@skda.gov.gh"
+    ],
+    [
+      "Adam Imuran",
+      "Ashanti",
+      "Sekyere Kumawu District",
+      "0244752406",
+      "imuranadam85@gmail.com"
+    ],
+    [
+      "Rabiatu Issah",
+      "Ashanti",
+      "Sekyere South District",
+      "0242821841",
+      "rabiatu.issah@ssma.gov.gh"
+    ],
+    [
+      "Solomon Appiah",
+      "Ashanti",
+      "Sekyere South District",
+      "0556227752",
+      "solomon.appiah@ssma.gov.gh"
+    ],
+    [
+      "Diana Yeboah",
+      "Ashanti",
+      "Sekyere South District",
+      "0241025152",
+      "diana.yeboah@ssma.gov.gh"
+    ],
+    [
+      "Isaac Kyei",
+      "Ashanti",
+      "Sekyere South District",
+      "0257160175",
+      "nanamesu75@gmail.com"
+    ],
+    [
+      "Kwaku Opare Asamoah",
+      "Ashanti",
+      "Suame Municipal",
+      "0249088017",
+      "asamoahabeiku@yahoo.com"
+    ],
+    [
+      "Sussana Osei",
+      "Ashanti",
+      "Suame Municipal",
+      "0242534842",
+      "sussan.osei@suamema.gov.gh"
+    ],
+    [
+      "George Bansah",
+      "Ashanti",
+      "Suame Municipal",
+      "0243339117",
+      "gs.bansah@gmail.com"
+    ],
+    [
+      "Rebecca Annor",
+      "Ashanti",
+      "Suame Municipal",
+      "0547181171",
+      "rebecca.annor@suamema.gov.gh"
+    ],
+    [
+      "Phyllis Abrokwah",
+      "Ashanti",
+      "Bosumtwi District",
+      "0246991511",
+      "phyllis.abrokwa-harriet@bosomtwe.gov.gh"
+    ],
+    [
+      "Jeff Asare",
+      "Ashanti",
+      "Bosumtwi District",
+      "0240515100",
+      "jeff.asare@bosomtwe.gov.gh"
+    ],
+    [
+      "Freshman Bandim",
+      "Ashanti",
+      "Bosumtwi District",
+      "0245766035",
+      "freshman.bandim@bosomtwe.gov.gh"
+    ],
+    [
+      "Patrick Adu",
+      "Ashanti",
+      "Bosumtwi District",
+      "0542167516",
+      "patrick.kofi-adu@bosomtwe.gov.gh"
+    ],
+    [
+      "Bernice Addae-Gyan",
+      "Ashanti",
+      "Ejisu Municipal",
+      "0541486613",
+      "bernice.addae-gyan@ejima.gov.gh"
+    ],
+    [
+      "Sally Antwi Boasiako",
+      "Ashanti",
+      "Ejisu Municipal",
+      "0548665662",
+      "sally.antwiboasiako@ejima.gov.gh"
+    ],
+    [
+      "Emmanuel Frimpong",
+      "Ashanti",
+      "Ejisu Municipal",
+      "0240518126",
+      "emmanuel.frimpong@ejima.gov.gh"
+    ],
+    [
+      "Theodore Djabeng",
+      "Ashanti",
+      "Ejisu Municipal",
+      "0557158521",
+      "kingspride2000@gmail.com"
+    ],
+    [
+      "Felix Frimpong",
+      "Ashanti",
+      "Ejura Sekyeredumasi District",
+      "0242743126",
+      "felixkwasi1990@gmail.com"
+    ],
+    [
+      "Baffour Twum",
+      "Ashanti",
+      "Ejura Sekyeredumasi District",
+      "0501107578",
+      "baffour.twum@esma.gov.gh"
+    ],
+    [
+      "Albert Attakorah",
+      "Ashanti",
+      "Ejura Sekyeredumasi District",
+      "0243226044",
+      "albert.attakorah@esma.gov.gh"
+    ],
+    [
+      "Ramzi Alhassan",
+      "Ashanti",
+      "Ejura Sekyeredumasi District",
+      "0244543300",
+      "ramzi.alhassan@esma.gov.gh"
+    ],
+    [
+      "Jones Kani",
+      "Ashanti",
+      "Kumasi - Metropolis",
+      "0244234760",
+      "jones.kani@kma.gov.gh"
+    ],
+    [
+      "Eric Nunoo",
+      "Ashanti",
+      "Kumasi - Metropolis",
+      "0244204648",
+      "eric.nunoo@kma.gov.gh"
+    ],
+    [
+      "Grant Nkrumah",
+      "Ashanti",
+      "Kumasi - Metropolis",
+      "0244792819",
+      "grant.nkrumah@kma.gov.gh"
+    ],
+    [
+      "Yaa Acheampong",
+      "Ashanti",
+      "Kumasi - Metropolis",
+      "0268071560",
+      "yaa.acheampong@kma.gov.gh"
+    ],
+    [
+      "Joshua Adjei Boateng",
+      "Ashanti",
+      "Kwabre East District",
+      "0209144800",
+      "adjeiboateng18@yahoo.com"
+    ],
+    [
+      "Lordina Afriyie",
+      "Ashanti",
+      "Kwabre East District",
+      "0249326706",
+      "lordina.afriyie@kema.gov.gh"
+    ],
+    [
+      "Eric Asumaning",
+      "Ashanti",
+      "Kwabre East District",
+      "0247110705",
+      "ericasumaning@gmail.com"
+    ],
+    [
+      "Mary Okyere",
+      "Ashanti",
+      "Kwabre East District",
+      "0541441602",
+      "mary.okyere@kema.gov.gh"
+    ],
+    [
+      "Joseph Osei-Owusu",
+      "Ashanti",
+      "Kwadaso Municipal",
+      "0243218360",
+      "joseph.owusu@kwadma.gov.gh"
+    ],
+    [
+      "Maxwell Frimpong",
+      "Ashanti",
+      "Kwadaso Municipal",
+      "0541137570",
+      "maxwell.frimpong@kwadma.gov.gh"
+    ],
+    [
+      "Samuel Asiedu-Ampem",
+      "Ashanti",
+      "Kwadaso Municipal",
+      "0240585415",
+      "aseidu.samuel@kwadma.gov.gh"
+    ],
+    [
+      "Barbara Banahene",
+      "Ashanti",
+      "Kwadaso Municipal",
+      "0245459470",
+      "barbara.banahene@kwadma.gov.gh"
+    ],
+    [
+      "Emmanuel Osei",
+      "Ashanti",
+      "Mampong Municipal",
+      "0246176646",
+      "emmanuel.osei@mma.gov.gh"
+    ],
+    [
+      "George Asomaning",
+      "Ashanti",
+      "Mampong Municipal",
+      "0554349659",
+      "georgeasomaning@mma.gov.gh"
+    ],
+    [
+      "Millicent Agyemang",
+      "Ashanti",
+      "Mampong Municipal",
+      "0242572642",
+      "millicent.agyemang@mma.gov.gh"
+    ],
+    [
+      "Dorigen Yiadom",
+      "Ashanti",
+      "Mampong Municipal",
+      "0241337088",
+      "dorigen.yiadom@mma.gov.gh"
+    ],
+    [
+      "Jacinta Ackah",
+      "Ashanti",
+      "Obuasi East District",
+      "0266116169",
+      ""
+    ],
+    [
+      "Kusi Appiah",
+      "Ashanti",
+      "Obuasi East District",
+      "0541681343",
+      "kusi.appiah@oeda.gov.gh"
+    ],
+    [
+      "Barbara Tiwaa Ameyaw",
+      "Ashanti",
+      "Obuasi East District",
+      "0541606692",
+      "barbara.ameyaw@oeda.gov.gh"
+    ],
+    [
+      "Mariam Owusu",
+      "Ashanti",
+      "Obuasi East District",
+      "0248337716",
+      "maameagyeiwaa22@gmail.com"
+    ],
+    [
+      "Rolland Owusu Asare",
+      "Ashanti",
+      "Obuasi Municipal",
+      "0249061823",
+      ""
+    ],
+    [
+      "Richard Ofori",
+      "Ashanti",
+      "Obuasi Municipal",
+      "0544788881",
+      ""
+    ],
+    [
+      "Wadat Haruna",
+      "Ashanti",
+      "Obuasi Municipal",
+      "0274289878",
+      ""
+    ],
+    [
+      "Edna Arkoh",
+      "Ashanti",
+      "Obuasi Municipal",
+      "0244880047",
+      "edna.arko@oma.gov.gh"
+    ],
+    [
+      "Patrick Antwi",
+      "Ashanti",
+      "Amansie Central District",
+      "0244764816",
+      "patrick.marfo_antwi@amansiecentral.gov.gh"
+    ],
+    [
+      "Linda Apuriyure",
+      "Ashanti",
+      "Amansie Central District",
+      "0556677992",
+      "lindaapuri@gmail.com"
+    ],
+    [
+      "Vida Mills",
+      "Ashanti",
+      "Amansie Central District",
+      "0544943850",
+      "vida.mills@amansiecentral.gov.gh"
+    ],
+    [
+      "Christian Peprah-Mensah",
+      "Ashanti",
+      "Adansi North District",
+      "0246678207",
+      "christian.peprah-mensah@adnda.gov.gh"
+    ],
+    [
+      "Joshua Donkor",
+      "Ashanti",
+      "Adansi North District",
+      "0551030244",
+      "joshua.donkor@adnda.gov.gh"
+    ],
+    [
+      "Abigail Osei",
+      "Ashanti",
+      "Adansi North District",
+      "0240785870",
+      "oseiabigailaboagyewaa1994@gmail.com"
+    ],
+    [
+      "Emmnauel Ohyeamang",
+      "Ashanti",
+      "Adansi North District",
+      "0542929067",
+      "emmanuel.ohyeamang@adnda.gov.gh"
+    ]
+  ],
+  "walkin": [
+    [
+      "Francis Nkrumah Bimpeh",
+      "Ashanti",
+      "Adansi North District",
+      "242053217",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "08:57",
+      "chaptex217@gmail.com"
+    ],
+    [
+      "Mariam Owusu",
+      "Ashanti",
+      "Obuasi East",
+      "248337716",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:18",
+      "maameagyeiwaa22@gmail.com"
+    ],
+    [
+      "Abigail Boamah",
+      "Ashanti",
+      "Offinso Municipal",
+      "247228652",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:24",
+      "abigail.boamah@ofma.gov.gh"
+    ],
+    [
+      "DWAMENA PATRICK",
+      "Ashanti",
+      "SEKYERE EAST",
+      "545242208",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:30",
+      "dwamenapatrick75@gmail.com"
+    ],
+    [
+      "Ruth Obeng-Agyemang",
+      "Ashanti",
+      "Ashanti Regional coordinating council",
+      "243467343",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:32",
+      "ruth.agyeman@arcc.gov.gh"
+    ],
+    [
+      "Frank Bonsu Asamoah",
+      "Ashanti",
+      "Sekyere Afram Plains District Assembly",
+      "542597144",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:33",
+      "frank.bonsu@sapda.gov.gh"
+    ],
+    [
+      "Edna Vivian Arkoh",
+      "Ashanti",
+      "Obuasi Municipal Assembly",
+      "244880047",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:41",
+      "edna.arko@oma.gov.gh"
+    ],
+    [
+      "Christiana Amoah",
+      "Ashanti",
+      "Sekyere Afram Plains District Assembly",
+      "547222341",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:41",
+      "amoahchristy38@gmail.com"
+    ],
+    [
+      "Vida Otchere Mills",
+      "Ashanti",
+      "Amansie Central District Assembly",
+      "544943850",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:41",
+      "vida.mills@amansiecentral.gov.gh"
+    ],
+    [
+      "Atuahene Thomas",
+      "Ashanti",
+      "Ashanti Regional Coordinating Council",
+      "244459025",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:43",
+      "thomas.atuahene@arcc.gov.gh"
+    ],
+    [
+      "Linda Apuriyure",
+      "Ashanti",
+      "Amensie central District Assembly",
+      "556677992",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:44",
+      "lapuriyure@amensiecental.gov.gh"
+    ],
+    [
+      "Patrick Marfo Antwi",
+      "Ashanti",
+      "Amansie Central District Assembly",
+      "244764816",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:49",
+      "patrick.marfo_antwi@amansiecentral.gov.gh"
+    ],
+    [
+      "Adam Imuran",
+      "Ashanti",
+      "Sekyere Kumawu",
+      "244752406",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "09:59",
+      "imuranadam85@gmail.com"
+    ],
+    [
+      "Kwaku Ppare Asamoah",
+      "Ashanti",
+      "Suame",
+      "249088017",
+      "Walk-In",
+      "14th September 2026",
+      "Y",
+      "10:00",
+      "asamoahabeiku@yahoo.com"
+    ],
+    [
+      "Nana Osei Owusu",
+      "Ashanti",
+      "offinsoi North",
+      "545755923",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "08:39",
+      "wususika@gmail.com"
+    ],
+    [
+      "LINDA APURIYURE",
+      "Ashanti",
+      "Amensie central District Assembly",
+      "556677992",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "08:39",
+      "lindaapuri@gmail.com"
+    ],
+    [
+      "Vida Otchere Mills",
+      "Ashanti",
+      "Amensie Central District Assembly",
+      "544943850",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "08:45",
+      "vida.mills@amansiecentral.gov.gh"
+    ],
+    [
+      "Patrick Adu Kofi",
+      "Ashanti",
+      "Bosomtwe",
+      "542167516",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:05",
+      "patrick.kofi-adu@bosomtwe.gov.gh"
+    ],
+    [
+      "Francis Nkrumah Bimpeh",
+      "Ashanti",
+      "Adansi North District",
+      "242053217",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:13",
+      "francis.bimpeh@adnda.gov.gh"
+    ],
+    [
+      "Ruth Obeng-Agyemang",
+      "Ashanti",
+      "Ashanti Regional coordinating council",
+      "243467343",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:15",
+      "ruth.agyeman@arcc.gov.gh"
+    ],
+    [
+      "Christiana Amoah",
+      "Ashanti",
+      "Sekyere Afram Plains District Assembly",
+      "547222341",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:18",
+      "amoahchristy38@gmail.com"
+    ],
+    [
+      "Frank Bonsu Asamoah",
+      "Ashanti",
+      "Sekyere Afram Plains District Assembly",
+      "542597144",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:19",
+      "frank.bonsu@sapda.gov.gh"
+    ],
+    [
+      "Richard Ofori",
+      "Ashanti",
+      "Obuasi Municipal",
+      "544788881",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:20",
+      "richard.ofori@oma.gov.gh"
+    ],
+    [
+      "Rolland Owusu. Asare",
+      "Ashanti",
+      "Obuasi Municipal Assembly",
+      "249061823",
+      "Walk-In",
+      "15th September 2026",
+      "Y",
+      "09:21",
+      "rolland.asare@oma.gov.gh"
+    ]
+  ]
+}

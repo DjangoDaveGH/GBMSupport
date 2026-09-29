@@ -1,0 +1,351 @@
+{
+  "exportedAt": "2026-09-07T16:31:34.655Z",
+  "scope": "MDA tickets only",
+  "mdaInstitutionIds": [
+    "ahafo-rba",
+    "asikuma-odoben-brakwa-breman",
+    "assit-rba",
+    "audit-service",
+    "bono-rba",
+    "commission-on-human-rights-and-administrative-justice",
+    "district-assemblies-common-fund",
+    "eastern-arba",
+    "eastern-rba",
+    "electoral-commission",
+    "gomoa-central",
+    "judicial-service",
+    "legal-aid-commission",
+    "ministry-of-communication-and-decentralization",
+    "ministry-of-defence",
+    "ministry-of-education",
+    "ministry-of-employment-and-labour-relations",
+    "ministry-of-energy",
+    "ministry-of-environment-science-technology-and-innovation",
+    "ministry-of-finance",
+    "ministry-of-fisheries-aqua-culture-development",
+    "ministry-of-food-and-agriculture",
+    "ministry-of-foreign-affairs-and-regional-integration",
+    "ministry-of-gender-children-and-social-protection",
+    "ministry-of-health",
+    "ministry-of-lands-and-natural-resources",
+    "ministry-of-local-government",
+    "ministry-of-roads-and-highways",
+    "ministry-of-the-interior",
+    "ministry-of-tourism-culture-and-creative-arts",
+    "ministry-of-trade-and-industry",
+    "ministry-of-transport",
+    "ministry-of-works-and-housing",
+    "ministry-of-youth-and-sports",
+    "ministry-of-youth-development-and-empowerment",
+    "national-commission-on-civic-education",
+    "national-development-planning-commission",
+    "national-health-fund",
+    "national-labour-commission",
+    "national-media-commission",
+    "northern-arba",
+    "northern-rba",
+    "office-of-government-machinery",
+    "office-of-the-attorney-general-and-ministry-of-justice",
+    "office-of-the-head-of-civil-service",
+    "office-of-the-special-prosecutor",
+    "parliament-of-ghana",
+    "pfm-systems",
+    "public-services-commission",
+    "rba",
+    "right-to-information-commission",
+    "savannah-arba",
+    "savannah-rba",
+    "upper-east-assit-rba",
+    "upper-east-rba",
+    "volta-rba"
+  ],
+  "tickets": [
+    {
+      "id": "LRBFyLHwSG8PCzyKWXhT",
+      "data": {
+        "ticketReference": "PFMSD-2026-000018",
+        "createdBy": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+        "institutionId": "northern-arba",
+        "category": "access",
+        "subCategory": "",
+        "title": "Experiencing challenge logging in",
+        "description": "Experiencing challenge logging in",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1788538517,
+          "_nanoseconds": 877000000
+        },
+        "assignedTo": "gyyMKWfIAFPZzvfdbWG67c9KkGL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1788538518,
+          "_nanoseconds": 372000000
+        },
+        "assignedToName": "Yaw Darko"
+      },
+      "activity": [
+        {
+          "id": "5oP1bEgTYGKMhN5mKzI7",
+          "data": {
+            "ticketId": "LRBFyLHwSG8PCzyKWXhT",
+            "actorId": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1788538517,
+              "_nanoseconds": 877000000
+            }
+          }
+        },
+        {
+          "id": "jHCBbPPswa6ToFtNCQZu",
+          "data": {
+            "ticketId": "LRBFyLHwSG8PCzyKWXhT",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "gyyMKWfIAFPZzvfdbWG67c9KkGL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1788538518,
+              "_nanoseconds": 372000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "WoNT9IjtcMXk8unBR2p3",
+      "data": {
+        "ticketReference": "PFMSD-2026-000040",
+        "createdBy": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+        "institutionId": "northern-arba",
+        "category": "general_enquiry",
+        "subCategory": "",
+        "title": "wrong spelling of my name.",
+        "description": "wrong spelling of my name. The correct spelling is BRIGHT not BIGHT",
+        "attachmentUrls": [],
+        "priority": "low",
+        "impact": "low",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1788538727,
+          "_nanoseconds": 965000000
+        },
+        "assignedTo": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1788538728,
+          "_nanoseconds": 520000000
+        },
+        "assignedToName": "Evans Appiah"
+      },
+      "activity": [
+        {
+          "id": "BoX1j9dIRmfNmLpVJkZa",
+          "data": {
+            "ticketId": "WoNT9IjtcMXk8unBR2p3",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1788538728,
+              "_nanoseconds": 520000000
+            }
+          }
+        },
+        {
+          "id": "dyAOwcbc8SXEodOFZFiX",
+          "data": {
+            "ticketId": "WoNT9IjtcMXk8unBR2p3",
+            "actorId": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1788538727,
+              "_nanoseconds": 965000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pqlg7C1oG1NmdrLlsEVa",
+      "data": {
+        "ticketReference": "PFMSD-2026-000005",
+        "createdBy": "sxpUJKjX7bRHthE0hImT0xmNH3u1",
+        "institutionId": "savannah-arba",
+        "category": "budget_forms",
+        "subCategory": "",
+        "title": "form is blank for me to enter daya",
+        "description": "form is blank for me to enter daya",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1788538408,
+          "_nanoseconds": 822000000
+        },
+        "assignedTo": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1788538411,
+          "_nanoseconds": 934000000
+        },
+        "assignedToName": "Lisa Frema Boadu"
+      },
+      "activity": [
+        {
+          "id": "9RMUUI3RnRfaQiMDSOWV",
+          "data": {
+            "ticketId": "pqlg7C1oG1NmdrLlsEVa",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1788538411,
+              "_nanoseconds": 934000000
+            }
+          }
+        },
+        {
+          "id": "fzub7ZZLHvSHVnUBSdYJ",
+          "data": {
+            "ticketId": "pqlg7C1oG1NmdrLlsEVa",
+            "actorId": "sxpUJKjX7bRHthE0hImT0xmNH3u1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1788538408,
+              "_nanoseconds": 822000000
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "ticketNotifications": [
+    {
+      "id": "cGYplWyLEOOrsxJBQSOL",
+      "data": {
+        "userId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "title": "Hyperion Support",
+        "ticketId": "pqlg7C1oG1NmdrLlsEVa",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000005 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538414,
+          "_nanoseconds": 905000000
+        }
+      }
+    },
+    {
+      "id": "ciQ253pKL6SJtw8pJyY1",
+      "data": {
+        "userId": "sxpUJKjX7bRHthE0hImT0xmNH3u1",
+        "title": "Hyperion Support",
+        "ticketId": "pqlg7C1oG1NmdrLlsEVa",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000005 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538410,
+          "_nanoseconds": 949000000
+        }
+      }
+    },
+    {
+      "id": "f4I8XuA2ud9YPDGxauAE",
+      "data": {
+        "userId": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+        "title": "Hyperion Support",
+        "ticketId": "WoNT9IjtcMXk8unBR2p3",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000040 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538728,
+          "_nanoseconds": 748000000
+        }
+      }
+    },
+    {
+      "id": "lv7xmLxBfOGSaUiP3Oqj",
+      "data": {
+        "userId": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+        "title": "Hyperion Support",
+        "ticketId": "WoNT9IjtcMXk8unBR2p3",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000040 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538728,
+          "_nanoseconds": 82000000
+        }
+      }
+    },
+    {
+      "id": "vLkZcaLSKdkpR75yuMMu",
+      "data": {
+        "userId": "gyyMKWfIAFPZzvfdbWG67c9KkGL2",
+        "title": "Hyperion Support",
+        "ticketId": "LRBFyLHwSG8PCzyKWXhT",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000018 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538518,
+          "_nanoseconds": 566000000
+        }
+      }
+    },
+    {
+      "id": "ynVJM4UcVfnPku0ol2NM",
+      "data": {
+        "userId": "Vrhmm2R4mObV6B1t6WMtNfF36442",
+        "title": "Hyperion Support",
+        "ticketId": "LRBFyLHwSG8PCzyKWXhT",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000018 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1788538518,
+          "_nanoseconds": 14000000
+        }
+      }
+    }
+  ]
+}

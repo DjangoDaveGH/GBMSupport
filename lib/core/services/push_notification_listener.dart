@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,11 +27,19 @@ class PushNotificationListener extends ConsumerStatefulWidget {
 
 class _PushNotificationListenerState extends ConsumerState<PushNotificationListener> {
   bool _started = false;
+  final List<StreamSubscription<void>> _subscriptions = [];
 
   @override
   void initState() {
     super.initState();
     Future.microtask(_start);
+  }
+
+  void _cancelSubscriptions() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
   }
 
   Future<void> _start() async {
@@ -38,8 +48,10 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
     if (user == null) return;
     _started = true;
 
-    LocalNotificationService.onTicketTap =
-        (ticketId) => ref.read(routerProvider).push('/tickets/$ticketId');
+    LocalNotificationService.onTicketTap = (ticketId) {
+      ref.read(routerProvider).push('/tickets/$ticketId');
+      _markTicketNotificationsRead(ticketId);
+    };
 
     final service = ref.read(pushNotificationServiceProvider);
     final granted = await service.requestPermission();
@@ -50,14 +62,14 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
       await ref.read(userRepositoryProvider).addFcmToken(user.id, token);
     }
 
-    service.onTokenRefresh.listen((newToken) {
+    _subscriptions.add(service.onTokenRefresh.listen((newToken) {
       final current = ref.read(currentAppUserProvider).valueOrNull;
       if (current != null) {
         ref.read(userRepositoryProvider).addFcmToken(current.id, newToken);
       }
-    });
+    }));
 
-    service.onForegroundMessage.listen((message) {
+    _subscriptions.add(service.onForegroundMessage.listen((message) {
       final text = message.notification?.body ?? message.data['message'] as String?;
       if (text == null) return;
       final unread = int.tryParse(message.data['unreadCount']?.toString() ?? '');
@@ -73,18 +85,36 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
         badgeCount: unread,
       );
       if (unread != null) AppBadgeService.set(unread);
-    });
+    }));
 
-    service.onMessageOpenedApp.listen(_openTicketFrom);
+    _subscriptions.add(service.onMessageOpenedApp.listen(_openTicketFrom));
     final initial = await service.initialMessage;
     if (initial != null) _openTicketFrom(initial);
+  }
+
+  @override
+  void dispose() {
+    _cancelSubscriptions();
+    super.dispose();
   }
 
   void _openTicketFrom(RemoteMessage message) {
     final ticketId = message.data['ticketId'] as String?;
     if (ticketId != null && ticketId.isNotEmpty) {
       ref.read(routerProvider).push('/tickets/$ticketId');
+      _markTicketNotificationsRead(ticketId);
     }
+  }
+
+  // Flips `read` on every unread notification about [ticketId] once the
+  // user has actually opened it from a tap — keeps the app-icon badge (see
+  // build()'s unreadNotificationCountProvider listener) from staying
+  // inflated for someone who only ever taps the tray notification and
+  // never visits the in-app Notifications list.
+  void _markTicketNotificationsRead(String ticketId) {
+    final userId = ref.read(currentAppUserProvider).valueOrNull?.id;
+    if (userId == null) return;
+    ref.read(notificationRepositoryProvider).markReadForTicket(userId, ticketId);
   }
 
   @override
@@ -95,6 +125,7 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
     // needs their own token registered too).
     ref.listen(currentAppUserProvider, (previous, next) {
       if (previous?.valueOrNull?.id != next.valueOrNull?.id) {
+        _cancelSubscriptions();
         _started = false;
         _start();
         if (next.valueOrNull == null) AppBadgeService.set(0);

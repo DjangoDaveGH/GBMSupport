@@ -30,7 +30,7 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
   TicketCategory? _category;
 
   bool _isAtRisk(Ticket t, SlaPolicy policy) {
-    if (!t.status.isOpenState) return false;
+    if (!t.status.isPendingSlaAction) return false;
     final targetHours = policy.targetHoursFor(t.priority);
     final elapsedHours = DateTime.now().difference(t.createdAt).inHours;
     return elapsedHours <= targetHours && elapsedHours >= targetHours * 0.75;

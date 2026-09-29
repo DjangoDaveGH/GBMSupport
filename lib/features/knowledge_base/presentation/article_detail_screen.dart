@@ -35,7 +35,13 @@ class _ArticleDetailScreenState extends ConsumerState<ArticleDetailScreen> {
 
     final body = articleAsync.when(
         loading: () => const BrandedLoaderCenter(),
-        error: (e, _) => Center(child: Text('Could not load article: $e')),
+        // A draft/in-review article a non-editor isn't linked to read
+        // surfaces here as a permission-denied stream error (firestore.
+        // rules now restrict knowledge_articles reads to published-only
+        // for non-editors) — shown the same as "doesn't exist" rather than
+        // a raw Firestore error, since from this reader's perspective it
+        // may as well not exist.
+        error: (e, _) => const Center(child: Text('Article not found.')),
         data: (article) {
           if (article == null) return const Center(child: Text('Article not found.'));
           return ListView(

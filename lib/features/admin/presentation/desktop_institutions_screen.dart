@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/scrollable_table.dart';
+import 'package:hyport/features/admin/presentation/institution_dialogs.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 
@@ -25,47 +25,6 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _showAddDialog() {
-    final nameController = TextEditingController();
-    var type = InstitutionType.mda;
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('Add Institution'),
-          content: SizedBox(
-            width: 360,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<InstitutionType>(
-                  initialValue: type,
-                  decoration: const InputDecoration(labelText: 'Type'),
-                  items: InstitutionType.values.map((t) => DropdownMenuItem(value: t, child: Text(t.wireValue))).toList(),
-                  onChanged: (v) => setDialogState(() => type = v!),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () async {
-                final name = nameController.text.trim();
-                if (name.isEmpty) return;
-                await ref.read(institutionRepositoryProvider).create(name: name, type: type);
-                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -95,7 +54,11 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
               // IntrinsicWidth forces the two-pass measure the button needs,
               // without changing its appearance.
               IntrinsicWidth(
-                child: FilledButton.icon(onPressed: _showAddDialog, icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Add Institution')),
+                child: FilledButton.icon(
+                  onPressed: () => showAddInstitutionDialog(context, ref, width: 360),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Institution'),
+                ),
               ),
             ],
           ),

@@ -61,18 +61,30 @@ class _AddUserScreenState extends ConsumerState<AddUserScreen> {
         'institutionId': _institutionIdController.text.trim(),
         'institutionType': _institutionType.wireValue,
       });
-      // The callable creates the account server-side but can't itself send
-      // Firebase's hosted reset email — only the client SDK's
-      // sendPasswordResetEmail triggers that, and it works for any email
-      // regardless of who's currently signed in. See functions/index.js.
-      await ref.read(authServiceProvider).sendPasswordResetEmail(email);
+      // The account now exists regardless of what happens below — clear the
+      // form and report success from here on, so a failure sending the
+      // reset email (a separate call, network blip/rate limit) never reads
+      // as "Could not create user" when the user was, in fact, created.
       if (!mounted) return;
-      setState(() => _success = 'User created. A password reset link has been sent to their email.');
       _formKey.currentState!.reset();
       _nameController.clear();
       _emailController.clear();
       _phoneController.clear();
       _institutionIdController.clear();
+
+      // The callable creates the account server-side but can't itself send
+      // Firebase's hosted reset email — only the client SDK's
+      // sendPasswordResetEmail triggers that, and it works for any email
+      // regardless of who's currently signed in. See functions/index.js.
+      try {
+        await ref.read(authServiceProvider).sendPasswordResetEmail(email);
+        if (mounted) setState(() => _success = 'User created. A password reset link has been sent to their email.');
+      } catch (e) {
+        if (mounted) {
+          setState(() => _success =
+              'User created, but the password reset email could not be sent ($e). They can request one themselves via "Forgot Password?" on the login screen.');
+        }
+      }
     } on FirebaseFunctionsException catch (e) {
       if (mounted) setState(() => _error = e.message ?? 'Could not create user (${e.code}).');
     } catch (e) {

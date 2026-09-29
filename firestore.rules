@@ -78,7 +78,7 @@ service cloud.firestore {
       return canViewAllTickets()
         || (isFunctionalLead() && t.assignedTo == request.auth.uid)
         || (isTechnicalLead() && t.assignedTo == request.auth.uid)
-        || (isVendor() && t.assignedTo == request.auth.uid)
+        || (isVendor() && t.assignedTo == request.auth.uid && t.escalationLevel == 2)
         || (isFocalPerson() && t.institutionId == institutionId())
         || (isRequesterSide() && t.createdBy == request.auth.uid);
     }
@@ -190,13 +190,18 @@ service cloud.firestore {
         role() == 'support_coordinator'
         // PFM Management/Administrator can manually (re)assign a ticket —
         // same write TicketRepository.assignTicket() makes (assignedTo,
-        // status -> 'assigned', updatedAt) and nothing more: escalate,
-        // close, and priority-edit stay Coordinator-only, matching
-        // canAssign in ticket_detail_screen.dart/desktop_ticket_detail_
-        // screen.dart, which offers Admin only the Assign action.
+        // status -> 'assigned', updatedAt, plus clearing resolvedAt/
+        // resolutionNotes when reassigning a resolved ticket) — and can
+        // close a resolved ticket, matching the Close Ticket action
+        // ticket_detail_screen.dart/desktop_ticket_detail_screen.dart now
+        // offer every back-office role. Escalate and priority-edit stay
+        // Coordinator-only, per the comment above.
         || (role() == 'pfm_management'
-            && onlyFieldsChanged(['assignedTo', 'status', 'updatedAt'])
-            && request.resource.data.status == 'assigned')
+            && ((onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
+                 && request.resource.data.status == 'assigned')
+                || (resource.data.status == 'resolved'
+                    && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy'])
+                    && request.resource.data.status == 'closed')))
         // Vendor/Specialist's only granted action is resolving a ticket
         // escalated to them (Section 3: no assign/escalate/close) — the app
         // UI never offers those to Vendor, but the rule shouldn't rely on
@@ -208,15 +213,25 @@ service cloud.firestore {
         || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2
             && onlyFieldsChanged(['status', 'updatedAt', 'resolutionNotes', 'resolvedAt'])
             && request.resource.data.status == 'resolved')
-        || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
-        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid)
-        // Requester: may only reopen or confirm-close their own ticket —
-        // never touch assignment, escalation, or category/priority fields.
-        // reopen() also clears resolvedAt (a reopened ticket is no longer
-        // resolved), so that field is in the allowed set here.
-        || (isRequesterSide()
-            && resource.data.createdBy == request.auth.uid
-            && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy', 'resolvedAt']));
+        // Functional/Technical Lead: Start Work, Resolve, self-service
+        // escalate-up (to ASU/Vendor, capped at level 2), and Close (once
+        // resolved) — matches the action set ticket_detail_screen.dart's
+        // admin toolbar actually offers these roles. Assign/priority/
+        // category edits stay Coordinator-only, per the comment above.
+        || ((isFunctionalLead() || isTechnicalLead())
+            && resource.data.assignedTo == request.auth.uid
+            && onlyFieldsChanged([
+                 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes',
+                 'escalationLevel', 'assignedTo', 'closedAt', 'closedBy'
+               ])
+            && request.resource.data.status in ['in_progress', 'resolved', 'escalated', 'closed']
+            && request.resource.data.escalationLevel >= resource.data.escalationLevel
+            && request.resource.data.escalationLevel <= 2);
+        // Requesters (MDA/MMDA users and focal persons) have no ticket-update
+        // path at all — reopening and closing are staff-only actions (see
+        // ticket_detail_screen.dart's requester actions, which offer Chat
+        // only). Once resolved, a ticket only moves again via staff closing
+        // it; there is no reopen action anywhere in the app any more.
 
       allow delete: if false; // tickets are closed, never deleted — audit trail must persist
 
@@ -225,7 +240,9 @@ service cloud.firestore {
         allow read: if canViewAllTickets()
           || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isVendor() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
+          || (isVendor()
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel == 2)
           || (isFocalPerson() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.institutionId == institutionId())
           || (isRequesterSide()
               && get(/databases/$(database)/documents/tickets/$(ticketId)).data.createdBy == request.auth.uid);
@@ -235,11 +252,15 @@ service cloud.firestore {
         // as themselves, and entries are immutable once written. Functional
         // and Technical Lead mirror the same assignedTo condition as the read
         // rule above — they shouldn't be able to write to a ticket's trail
-        // they can't even open.
+        // they can't even open. Vendor mirrors the same escalationLevel == 2
+        // gate as the read rule above, for the same reason.
         allow create: if (canViewAllTickets()
           || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
           || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || isVendor() || isRequesterSide())
+          || (isVendor()
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel == 2)
+          || isRequesterSide())
           && request.resource.data.actorId == request.auth.uid
           && request.resource.data.ticketId == ticketId;
         allow update, delete: if false;
@@ -261,12 +282,15 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
 
-      // Ticket-lifecycle notifications are written by Cloud Functions via
-      // the Admin SDK, which bypasses these rules entirely. The only
-      // client-side create path is the admin broadcast screen (Section 7:
-      // system downtime / deadline / maintenance notices).
-      allow create: if isSupportSide()
-        && request.resource.data.type in ['system_downtime', 'deadline_reminder', 'maintenance'];
+      // Every notification — ticket-lifecycle ones and admin broadcasts
+      // alike — is written server-side by Cloud Functions via the Admin
+      // SDK (onTicketCreated/onTicketUpdated, adminBroadcastNotification),
+      // which bypasses these rules entirely. The client (announcements_
+      // screen.dart) only ever calls the adminBroadcastNotification
+      // callable, which independently re-checks role == pfm_management —
+      // it never writes to this collection directly, so there is no
+      // legitimate client-side create path to allow here.
+      allow create: if false;
 
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
@@ -277,7 +301,12 @@ service cloud.firestore {
 
     // ----- knowledge base -----
     match /knowledge_articles/{articleId} {
-      allow read: if isSignedIn();
+      // Draft/in-review articles are editor-only — a requester who has,
+      // guesses, or is linked a draft's id must not be able to read its
+      // unpublished content directly (the app's own list screens already
+      // filter to published-only for non-editors, but that's a client-side
+      // UI filter, not an access boundary; this is the real one).
+      allow read: if isSignedIn() && (resource.data.status == 'published' || isSupportSide());
       allow create, delete: if isSupportSide();
       // Any signed-in reader may bump viewCount when they open an article
       // (real "most viewed" data, not a fabricated number) — every other
@@ -322,12 +351,16 @@ service cloud.firestore {
     // query across every ticket's activity subcollection. The per-ticket
     // `allow read` above only governs direct reads scoped to one ticket's
     // subcollection — Firestore requires a separate wildcard-path rule for
-    // collection-group queries to be permitted at all. Same isSupportSide()
-    // scoping as the per-ticket rule (excludes Vendor, matches the desktop
-    // nav guard) so this can't be used to widen Vendor's ticket-scoped
-    // access into a full activity feed.
+    // collection-group queries to be permitted at all. Must mirror the
+    // per-ticket rule's scoping exactly (Coordinator/Management see
+    // everything; Functional/Technical Lead only their assigned tickets),
+    // not just isSupportSide() — otherwise this collection-group rule
+    // would hand Leads the full cross-institution visibility the per-ticket
+    // rule deliberately narrowed them out of.
     match /{path=**}/activity/{activityId} {
-      allow read: if isSupportSide();
+      allow read: if canViewAllTickets()
+        || ((isFunctionalLead() || isTechnicalLead())
+            && get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data.assignedTo == request.auth.uid);
     }
   }
 }

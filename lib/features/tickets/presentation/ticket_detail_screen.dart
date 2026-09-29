@@ -13,6 +13,7 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
+import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart' show categoryIcon;
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
@@ -96,7 +97,6 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   Ticket get ticket => widget.ticket;
   AppUser get viewer => widget.viewer;
 
-  bool get _isOwner => viewer.id == ticket.createdBy;
   bool get _isAssignee => viewer.id == ticket.assignedTo;
 
   @override
@@ -267,21 +267,27 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
     if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
         _isAssignee &&
         ticket.status != TicketStatus.closed) {
-      overflow.add(('Start Work', Icons.play_arrow_rounded, () => _showStatusDialog(context, ref, TicketStatus.inProgress)));
+      overflow.add(('Start Work', Icons.play_arrow_rounded, () {
+        _changeStatus(ref, TicketStatus.inProgress);
+      }));
       overflow.add((
         'Resolve',
         Icons.check_circle_outline_rounded,
-        () => _showStatusDialog(context, ref, TicketStatus.resolved, requireNote: true),
+        () {
+          _changeStatus(ref, TicketStatus.resolved);
+        },
       ));
     }
     if (viewer.role == UserRole.vendorSupport && _isAssignee && ticket.status != TicketStatus.closed) {
       overflow.add((
         'Resolve',
         Icons.check_circle_outline_rounded,
-        () => _showStatusDialog(context, ref, TicketStatus.resolved, requireNote: true),
+        () {
+          _changeStatus(ref, TicketStatus.resolved);
+        },
       ));
     }
-    if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved && viewer.role != UserRole.pfmManagement) {
+    if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved) {
       overflow.add((
         'Close Ticket',
         Icons.lock_outline_rounded,
@@ -347,36 +353,17 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   }
 
   Widget _buildRequesterActions(BuildContext context, WidgetRef ref) {
-    final actions = <Widget>[];
-
-    if (_isOwner) {
-      if (ticket.status == TicketStatus.resolved) {
-        actions.add(FilledButton.icon(
-          onPressed: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
-          icon: const Icon(Icons.check_rounded, size: 18),
-          label: const Text('Confirm & close'),
-        ));
-        actions.add(OutlinedButton.icon(
-          onPressed: () => _showReopenDialog(context, ref),
-          icon: const Icon(Icons.replay_rounded, size: 18),
-          label: const Text('Reopen'),
-        ));
-      } else if (ticket.status == TicketStatus.closed) {
-        actions.add(OutlinedButton.icon(
-          onPressed: () => _showReopenDialog(context, ref),
-          icon: const Icon(Icons.replay_rounded, size: 18),
-          label: const Text('Reopen'),
-        ));
-      }
-    }
-
-    actions.add(OutlinedButton.icon(
-      onPressed: () => context.push('/tickets/${ticket.id}/chat'),
-      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-      label: const Text('Chat'),
-    ));
-
-    return Wrap(spacing: 10, runSpacing: 10, children: actions);
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => context.push('/tickets/${ticket.id}/chat'),
+          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+          label: const Text('Chat'),
+        ),
+      ],
+    );
   }
 
   void _showEscalateDialog(BuildContext context, WidgetRef ref) {
@@ -438,64 +425,12 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
     );
   }
 
-  void _showStatusDialog(BuildContext context, WidgetRef ref, TicketStatus newStatus, {bool requireNote = false}) {
-    final noteController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Mark as ${newStatus.label}'),
-        content: TextField(
-          controller: noteController,
-          decoration: InputDecoration(labelText: requireNote ? 'Resolution notes' : 'Note (optional)'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              if (requireNote && noteController.text.trim().isEmpty) return;
-              await ref.read(ticketRepositoryProvider).changeStatus(
-                    ticketId: ticket.id,
-                    to: newStatus,
-                    actorId: viewer.id,
-                    note: noteController.text.trim(),
-                  );
-              if (context.mounted) Navigator.of(context).pop();
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showReopenDialog(BuildContext context, WidgetRef ref) {
-    final noteController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reopen ticket'),
-        content: TextField(
-          controller: noteController,
-          decoration: const InputDecoration(labelText: 'Why are you reopening this?'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              await ref.read(ticketRepositoryProvider).reopen(
-                    ticketId: ticket.id,
-                    actorId: viewer.id,
-                    note: noteController.text.trim(),
-                  );
-              if (context.mounted) Navigator.of(context).pop();
-            },
-            child: const Text('Reopen'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _changeStatus(WidgetRef ref, TicketStatus status) {
+    return ref.read(ticketRepositoryProvider).changeStatus(
+          ticketId: ticket.id,
+          to: status,
+          actorId: viewer.id,
+        );
   }
 
 }
@@ -542,6 +477,10 @@ class _DetailsTab extends ConsumerWidget {
               Text('Description', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Text(ticket.description, style: Theme.of(context).textTheme.bodyMedium),
+              if (ticket.attachmentUrls.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
+              ],
               if (ticket.resolutionNotes != null && ticket.resolutionNotes!.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 Container(

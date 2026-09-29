@@ -1,0 +1,4224 @@
+{
+  "exportedAt": "2026-09-24T06:19:00.334Z",
+  "scope": "MMDA tickets created 2026-09-22",
+  "mmdaInstitutionIds": [
+    "ablekuma-central-municipal",
+    "ablekuma-north-municipal",
+    "ablekuma-west-municipal",
+    "abuakwa-north-municipal",
+    "abuakwa-south-municipal",
+    "abura-asebu-kwamankese-district",
+    "accra-metro",
+    "accra-metropolis",
+    "achiase-district",
+    "ada-east-district",
+    "ada-west-district",
+    "adaklu-district",
+    "adansi-asokwa-district",
+    "adansi-north-district",
+    "adansi-south-district",
+    "adenta-municipal",
+    "afadzato-south-district",
+    "afigya-kwabre-north-district",
+    "afigya-kwabre-south-district",
+    "agona-east-district",
+    "agona-west-district",
+    "agortime-ziope-district",
+    "ahafo-ano-north-district",
+    "ahafo-ano-south-district",
+    "ahafo-ano-south-east-district",
+    "ahafo-ano-south-west-district",
+    "ahanta-west-municipal",
+    "ajumanku-enyan-essiam-district",
+    "akatsi-north-district",
+    "akatsi-south-district",
+    "akrofuom-district",
+    "akuapem-south-district",
+    "akwapim-north-district",
+    "akyemansa-district",
+    "amansie-central-district",
+    "amansie-south-district",
+    "amansie-west-district",
+    "amenfi-central-district",
+    "anloga-district",
+    "aowin-municipal",
+    "asante-akim-central-municipal",
+    "asante-akim-north-district",
+    "asante-akim-south-district",
+    "asene-manso-district",
+    "ashaiman-municipal",
+    "asokore-mampong-municipal",
+    "asokwa-municipal",
+    "assin-fosu-municipal",
+    "assin-north-district",
+    "assin-south-district",
+    "asunafo-north-municipal",
+    "asunafo-south-district",
+    "asuogyaman-district",
+    "asutifi-district",
+    "asutifi-south-district",
+    "atebubu-amantin-municipal",
+    "atiwa-east-district",
+    "atiwa-west-district",
+    "atwima-kwanwoma-district",
+    "atwima-mponua-district",
+    "atwima-nwabiagya-district",
+    "atwima-nwabiagya-north-district",
+    "awutu-senya-district",
+    "awutu-senya-east-municipal",
+    "ayawaso-central-municipal",
+    "ayawaso-east-municipal",
+    "ayawaso-north-municipal",
+    "ayawaso-west-municipal",
+    "ayensuano-district",
+    "banda-district",
+    "bawku-municipal",
+    "bawku-west-district",
+    "bekwai-municipal",
+    "berekum-east-municipal",
+    "berekum-west-district",
+    "bia-east-district",
+    "bia-west-district",
+    "biakoye-district",
+    "bibiani-anhwiaso-bekwai-municipal",
+    "binduri-district",
+    "birim-central-municipal",
+    "birim-north-district",
+    "birim-south-district",
+    "bodi-district",
+    "bole-district",
+    "bolgatanga-east-district",
+    "bolgatanga-municipal",
+    "bongo-district",
+    "bosome-freho-district",
+    "bosumtwi-district",
+    "builsa-north-district",
+    "builsa-south-district",
+    "bunkpurugu-nakpanduri-district",
+    "cape-coast-metropolis",
+    "central-tongu-district",
+    "chereponi-district",
+    "dafiama-bussie-issa-district",
+    "denkyembuor-district",
+    "dormaa-central-municipal",
+    "dormaa-east-district",
+    "dormaa-west-district",
+    "east-gonja-municipal",
+    "effia-kwesimintsim-municipal",
+    "effutu-municipal",
+    "ejisu-municipal",
+    "ejura-sekyeredumasi-district",
+    "ekumfi-district",
+    "ellembelle-district",
+    "fanteakwa-north-district",
+    "fanteakwa-south-district",
+    "ga-central-municipal",
+    "ga-east-municipal",
+    "ga-north-municipal",
+    "ga-south-municipal",
+    "ga-west-municipal",
+    "garu-district",
+    "gomoa-east-district",
+    "gomoa-west-district",
+    "gonja-central-district",
+    "guan-district",
+    "gushiegu-municipal",
+    "hemang-lower-denkyira-district",
+    "ho-municipal",
+    "ho-west-district",
+    "hohoe-municipal",
+    "jaman-north-district",
+    "jaman-south-municipal",
+    "jasikan-district",
+    "jirapa-municipal",
+    "jomoro-municipal",
+    "juaben-municipal",
+    "juaboso-district",
+    "kadjebi-district",
+    "karaga-district",
+    "kasena-nankana-east-municipal",
+    "kasena-nankana-west-district",
+    "keta-municipal",
+    "ketu-north-municipal",
+    "ketu-south-municipal",
+    "kintampo-north-municipal",
+    "kintampo-south-district",
+    "komenda-edina-eguafo-abrim-municipal",
+    "korle-klottey-municipal",
+    "kpandai-district-assembly",
+    "kpando-municipal",
+    "kpone-katamanso-municipal",
+    "krachi-east-municipal",
+    "krachi-nchumuru-district",
+    "krachi-west-district",
+    "krowor-municipal",
+    "kumasi-metropolis",
+    "kumbungu-district",
+    "kwabre-east-district",
+    "kwadaso-municipal",
+    "kwaebibirem-district",
+    "kwahu-afram-plains-north-district",
+    "kwahu-afram-plains-south-district",
+    "kwahu-east-district",
+    "kwahu-south-district",
+    "kwahu-west-district",
+    "kwsebibirem-district",
+    "la-dade-kotopon-municipal",
+    "la-nkwantanang-municipal",
+    "lambussie-karni-district",
+    "lawra-municipal",
+    "ledzokuku-municipal",
+    "lower-manya-krobo-district",
+    "mampong-municipal",
+    "mamprugu-moagduri-district",
+    "mamprusi-east-municipal",
+    "mfantsiman-municipal",
+    "mion-district",
+    "mpohor-district",
+    "nabdam-district",
+    "nadowli-kaleo-district",
+    "nandom-district",
+    "nanton-district",
+    "nanumba-north-municipal",
+    "nanumba-south-district",
+    "new-juaben-north-municipal",
+    "new-juaben-south-municipal",
+    "ningo-district",
+    "nkoranza-north-district",
+    "nkoranza-south-municipal",
+    "nkwanta-north-district",
+    "nkwanta-south-municipal",
+    "north-dayi-district",
+    "north-east-gonja-district",
+    "north-gonja-district",
+    "north-tongu-district",
+    "nsawam-adoagyiri-municipal",
+    "nzema-east-municipal",
+    "obuasi-east-district",
+    "obuasi-municipal",
+    "offinso-municipal",
+    "offinso-north-district",
+    "oforikrom-municipal",
+    "okaikwei-north-municipal",
+    "okere-district",
+    "old-tafo-municipal",
+    "prestea-huni-valley-municipal",
+    "pru-east-district",
+    "pru-west-district",
+    "pusiga-district",
+    "saboba-district",
+    "sagnerigu-municipal",
+    "savelugu-district",
+    "sawla-tuna-kalba-district",
+    "sefwi-akontombra-district",
+    "sefwi-wiawso-municipal",
+    "sekondi-takoradi-metropolis",
+    "sekyere-afram-plains-district",
+    "sekyere-central-district",
+    "sekyere-east-district",
+    "sekyere-kumawu-district",
+    "sekyere-south-district",
+    "sene-east-district",
+    "sene-west-district",
+    "shai-osudoku-district",
+    "shama-district",
+    "sissala-east-municipal",
+    "sissala-west-district",
+    "south-dayi-district",
+    "south-tongu-district",
+    "suaman-district",
+    "suame-municipal",
+    "suhum-district",
+    "sunyani-municipal",
+    "sunyani-west-district",
+    "tain-district",
+    "talensi-district",
+    "tamale-metropolis",
+    "tano-north-district",
+    "tano-south-municipal",
+    "tarkwa-nsuaem-municipal",
+    "tatale-sanguli-district",
+    "techiman-municipal",
+    "techiman-north-district",
+    "tema-metropolis",
+    "tema-west-municipal",
+    "tempane-district",
+    "tolon-district",
+    "twifo-ati-morkwa-district",
+    "upper-denkyira-east-municipal",
+    "upper-denkyira-west-district",
+    "upper-manya-krobo-district",
+    "upper-west-akyem-district",
+    "wa-east-district",
+    "wa-municipal",
+    "wa-west-district",
+    "wassa-amenfi-east-district",
+    "wassa-amenfi-west-district",
+    "wassa-east-district",
+    "weija-gbawe-municipal",
+    "wenchi-municipal",
+    "west-akim-municipal",
+    "west-gonja-district",
+    "west-mamprusi-municipal-assembly",
+    "yendi-municipal",
+    "yilo-krobo-district",
+    "yunyoo-nasuan-district",
+    "zabzugu-district"
+  ],
+  "tickets": [
+    {
+      "id": "0RW9gqF1yywWjIYPWmUK",
+      "data": {
+        "ticketReference": "PFMSD-2026-000187",
+        "createdBy": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+        "institutionId": "wa-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "Am not able to generate a report",
+        "description": "Am not able to generate a report",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094892,
+          "_nanoseconds": 666000000
+        },
+        "assignedTo": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094893,
+          "_nanoseconds": 216000000
+        },
+        "assignedToName": "Jerome Ankrah",
+        "firstRespondedAt": {
+          "_seconds": 1790095085,
+          "_nanoseconds": 470000000
+        }
+      },
+      "activity": [
+        {
+          "id": "9F9qEj11K9UP7LQkW4kp",
+          "data": {
+            "ticketId": "0RW9gqF1yywWjIYPWmUK",
+            "actorId": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094892,
+              "_nanoseconds": 666000000
+            }
+          }
+        },
+        {
+          "id": "ARpJxhPkrEiFctIuztqs",
+          "data": {
+            "ticketId": "0RW9gqF1yywWjIYPWmUK",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094893,
+              "_nanoseconds": 216000000
+            }
+          }
+        },
+        {
+          "id": "SCTJn2Vuwx1aA2LqusPz",
+          "data": {
+            "ticketId": "0RW9gqF1yywWjIYPWmUK",
+            "actorId": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Which  report are you working on",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095085,
+              "_nanoseconds": 242000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095085,
+              "_nanoseconds": 481000000
+            }
+          }
+        },
+        {
+          "id": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095085,
+              "_nanoseconds": 805000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "0ri7P84C53Jf8UfyV2dW",
+      "data": {
+        "ticketReference": "PFMSD-2026-000196",
+        "createdBy": "PZGxysvRtBh8O5pnHBIG3K8s0nJ3",
+        "institutionId": "wa-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "Head of Budget can not view all the cost centres",
+        "description": "Head of Budget can not view all the cost centres",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095137,
+          "_nanoseconds": 215000000
+        },
+        "assignedTo": "YhGjpL6QgJNnpx88db4lFKS42RC3",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095138,
+          "_nanoseconds": 418000000
+        },
+        "assignedToName": "David Kyei",
+        "firstRespondedAt": {
+          "_seconds": 1790095180,
+          "_nanoseconds": 377000000
+        }
+      },
+      "activity": [
+        {
+          "id": "RE8sPxI1VGbMTrIHXnHp",
+          "data": {
+            "ticketId": "0ri7P84C53Jf8UfyV2dW",
+            "actorId": "YhGjpL6QgJNnpx88db4lFKS42RC3",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi ticket received",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095180,
+              "_nanoseconds": 166000000
+            }
+          }
+        },
+        {
+          "id": "nsXH0KqrbMMhwNh8kpir",
+          "data": {
+            "ticketId": "0ri7P84C53Jf8UfyV2dW",
+            "actorId": "PZGxysvRtBh8O5pnHBIG3K8s0nJ3",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095137,
+              "_nanoseconds": 215000000
+            }
+          }
+        },
+        {
+          "id": "rUpZHWYHge0AQCYlNjoO",
+          "data": {
+            "ticketId": "0ri7P84C53Jf8UfyV2dW",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "YhGjpL6QgJNnpx88db4lFKS42RC3",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095138,
+              "_nanoseconds": 418000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "PZGxysvRtBh8O5pnHBIG3K8s0nJ3",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095180,
+              "_nanoseconds": 798000000
+            }
+          }
+        },
+        {
+          "id": "YhGjpL6QgJNnpx88db4lFKS42RC3",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095345,
+              "_nanoseconds": 731000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "4Vlw703u23Iipx5gvS8t",
+      "data": {
+        "ticketReference": "PFMSD-2026-000195",
+        "createdBy": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+        "institutionId": "wa-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "good evening snrs",
+        "description": "good evening snrs",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095127,
+          "_nanoseconds": 408000000
+        },
+        "assignedTo": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+        "assignedToName": "Andrews Kwame Amoah",
+        "firstRespondedAt": {
+          "_seconds": 1790095148,
+          "_nanoseconds": 364000000
+        },
+        "resolutionNotes": "resolved",
+        "status": "resolved",
+        "resolvedAt": {
+          "_seconds": 1790095229,
+          "_nanoseconds": 752000000
+        },
+        "updatedAt": {
+          "_seconds": 1790095229,
+          "_nanoseconds": 752000000
+        }
+      },
+      "activity": [
+        {
+          "id": "96B3Qz1l6vNbL6C16jsy",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095127,
+              "_nanoseconds": 408000000
+            }
+          }
+        },
+        {
+          "id": "9mqgZuoYXv8WhLICysE2",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "action": "status_changed",
+            "fromValue": "resolved",
+            "toValue": "resolved",
+            "note": "resolved",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095228,
+              "_nanoseconds": 427000000
+            }
+          }
+        },
+        {
+          "id": "EdxTPh1Z9b4nTut2WtR5",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095127,
+              "_nanoseconds": 965000000
+            }
+          }
+        },
+        {
+          "id": "TNvXIo459R84psh1a9gm",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Good evening chief",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095147,
+              "_nanoseconds": 938000000
+            }
+          }
+        },
+        {
+          "id": "a5RPImzB0KTfdZk6gDqL",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "action": "status_changed",
+            "fromValue": "resolved",
+            "toValue": "resolved",
+            "note": "resolved",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095229,
+              "_nanoseconds": 752000000
+            }
+          }
+        },
+        {
+          "id": "vNUx1dlvAfQn2qfHXs1P",
+          "data": {
+            "ticketId": "4Vlw703u23Iipx5gvS8t",
+            "actorId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "action": "status_changed",
+            "fromValue": "assigned",
+            "toValue": "resolved",
+            "note": "resolved",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095227,
+              "_nanoseconds": 73000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095148,
+              "_nanoseconds": 211000000
+            }
+          }
+        },
+        {
+          "id": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095148,
+              "_nanoseconds": 617000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "7Up308L2MkGPaY1jGQGk",
+      "data": {
+        "ticketReference": "PFMSD-2026-000197",
+        "createdBy": "wePMoKrEzWb70spjaQscfqBvhlm1",
+        "institutionId": "dafiama-bussie-issa-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "I can't login",
+        "description": "I can't login",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095153,
+          "_nanoseconds": 563000000
+        },
+        "assignedTo": "mWvST23CpcZIn0mUXcZTLwEd5D32",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095154,
+          "_nanoseconds": 353000000
+        },
+        "assignedToName": "Naa-Dey Ashie",
+        "firstRespondedAt": {
+          "_seconds": 1790167136,
+          "_nanoseconds": 76000000
+        }
+      },
+      "activity": [
+        {
+          "id": "CEkO85SBixtJVGWo6Mxd",
+          "data": {
+            "ticketId": "7Up308L2MkGPaY1jGQGk",
+            "actorId": "wePMoKrEzWb70spjaQscfqBvhlm1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095153,
+              "_nanoseconds": 563000000
+            }
+          }
+        },
+        {
+          "id": "YpSoEQoqJ6g77YDFjerF",
+          "data": {
+            "ticketId": "7Up308L2MkGPaY1jGQGk",
+            "actorId": "mWvST23CpcZIn0mUXcZTLwEd5D32",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi Dauda, \nplease share a screenshot of your screen with the notification you are having",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790167135,
+              "_nanoseconds": 738000000
+            }
+          }
+        },
+        {
+          "id": "pzQLncYOU9u4up7oPXUK",
+          "data": {
+            "ticketId": "7Up308L2MkGPaY1jGQGk",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "mWvST23CpcZIn0mUXcZTLwEd5D32",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095154,
+              "_nanoseconds": 353000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "mWvST23CpcZIn0mUXcZTLwEd5D32",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790181346,
+              "_nanoseconds": 904000000
+            }
+          }
+        },
+        {
+          "id": "wePMoKrEzWb70spjaQscfqBvhlm1",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095166,
+              "_nanoseconds": 594000000
+            },
+            "lastDeliveredAt": {
+              "_seconds": 1790167136,
+              "_nanoseconds": 791000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "BCtjlfhOCik9QMpIBAGD",
+      "data": {
+        "ticketReference": "PFMSD-2026-000198",
+        "createdBy": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+        "institutionId": "wa-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "Am not able to generate a report",
+        "description": "Am not able to generate a report",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095155,
+          "_nanoseconds": 829000000
+        },
+        "assignedTo": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095156,
+          "_nanoseconds": 396000000
+        },
+        "assignedToName": "Samuel Amissah"
+      },
+      "activity": [
+        {
+          "id": "b461JrxGmuR65aZlu0G1",
+          "data": {
+            "ticketId": "BCtjlfhOCik9QMpIBAGD",
+            "actorId": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095155,
+              "_nanoseconds": 829000000
+            }
+          }
+        },
+        {
+          "id": "cDFAGzgR6yno0zrOIIpl",
+          "data": {
+            "ticketId": "BCtjlfhOCik9QMpIBAGD",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095156,
+              "_nanoseconds": 396000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "EISLEjgZ2SUwxLSYYvwL",
+      "data": {
+        "ticketReference": "PFMSD-2026-000205",
+        "createdBy": "YMwMeoOKgCeUJ6cyaIl8QIWey4s1",
+        "institutionId": "nadowli-kaleo-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "can't connect to the system",
+        "description": "can't connect to the system",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095344,
+          "_nanoseconds": 644000000
+        },
+        "assignedTo": "QdkexOcPfTdnSo0lxPo8hMRUYnp2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095345,
+          "_nanoseconds": 299000000
+        },
+        "assignedToName": "Edward Nsubi"
+      },
+      "activity": [
+        {
+          "id": "gtM5cZbqecVmNj8wEwAX",
+          "data": {
+            "ticketId": "EISLEjgZ2SUwxLSYYvwL",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "QdkexOcPfTdnSo0lxPo8hMRUYnp2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095345,
+              "_nanoseconds": 299000000
+            }
+          }
+        },
+        {
+          "id": "ow9brybF8b5CIOn5G3cF",
+          "data": {
+            "ticketId": "EISLEjgZ2SUwxLSYYvwL",
+            "actorId": "YMwMeoOKgCeUJ6cyaIl8QIWey4s1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095344,
+              "_nanoseconds": 644000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "J60c1UQU8p10BDmk5foA",
+      "data": {
+        "ticketReference": "PFMSD-2026-000204",
+        "createdBy": "XDRRuEyHU6YGOpwt4oDLXfLKq142",
+        "institutionId": "sissala-east-municipal",
+        "category": "reports",
+        "subCategory": "",
+        "title": "Not able to generate a report",
+        "description": "Not able to generate a report",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095200,
+          "_nanoseconds": 803000000
+        },
+        "assignedTo": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095202,
+          "_nanoseconds": 551000000
+        },
+        "assignedToName": "Lydia Kyei Baffour"
+      },
+      "activity": [
+        {
+          "id": "sm9Audchca6gEf35xVrn",
+          "data": {
+            "ticketId": "J60c1UQU8p10BDmk5foA",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095202,
+              "_nanoseconds": 551000000
+            }
+          }
+        },
+        {
+          "id": "sqE6CNd9u1zqQuY5kWh6",
+          "data": {
+            "ticketId": "J60c1UQU8p10BDmk5foA",
+            "actorId": "XDRRuEyHU6YGOpwt4oDLXfLKq142",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095200,
+              "_nanoseconds": 803000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "KrJis1bRkOhdFLhs3YeE",
+      "data": {
+        "ticketReference": "PFMSD-2026-000186",
+        "createdBy": "rSojX1cYltMnWduMlD1H20tsID33",
+        "institutionId": "lambussie-karni-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "no displays",
+        "description": "no displays",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": true,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094891,
+          "_nanoseconds": 766000000
+        },
+        "assignedTo": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094893,
+          "_nanoseconds": 35000000
+        },
+        "assignedToName": "Lisa Frema Boadu",
+        "firstRespondedAt": {
+          "_seconds": 1790095035,
+          "_nanoseconds": 88000000
+        }
+      },
+      "activity": [
+        {
+          "id": "F7mYodcliZJRxB08PCEF",
+          "data": {
+            "ticketId": "KrJis1bRkOhdFLhs3YeE",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094893,
+              "_nanoseconds": 35000000
+            }
+          }
+        },
+        {
+          "id": "Tin2OZ40FhRg4REExkPm",
+          "data": {
+            "ticketId": "KrJis1bRkOhdFLhs3YeE",
+            "actorId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095034,
+              "_nanoseconds": 839000000
+            }
+          }
+        },
+        {
+          "id": "bcKUAdCzVauKmttbF07X",
+          "data": {
+            "ticketId": "KrJis1bRkOhdFLhs3YeE",
+            "actorId": "rSojX1cYltMnWduMlD1H20tsID33",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094891,
+              "_nanoseconds": 766000000
+            }
+          }
+        },
+        {
+          "id": "csR8kLPEucsuXQdRNNUw",
+          "data": {
+            "ticketId": "KrJis1bRkOhdFLhs3YeE",
+            "actorId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "I just received your issue",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095062,
+              "_nanoseconds": 576000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "rSojX1cYltMnWduMlD1H20tsID33",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095063,
+              "_nanoseconds": 98000000
+            },
+            "lastReadAt": {
+              "_seconds": 1790095104,
+              "_nanoseconds": 935000000
+            }
+          }
+        },
+        {
+          "id": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095062,
+              "_nanoseconds": 857000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "L6uZBG3EULQOlSpDJQrb",
+      "data": {
+        "ticketReference": "PFMSD-2026-000201",
+        "createdBy": "KsyfI2hMpZPsqtoExehclMuoGut2",
+        "institutionId": "wa-east-district",
+        "category": "workflow",
+        "subCategory": "",
+        "title": "Not connecting",
+        "description": "Not connecting",
+        "attachmentUrls": [],
+        "priority": "low",
+        "impact": "low",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095184,
+          "_nanoseconds": 312000000
+        },
+        "assignedTo": "ZteAERCgdbZnDzvLBz7OMH1247w2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095184,
+          "_nanoseconds": 826000000
+        },
+        "assignedToName": "Prince Edward Amponsah-Donkor",
+        "firstRespondedAt": {
+          "_seconds": 1790095199,
+          "_nanoseconds": 42000000
+        }
+      },
+      "activity": [
+        {
+          "id": "AMivCP5qMqQLkIRuK7WU",
+          "data": {
+            "ticketId": "L6uZBG3EULQOlSpDJQrb",
+            "actorId": "ZteAERCgdbZnDzvLBz7OMH1247w2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095198,
+              "_nanoseconds": 903000000
+            }
+          }
+        },
+        {
+          "id": "SK46RUlZwyWNk1ybgsqI",
+          "data": {
+            "ticketId": "L6uZBG3EULQOlSpDJQrb",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "ZteAERCgdbZnDzvLBz7OMH1247w2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095184,
+              "_nanoseconds": 826000000
+            }
+          }
+        },
+        {
+          "id": "wEafnp7ju1K2MkYz2k78",
+          "data": {
+            "ticketId": "L6uZBG3EULQOlSpDJQrb",
+            "actorId": "KsyfI2hMpZPsqtoExehclMuoGut2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095184,
+              "_nanoseconds": 312000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "KsyfI2hMpZPsqtoExehclMuoGut2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095199,
+              "_nanoseconds": 238000000
+            }
+          }
+        },
+        {
+          "id": "ZteAERCgdbZnDzvLBz7OMH1247w2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095198,
+              "_nanoseconds": 935000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "O7oGFFAvP63QKI9zvXGs",
+      "data": {
+        "ticketReference": "PFMSD-2026-000183",
+        "createdBy": "g8fdLQnIoqcP83XaFnX0aLNhUFX2",
+        "institutionId": "dafiama-bussie-issa-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "Head of budget is not able to view all departments",
+        "description": "Head of budget is not able to view all departments",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790094865,
+          "_nanoseconds": 895000000
+        },
+        "assignedTo": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094867,
+          "_nanoseconds": 557000000
+        },
+        "assignedToName": "Samuel Amissah"
+      },
+      "activity": [
+        {
+          "id": "e1pJjof1612EQ9HKq2fy",
+          "data": {
+            "ticketId": "O7oGFFAvP63QKI9zvXGs",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094867,
+              "_nanoseconds": 557000000
+            }
+          }
+        },
+        {
+          "id": "ofcOTGvOPJSpTOEAbo83",
+          "data": {
+            "ticketId": "O7oGFFAvP63QKI9zvXGs",
+            "actorId": "g8fdLQnIoqcP83XaFnX0aLNhUFX2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094865,
+              "_nanoseconds": 895000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "OzOsk5BCplsgWCXimsGt",
+      "data": {
+        "ticketReference": "PFMSD-2026-000189",
+        "createdBy": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+        "institutionId": "lawra-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "Compensation of employees not responding",
+        "description": "Compensation of employees not responding",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094906,
+          "_nanoseconds": 189000000
+        },
+        "assignedTo": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094907,
+          "_nanoseconds": 113000000
+        },
+        "assignedToName": "Justin Osei Poku",
+        "firstRespondedAt": {
+          "_seconds": 1790095225,
+          "_nanoseconds": 130000000
+        }
+      },
+      "activity": [
+        {
+          "id": "6XY47SsAU9IbWjqq46uW",
+          "data": {
+            "ticketId": "OzOsk5BCplsgWCXimsGt",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094907,
+              "_nanoseconds": 113000000
+            }
+          }
+        },
+        {
+          "id": "YWbaDDl1CUuDrkGIiRpn",
+          "data": {
+            "ticketId": "OzOsk5BCplsgWCXimsGt",
+            "actorId": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hello , Please your issue has been noted and will be worked on",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095224,
+              "_nanoseconds": 874000000
+            }
+          }
+        },
+        {
+          "id": "elCmTVWu4nlBVK8C4w8t",
+          "data": {
+            "ticketId": "OzOsk5BCplsgWCXimsGt",
+            "actorId": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094906,
+              "_nanoseconds": 189000000
+            }
+          }
+        },
+        {
+          "id": "khwhv3PHvSAud35ijQ9P",
+          "data": {
+            "ticketId": "OzOsk5BCplsgWCXimsGt",
+            "actorId": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Have a good day",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095234,
+              "_nanoseconds": 717000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095235,
+              "_nanoseconds": 235000000
+            }
+          }
+        },
+        {
+          "id": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095261,
+              "_nanoseconds": 677000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "PLwgAAYI6lVKDaBq1ZiA",
+      "data": {
+        "ticketReference": "PFMSD-2026-000208",
+        "createdBy": "LVfJoFiDecO4npaSZSNebNUn6Vx2",
+        "institutionId": "sissala-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "The number days should have been five instead",
+        "description": "The number days should have been five instead",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790096078,
+          "_nanoseconds": 712000000
+        },
+        "assignedTo": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790096080,
+          "_nanoseconds": 153000000
+        },
+        "assignedToName": "David Kojo Brown-Pobee",
+        "firstRespondedAt": {
+          "_seconds": 1790096165,
+          "_nanoseconds": 396000000
+        }
+      },
+      "activity": [
+        {
+          "id": "61Wv1XNPcFnX0zIRPrhU",
+          "data": {
+            "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790096080,
+              "_nanoseconds": 153000000
+            }
+          }
+        },
+        {
+          "id": "8iUT1FytB3aynjqnff9y",
+          "data": {
+            "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+            "actorId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Please number of days for what please",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790096164,
+              "_nanoseconds": 901000000
+            }
+          }
+        },
+        {
+          "id": "moM3bBgunN1QEdOABwDJ",
+          "data": {
+            "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+            "actorId": "LVfJoFiDecO4npaSZSNebNUn6Vx2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790096078,
+              "_nanoseconds": 712000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "LVfJoFiDecO4npaSZSNebNUn6Vx2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790096165,
+              "_nanoseconds": 838000000
+            }
+          }
+        },
+        {
+          "id": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790096165,
+              "_nanoseconds": 163000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "R8buzA3KjHI6Tntb8kZk",
+      "data": {
+        "ticketReference": "PFMSD-2026-000210",
+        "createdBy": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+        "institutionId": "dormaa-east-district",
+        "category": "budget_forms",
+        "subCategory": "",
+        "title": "Good evening Sir,",
+        "description": "Good evening Sir,\nThe following Departments have assigned to any of my colleagues.\n31017 - Births and Deaths and\n31018 - Human Resource Departments were assigned to Daniel  Oppong\n\n31019 - Statistics was Assigned to Calvin Tim\n\nWe kindly request for your assistant on the above subhecg matter",
+        "attachmentUrls": [
+          "https://firebasestorage.googleapis.com/v0/b/mofapp-60963.firebasestorage.app/o/attachments%2F8BIiqy6sM0UfKVkDoXs3BiCTYTB2%2F1790107104119_MMDA_User_Provisioning%20Template_Update.xlsx?alt=media&token=35c32fe6-d905-49e0-9738-dd19b1e6c8ff"
+        ],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": true,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790107112,
+          "_nanoseconds": 786000000
+        },
+        "assignedTo": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790107116,
+          "_nanoseconds": 400000000
+        },
+        "assignedToName": "Lisa Frema Boadu"
+      },
+      "activity": [
+        {
+          "id": "1qREDHOC0PTbSCIYldH1",
+          "data": {
+            "ticketId": "R8buzA3KjHI6Tntb8kZk",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790107116,
+              "_nanoseconds": 400000000
+            }
+          }
+        },
+        {
+          "id": "781ky7vzYF8WVQacP5Hu",
+          "data": {
+            "ticketId": "R8buzA3KjHI6Tntb8kZk",
+            "actorId": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790107112,
+              "_nanoseconds": 786000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "TSQ8sF9kHGGrMYTPAtxZ",
+      "data": {
+        "ticketReference": "PFMSD-2026-000209",
+        "createdBy": "83t3SuSDKdhuvomQ0REUW7S6fyl1",
+        "institutionId": "south-tongu-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "I still cannot access all the assigned department to my account",
+        "description": "I still cannot access all the assigned department to my account",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790102191,
+          "_nanoseconds": 218000000
+        },
+        "assignedTo": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790102195,
+          "_nanoseconds": 231000000
+        },
+        "assignedToName": "Christian Adigbo"
+      },
+      "activity": [
+        {
+          "id": "XSKZfAkJBGJtQs7PtRoR",
+          "data": {
+            "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790102195,
+              "_nanoseconds": 231000000
+            }
+          }
+        },
+        {
+          "id": "hL6QgHKeGgtAm7wM8eiI",
+          "data": {
+            "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+            "actorId": "83t3SuSDKdhuvomQ0REUW7S6fyl1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790102191,
+              "_nanoseconds": 218000000
+            }
+          }
+        },
+        {
+          "id": "huqKsa8jMJUgRtHfjl54",
+          "data": {
+            "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+            "actorId": "83t3SuSDKdhuvomQ0REUW7S6fyl1",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Please help fix this. This issue has been reported since the training at Capital view hotel but still not fixed... Raised a previous ticket on it but yet to receive a solution",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790102322,
+              "_nanoseconds": 745000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "83t3SuSDKdhuvomQ0REUW7S6fyl1",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790102323,
+              "_nanoseconds": 27000000
+            }
+          }
+        },
+        {
+          "id": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790102324,
+              "_nanoseconds": 570000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "TWcITNT6fnZCUiKli90l",
+      "data": {
+        "ticketReference": "PFMSD-2026-000202",
+        "createdBy": "hdT303ULDlgco4XyDlY4QZYdXMH3",
+        "institutionId": "sissala-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "Difficulty in loging in",
+        "description": "Difficulty in loging in",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095193,
+          "_nanoseconds": 627000000
+        },
+        "assignedTo": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095194,
+          "_nanoseconds": 193000000
+        },
+        "assignedToName": "Ivan C.K. Gosu"
+      },
+      "activity": [
+        {
+          "id": "OlyaNBVAKC0b9S8Oat7u",
+          "data": {
+            "ticketId": "TWcITNT6fnZCUiKli90l",
+            "actorId": "hdT303ULDlgco4XyDlY4QZYdXMH3",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095193,
+              "_nanoseconds": 627000000
+            }
+          }
+        },
+        {
+          "id": "wPWuhgHDl7Yc9KewTUgc",
+          "data": {
+            "ticketId": "TWcITNT6fnZCUiKli90l",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095194,
+              "_nanoseconds": 193000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "UQiXVy3UexNMopjyVIVB",
+      "data": {
+        "ticketReference": "PFMSD-2026-000185",
+        "createdBy": "Kj7UWGrVEKYP8Ec3PbXrsypdToI2",
+        "institutionId": "wa-east-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "I am having problem with accessing Oracle platform",
+        "description": "I am having problem with accessing Oracle platform",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094890,
+          "_nanoseconds": 785000000
+        },
+        "assignedTo": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094892,
+          "_nanoseconds": 157000000
+        },
+        "assignedToName": "Ivan C.K. Gosu",
+        "firstRespondedAt": {
+          "_seconds": 1790094993,
+          "_nanoseconds": 366000000
+        }
+      },
+      "activity": [
+        {
+          "id": "OFNMJfXno1tTQJ490Au4",
+          "data": {
+            "ticketId": "UQiXVy3UexNMopjyVIVB",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094892,
+              "_nanoseconds": 157000000
+            }
+          }
+        },
+        {
+          "id": "l9zYulwbDE2M4GGeJcog",
+          "data": {
+            "ticketId": "UQiXVy3UexNMopjyVIVB",
+            "actorId": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hello please I have received your ticket",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094992,
+              "_nanoseconds": 176000000
+            }
+          }
+        },
+        {
+          "id": "msm4vf0VPsFQRAhY5P6q",
+          "data": {
+            "ticketId": "UQiXVy3UexNMopjyVIVB",
+            "actorId": "Kj7UWGrVEKYP8Ec3PbXrsypdToI2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094890,
+              "_nanoseconds": 785000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "Kj7UWGrVEKYP8Ec3PbXrsypdToI2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790094993,
+              "_nanoseconds": 961000000
+            }
+          }
+        },
+        {
+          "id": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790094992,
+              "_nanoseconds": 400000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ux01FNXCa2B0cCyGcyfj",
+      "data": {
+        "ticketReference": "PFMSD-2026-000193",
+        "createdBy": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "institutionId": "wa-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "unable to generate a report",
+        "description": "unable to generate a report",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095041,
+          "_nanoseconds": 723000000
+        },
+        "assignedTo": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095042,
+          "_nanoseconds": 994000000
+        },
+        "assignedToName": "Evans Appiah",
+        "firstRespondedAt": {
+          "_seconds": 1790095090,
+          "_nanoseconds": 120000000
+        }
+      },
+      "activity": [
+        {
+          "id": "A2OIOqiWfM7Yz1IshIfN",
+          "data": {
+            "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+            "actorId": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi, ticket received.\nCan you further describe the issue.",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095089,
+              "_nanoseconds": 891000000
+            }
+          }
+        },
+        {
+          "id": "YSzAPyvSfeisVk36viHG",
+          "data": {
+            "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095042,
+              "_nanoseconds": 994000000
+            }
+          }
+        },
+        {
+          "id": "ytgBqOdLH2o0RPupeh59",
+          "data": {
+            "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+            "actorId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095041,
+              "_nanoseconds": 723000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095090,
+              "_nanoseconds": 127000000
+            }
+          }
+        },
+        {
+          "id": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095090,
+              "_nanoseconds": 463000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "XwvPexZOQ6RjQXKHvL4H",
+      "data": {
+        "ticketReference": "PFMSD-2026-000192",
+        "createdBy": "jEa1QlrIRSX2qnhxZs12Gi9aSRo1",
+        "institutionId": "wa-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "issues with logging in",
+        "description": "issues with logging in",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095035,
+          "_nanoseconds": 10000000
+        },
+        "assignedTo": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095036,
+          "_nanoseconds": 272000000
+        },
+        "assignedToName": "Christian Adigbo"
+      },
+      "activity": [
+        {
+          "id": "A3PD5XFp0b9gUnooMFuB",
+          "data": {
+            "ticketId": "XwvPexZOQ6RjQXKHvL4H",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095036,
+              "_nanoseconds": 272000000
+            }
+          }
+        },
+        {
+          "id": "wiGs2N2rlP7lIf3eiwJZ",
+          "data": {
+            "ticketId": "XwvPexZOQ6RjQXKHvL4H",
+            "actorId": "jEa1QlrIRSX2qnhxZs12Gi9aSRo1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095035,
+              "_nanoseconds": 10000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "YdXj3Ww2nEHXtWzJda8i",
+      "data": {
+        "ticketReference": "PFMSD-2026-000194",
+        "createdBy": "26sH11CjzQU1rMBf2fCeF8jJiTW2",
+        "institutionId": "nandom-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "To always get assistance where necessary",
+        "description": "To always get assistance where necessary",
+        "attachmentUrls": [
+          "https://firebasestorage.googleapis.com/v0/b/mofapp-60963.firebasestorage.app/o/attachments%2F26sH11CjzQU1rMBf2fCeF8jJiTW2%2F1790095008336_17900949092187735643356290196445.jpg?alt=media&token=d729929f-d6ca-498f-8799-a9fce8f86625",
+          "https://firebasestorage.googleapis.com/v0/b/mofapp-60963.firebasestorage.app/o/attachments%2F26sH11CjzQU1rMBf2fCeF8jJiTW2%2F1790095025122_1790094966879122390774796982588.jpg?alt=media&token=f6d2be5b-1dbc-4a47-9c19-58e55b851220"
+        ],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095048,
+          "_nanoseconds": 598000000
+        },
+        "assignedTo": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095049,
+          "_nanoseconds": 44000000
+        },
+        "assignedToName": "Lydia Kyei Baffour"
+      },
+      "activity": [
+        {
+          "id": "QDwORBYQIBtGdb8a41MZ",
+          "data": {
+            "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+            "actorId": "26sH11CjzQU1rMBf2fCeF8jJiTW2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi Boss",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095289,
+              "_nanoseconds": 997000000
+            }
+          }
+        },
+        {
+          "id": "b64i86ZxtjYZqAzqfWx1",
+          "data": {
+            "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+            "actorId": "26sH11CjzQU1rMBf2fCeF8jJiTW2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095048,
+              "_nanoseconds": 598000000
+            }
+          }
+        },
+        {
+          "id": "hiAwI1n4RkCkQ8DItDe7",
+          "data": {
+            "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095049,
+              "_nanoseconds": 44000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "26sH11CjzQU1rMBf2fCeF8jJiTW2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095795,
+              "_nanoseconds": 639000000
+            }
+          }
+        },
+        {
+          "id": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095290,
+              "_nanoseconds": 618000000
+            },
+            "lastReadAt": {
+              "_seconds": 1790208110,
+              "_nanoseconds": 858000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cnRHGpOcTWSclN5u2ckI",
+      "data": {
+        "ticketReference": "PFMSD-2026-000184",
+        "createdBy": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "institutionId": "wa-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "wanted to generate a report",
+        "description": "wanted to generate a report",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": true,
+        "escalationLevel": 0,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094889,
+          "_nanoseconds": 892000000
+        },
+        "assignedTo": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+        "assignedToName": "Christian M. Adigbo",
+        "resolvedAt": {
+          "_seconds": 1790161565,
+          "_nanoseconds": 136000000
+        },
+        "resolutionNotes": "Test try",
+        "status": "resolved",
+        "updatedAt": {
+          "_seconds": 1790161565,
+          "_nanoseconds": 136000000
+        },
+        "firstRespondedAt": {
+          "_seconds": 1790161565,
+          "_nanoseconds": 347000000
+        }
+      },
+      "activity": [
+        {
+          "id": "1I8FZUUBFlSuDuInyYYc",
+          "data": {
+            "ticketId": "cnRHGpOcTWSclN5u2ckI",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "status_changed",
+            "fromValue": "assigned",
+            "toValue": "resolved",
+            "note": "Test try",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161565,
+              "_nanoseconds": 136000000
+            }
+          }
+        },
+        {
+          "id": "cBcajR8h0NJY6h8YX7s3",
+          "data": {
+            "ticketId": "cnRHGpOcTWSclN5u2ckI",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094891,
+              "_nanoseconds": 392000000
+            }
+          }
+        },
+        {
+          "id": "hAvNYBetcNqE77T5AnXb",
+          "data": {
+            "ticketId": "cnRHGpOcTWSclN5u2ckI",
+            "actorId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094889,
+              "_nanoseconds": 892000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "e2MMhScFYn2zDOctTbRd",
+      "data": {
+        "ticketReference": "PFMSD-2026-000191",
+        "createdBy": "PaKlP3UB4BPDtgktUbqpdSGFiHc2",
+        "institutionId": "nadowli-kaleo-district",
+        "category": "workflow",
+        "subCategory": "",
+        "title": "revenue not loading",
+        "description": "revenue not loading",
+        "attachmentUrls": [],
+        "priority": "low",
+        "impact": "low",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790094967,
+          "_nanoseconds": 448000000
+        },
+        "assignedTo": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094968,
+          "_nanoseconds": 211000000
+        },
+        "assignedToName": "Lisa Frema Boadu"
+      },
+      "activity": [
+        {
+          "id": "Vimw9lGAa9TjeMz2vbxh",
+          "data": {
+            "ticketId": "e2MMhScFYn2zDOctTbRd",
+            "actorId": "PaKlP3UB4BPDtgktUbqpdSGFiHc2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094967,
+              "_nanoseconds": 448000000
+            }
+          }
+        },
+        {
+          "id": "W4Oe2ns4Gaags0pYQHcc",
+          "data": {
+            "ticketId": "e2MMhScFYn2zDOctTbRd",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094968,
+              "_nanoseconds": 211000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "f1RBtiaeF53TzEDkLUhR",
+      "data": {
+        "ticketReference": "PFMSD-2026-000199",
+        "createdBy": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+        "institutionId": "lawra-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "I have difficulty in accessing the system",
+        "description": "I have difficulty in accessing the system",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095169,
+          "_nanoseconds": 309000000
+        },
+        "assignedTo": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+        "assignedToName": "Christian M. Adigbo",
+        "firstRespondedAt": {
+          "_seconds": 1790161464,
+          "_nanoseconds": 275000000
+        },
+        "resolutionNotes": "Test try",
+        "status": "resolved",
+        "resolvedAt": {
+          "_seconds": 1790161548,
+          "_nanoseconds": 283000000
+        },
+        "updatedAt": {
+          "_seconds": 1790161548,
+          "_nanoseconds": 283000000
+        }
+      },
+      "activity": [
+        {
+          "id": "Dk1CHAtEV1KrDgPDo3lT",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi Nelson",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161518,
+              "_nanoseconds": 514000000
+            }
+          }
+        },
+        {
+          "id": "H46oniMLF04itccPZzKg",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "status_changed",
+            "fromValue": "in_progress",
+            "toValue": "resolved",
+            "note": "Test try",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161546,
+              "_nanoseconds": 685000000
+            }
+          }
+        },
+        {
+          "id": "SqWaTgt3R7Wokh8HEOvE",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095169,
+              "_nanoseconds": 891000000
+            }
+          }
+        },
+        {
+          "id": "Y3HQ5KID2WSJkAG9ME5E",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "status_changed",
+            "fromValue": "assigned",
+            "toValue": "in_progress",
+            "note": "",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161461,
+              "_nanoseconds": 990000000
+            }
+          }
+        },
+        {
+          "id": "qOSxuRDvzhnIYzezpVB2",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "status_changed",
+            "fromValue": "resolved",
+            "toValue": "resolved",
+            "note": "Test try",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161548,
+              "_nanoseconds": 283000000
+            }
+          }
+        },
+        {
+          "id": "r7lruSnpdPjiMlrh5mSX",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095169,
+              "_nanoseconds": 309000000
+            }
+          }
+        },
+        {
+          "id": "wPQOg0KH6tFxNvEAA2YZ",
+          "data": {
+            "ticketId": "f1RBtiaeF53TzEDkLUhR",
+            "actorId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+            "action": "status_changed",
+            "fromValue": "in_progress",
+            "toValue": "in_progress",
+            "note": "",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790161463,
+              "_nanoseconds": 425000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790161519,
+              "_nanoseconds": 39000000
+            }
+          }
+        },
+        {
+          "id": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790161518,
+              "_nanoseconds": 914000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "gdOV0s58NUEbM1SGDDf9",
+      "data": {
+        "ticketReference": "PFMSD-2026-000203",
+        "createdBy": "mlUPGCl27RNGof87zkz6LjQuaj83",
+        "institutionId": "jirapa-municipal",
+        "category": "access",
+        "subCategory": "",
+        "title": "I can't login please.",
+        "description": "I can't login please. kindly help me. thank you Sir",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095195,
+          "_nanoseconds": 453000000
+        },
+        "assignedTo": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095196,
+          "_nanoseconds": 13000000
+        },
+        "assignedToName": "Jerome Ankrah"
+      },
+      "activity": [
+        {
+          "id": "qh2msvPTR2JyNDogliNh",
+          "data": {
+            "ticketId": "gdOV0s58NUEbM1SGDDf9",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095196,
+              "_nanoseconds": 13000000
+            }
+          }
+        },
+        {
+          "id": "vK5ytbm9Pt3hUCbBQ5E8",
+          "data": {
+            "ticketId": "gdOV0s58NUEbM1SGDDf9",
+            "actorId": "mlUPGCl27RNGof87zkz6LjQuaj83",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095195,
+              "_nanoseconds": 453000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "mslX76tc2axzoBv1k8Bu",
+      "data": {
+        "ticketReference": "PFMSD-2026-000206",
+        "createdBy": "pWUEFtEw5LW8i3fOGZMbaHjec3G3",
+        "institutionId": "sissala-west-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "Not understanding and need other one because I have laptop",
+        "description": "Not understanding and need other one because I have laptop",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790095870,
+          "_nanoseconds": 524000000
+        },
+        "assignedTo": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095872,
+          "_nanoseconds": 219000000
+        },
+        "assignedToName": "Justin Osei Poku",
+        "firstRespondedAt": {
+          "_seconds": 1790096142,
+          "_nanoseconds": 29000000
+        }
+      },
+      "activity": [
+        {
+          "id": "5I5BDHI4dsCCQ1cKptUU",
+          "data": {
+            "ticketId": "mslX76tc2axzoBv1k8Bu",
+            "actorId": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hello please tell me into Detail what you don't understand",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790096141,
+              "_nanoseconds": 768000000
+            }
+          }
+        },
+        {
+          "id": "5ZjtgGj4gWF2rYzzH4Kd",
+          "data": {
+            "ticketId": "mslX76tc2axzoBv1k8Bu",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095872,
+              "_nanoseconds": 219000000
+            }
+          }
+        },
+        {
+          "id": "ppmU5PbEykemwSxFSiHf",
+          "data": {
+            "ticketId": "mslX76tc2axzoBv1k8Bu",
+            "actorId": "pWUEFtEw5LW8i3fOGZMbaHjec3G3",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095870,
+              "_nanoseconds": 524000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790096142,
+              "_nanoseconds": 270000000
+            }
+          }
+        },
+        {
+          "id": "pWUEFtEw5LW8i3fOGZMbaHjec3G3",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790096142,
+              "_nanoseconds": 484000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "njICBvqVYYBwH3VE5yIm",
+      "data": {
+        "ticketReference": "PFMSD-2026-000207",
+        "createdBy": "SfYeEtzleoT6as6HYjeOVhmQPPy1",
+        "institutionId": "nandom-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "I can't login",
+        "description": "I can't login",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095931,
+          "_nanoseconds": 511000000
+        },
+        "assignedTo": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095932,
+          "_nanoseconds": 924000000
+        },
+        "assignedToName": "Andrews Kwame Amoah"
+      },
+      "activity": [
+        {
+          "id": "FAx87WUHx5Qb88LYZ5ye",
+          "data": {
+            "ticketId": "njICBvqVYYBwH3VE5yIm",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095932,
+              "_nanoseconds": 924000000
+            }
+          }
+        },
+        {
+          "id": "Kt5ZIG1lfbGIz4K5RJbF",
+          "data": {
+            "ticketId": "njICBvqVYYBwH3VE5yIm",
+            "actorId": "SfYeEtzleoT6as6HYjeOVhmQPPy1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095931,
+              "_nanoseconds": 511000000
+            }
+          }
+        },
+        {
+          "id": "MeDRSFykHx1z6rztYw1Y",
+          "data": {
+            "ticketId": "njICBvqVYYBwH3VE5yIm",
+            "actorId": "SfYeEtzleoT6as6HYjeOVhmQPPy1",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hei",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095945,
+              "_nanoseconds": 669000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095946,
+              "_nanoseconds": 274000000
+            },
+            "lastReadAt": {
+              "_seconds": 1790106752,
+              "_nanoseconds": 266000000
+            }
+          }
+        },
+        {
+          "id": "SfYeEtzleoT6as6HYjeOVhmQPPy1",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095945,
+              "_nanoseconds": 909000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "paCq3NonYtd1sY6ap1yM",
+      "data": {
+        "ticketReference": "PFMSD-2026-000200",
+        "createdBy": "QZQo76CFguYsbNwRcR04MRkY26K2",
+        "institutionId": "jirapa-municipal",
+        "category": "reports",
+        "subCategory": "",
+        "title": "unable to generate reports",
+        "description": "unable to generate reports",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": false,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790095169,
+          "_nanoseconds": 869000000
+        },
+        "assignedTo": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790095170,
+          "_nanoseconds": 407000000
+        },
+        "assignedToName": "Lisa Frema Boadu"
+      },
+      "activity": [
+        {
+          "id": "gOzlwLjBmHamyEtgYCgu",
+          "data": {
+            "ticketId": "paCq3NonYtd1sY6ap1yM",
+            "actorId": "QZQo76CFguYsbNwRcR04MRkY26K2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095169,
+              "_nanoseconds": 869000000
+            }
+          }
+        },
+        {
+          "id": "hyfTnyPspQreQ8PDq4mO",
+          "data": {
+            "ticketId": "paCq3NonYtd1sY6ap1yM",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790095170,
+              "_nanoseconds": 407000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": []
+    },
+    {
+      "id": "w2vGsZb2pPYldU9T5LB2",
+      "data": {
+        "ticketReference": "PFMSD-2026-000211",
+        "createdBy": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+        "institutionId": "dormaa-east-district",
+        "category": "reports",
+        "subCategory": "",
+        "title": "The following Departments do not show in the reporting form.",
+        "description": "The following Departments do not show in the reporting form. Kindly help update it. Thanks\n31011 - Trade and Industry\n31015 - Disaster Prevention\n31017 - Births and Deaths\n31018 - Human Resource\n31019 - Statistics\n\nThank you",
+        "attachmentUrls": [
+          "https://firebasestorage.googleapis.com/v0/b/mofapp-60963.firebasestorage.app/o/attachments%2F8BIiqy6sM0UfKVkDoXs3BiCTYTB2%2F1790108722670_Report%20Organisation.png?alt=media&token=ce3ca8d9-2ff9-4d34-a2fb-6b122f2c9ad9"
+        ],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": true,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "firstRespondedAt": null,
+        "createdAt": {
+          "_seconds": 1790108729,
+          "_nanoseconds": 168000000
+        },
+        "assignedTo": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790108733,
+          "_nanoseconds": 166000000
+        },
+        "assignedToName": "Lydia Kyei Baffour"
+      },
+      "activity": [
+        {
+          "id": "AfWT7m1oMH56ncobnzLI",
+          "data": {
+            "ticketId": "w2vGsZb2pPYldU9T5LB2",
+            "actorId": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hi Lydia!\nHow far with my request",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790201135,
+              "_nanoseconds": 974000000
+            }
+          }
+        },
+        {
+          "id": "BTWgfrKsxbYcyqGYygtl",
+          "data": {
+            "ticketId": "w2vGsZb2pPYldU9T5LB2",
+            "actorId": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790108729,
+              "_nanoseconds": 168000000
+            }
+          }
+        },
+        {
+          "id": "Q8ZuLQHbn56qFAQT7r4j",
+          "data": {
+            "ticketId": "w2vGsZb2pPYldU9T5LB2",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790108733,
+              "_nanoseconds": 166000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790201136,
+              "_nanoseconds": 536000000
+            }
+          }
+        },
+        {
+          "id": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790201140,
+              "_nanoseconds": 534000000
+            },
+            "lastReadAt": {
+              "_seconds": 1790208249,
+              "_nanoseconds": 518000000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ztGv7Y7sBTyXvbf2V1U2",
+      "data": {
+        "ticketReference": "PFMSD-2026-000190",
+        "createdBy": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+        "institutionId": "nandom-district",
+        "category": "access",
+        "subCategory": "",
+        "title": "My MMDA is a municipal but we're set up as a district",
+        "description": "My MMDA is a municipal but we're set up as a district",
+        "attachmentUrls": [],
+        "priority": "high",
+        "impact": "high",
+        "affectsMultipleUsers": true,
+        "escalationLevel": 0,
+        "resolutionNotes": null,
+        "resolvedAt": null,
+        "closedAt": null,
+        "closedBy": null,
+        "createdAt": {
+          "_seconds": 1790094959,
+          "_nanoseconds": 441000000
+        },
+        "assignedTo": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "status": "assigned",
+        "updatedAt": {
+          "_seconds": 1790094960,
+          "_nanoseconds": 181000000
+        },
+        "assignedToName": "David Kojo Brown-Pobee",
+        "firstRespondedAt": {
+          "_seconds": 1790095017,
+          "_nanoseconds": 646000000
+        }
+      },
+      "activity": [
+        {
+          "id": "1EQDp6FSU2uOFOnn9074",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hello",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095017,
+              "_nanoseconds": 386000000
+            }
+          }
+        },
+        {
+          "id": "9z64OSA1OAOu6S9wePlb",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "My MMDA is a municipal but we're set up as a district. Can you correct it for me",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095140,
+              "_nanoseconds": 412000000
+            }
+          }
+        },
+        {
+          "id": "MjEg08Yxlb2AGoOPLyyP",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "system",
+            "action": "assigned",
+            "toValue": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+            "note": "Auto-assigned by category rules",
+            "timestamp": {
+              "_seconds": 1790094960,
+              "_nanoseconds": 181000000
+            }
+          }
+        },
+        {
+          "id": "dX8y0uLFGYrAvXjwmTMW",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Please We will look into have your details",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095354,
+              "_nanoseconds": 295000000
+            }
+          }
+        },
+        {
+          "id": "ostnelGoG0tUrIE1evzP",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+            "action": "created",
+            "fromValue": null,
+            "toValue": "open",
+            "note": null,
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790094959,
+              "_nanoseconds": 441000000
+            }
+          }
+        },
+        {
+          "id": "rDE6FOHRqOXdB4dL8vkH",
+          "data": {
+            "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+            "actorId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+            "action": "commented",
+            "fromValue": null,
+            "toValue": null,
+            "note": "Hello",
+            "attachmentUrl": null,
+            "timestamp": {
+              "_seconds": 1790095045,
+              "_nanoseconds": 896000000
+            }
+          }
+        }
+      ],
+      "chatReceipts": [
+        {
+          "id": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+          "data": {
+            "lastReadAt": {
+              "_seconds": 1790095140,
+              "_nanoseconds": 553000000
+            },
+            "lastDeliveredAt": {
+              "_seconds": 1790095354,
+              "_nanoseconds": 813000000
+            }
+          }
+        },
+        {
+          "id": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+          "data": {
+            "lastDeliveredAt": {
+              "_seconds": 1790095141,
+              "_nanoseconds": 209000000
+            },
+            "lastReadAt": {
+              "_seconds": 1790096139,
+              "_nanoseconds": 733000000
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "ticketNotifications": [
+    {
+      "id": "0Fe9xEApAqY88tmWV54Q",
+      "data": {
+        "userId": "SfYeEtzleoT6as6HYjeOVhmQPPy1",
+        "title": "Hyperion Support",
+        "ticketId": "njICBvqVYYBwH3VE5yIm",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000207 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095932,
+          "_nanoseconds": 340000000
+        }
+      }
+    },
+    {
+      "id": "0tYIypHqHQ9AJDKya7zm",
+      "data": {
+        "userId": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+        "title": "Hyperion Support",
+        "ticketId": "BCtjlfhOCik9QMpIBAGD",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000198 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095156,
+          "_nanoseconds": 27000000
+        }
+      }
+    },
+    {
+      "id": "0zXNTIUIt4v5GCzhOvsE",
+      "data": {
+        "userId": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+        "title": "Hyperion Support",
+        "ticketId": "OzOsk5BCplsgWCXimsGt",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000189.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095234,
+          "_nanoseconds": 991000000
+        }
+      }
+    },
+    {
+      "id": "1J6VO7KLsndKvsOm1dS0",
+      "data": {
+        "userId": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "title": "Hyperion Support",
+        "ticketId": "w2vGsZb2pPYldU9T5LB2",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000211.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790201139,
+          "_nanoseconds": 952000000
+        }
+      }
+    },
+    {
+      "id": "1NfcCvTgTrkOucBjlkrT",
+      "data": {
+        "userId": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+        "title": "Hyperion Support",
+        "ticketId": "OzOsk5BCplsgWCXimsGt",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000189 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790094907,
+          "_nanoseconds": 556000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "1PVXwYPyeds5yUHITmkh",
+      "data": {
+        "userId": "jEa1QlrIRSX2qnhxZs12Gi9aSRo1",
+        "title": "Hyperion Support",
+        "ticketId": "XwvPexZOQ6RjQXKHvL4H",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000192 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095035,
+          "_nanoseconds": 244000000
+        }
+      }
+    },
+    {
+      "id": "2E1cRHT47nUwgN4huTap",
+      "data": {
+        "userId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "title": "Hyperion Support",
+        "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000193 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095042,
+          "_nanoseconds": 503000000
+        }
+      }
+    },
+    {
+      "id": "2ujiC2rzXH6LdKPirHfI",
+      "data": {
+        "userId": "KsyfI2hMpZPsqtoExehclMuoGut2",
+        "title": "Hyperion Support",
+        "ticketId": "L6uZBG3EULQOlSpDJQrb",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000201 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095184,
+          "_nanoseconds": 483000000
+        }
+      }
+    },
+    {
+      "id": "3S4M8ax1fyYVE42zbBeV",
+      "data": {
+        "userId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000190.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095140,
+          "_nanoseconds": 964000000
+        }
+      }
+    },
+    {
+      "id": "3Ww7vl5YQIojft3bYS3I",
+      "data": {
+        "userId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+        "title": "Hyperion Support",
+        "ticketId": "cnRHGpOcTWSclN5u2ckI",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000184 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790094892,
+          "_nanoseconds": 288000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "4u5hSPbjiSNXj2wBuxeV",
+      "data": {
+        "userId": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+        "title": "Hyperion Support",
+        "ticketId": "w2vGsZb2pPYldU9T5LB2",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000211 has been received.",
+        "createdAt": {
+          "_seconds": 1790108732,
+          "_nanoseconds": 405000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "559JVcHsLuMIh1bFLKG3",
+      "data": {
+        "userId": "Kj7UWGrVEKYP8Ec3PbXrsypdToI2",
+        "title": "Hyperion Support",
+        "ticketId": "UQiXVy3UexNMopjyVIVB",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000185.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094993,
+          "_nanoseconds": 502000000
+        }
+      }
+    },
+    {
+      "id": "5OhgYR6qF2ds48ieaV14",
+      "data": {
+        "userId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000190 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094959,
+          "_nanoseconds": 734000000
+        }
+      }
+    },
+    {
+      "id": "5S67HW4N3tT9egos5JGu",
+      "data": {
+        "userId": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+        "title": "Hyperion Support",
+        "ticketId": "0RW9gqF1yywWjIYPWmUK",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000187.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095085,
+          "_nanoseconds": 683000000
+        }
+      }
+    },
+    {
+      "id": "6iM6xpybFkbj9TDuaBRT",
+      "data": {
+        "userId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "title": "Hyperion Support",
+        "ticketId": "KrJis1bRkOhdFLhs3YeE",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000186 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094893,
+          "_nanoseconds": 395000000
+        }
+      }
+    },
+    {
+      "id": "7jr99mJTNmsaTCLCBBKF",
+      "data": {
+        "userId": "XDRRuEyHU6YGOpwt4oDLXfLKq142",
+        "title": "Hyperion Support",
+        "ticketId": "J60c1UQU8p10BDmk5foA",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000204 has been received.",
+        "createdAt": {
+          "_seconds": 1790095202,
+          "_nanoseconds": 238000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "8eL7VpDVYztqHp4YyUkx",
+      "data": {
+        "userId": "mlUPGCl27RNGof87zkz6LjQuaj83",
+        "title": "Hyperion Support",
+        "ticketId": "gdOV0s58NUEbM1SGDDf9",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000203 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095195,
+          "_nanoseconds": 621000000
+        }
+      }
+    },
+    {
+      "id": "9Ti5HmpQk9acbmFoLSbX",
+      "data": {
+        "userId": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+        "title": "Hyperion Support",
+        "ticketId": "O7oGFFAvP63QKI9zvXGs",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000183 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094868,
+          "_nanoseconds": 513000000
+        }
+      }
+    },
+    {
+      "id": "9W7dsTFAPDqpx3aXLKNJ",
+      "data": {
+        "userId": "pWUEFtEw5LW8i3fOGZMbaHjec3G3",
+        "title": "Hyperion Support",
+        "ticketId": "mslX76tc2axzoBv1k8Bu",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000206 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095871,
+          "_nanoseconds": 637000000
+        }
+      }
+    },
+    {
+      "id": "AlJuJgLXXEfG2QRh9rXT",
+      "data": {
+        "userId": "YhGjpL6QgJNnpx88db4lFKS42RC3",
+        "title": "Hyperion Support",
+        "ticketId": "0ri7P84C53Jf8UfyV2dW",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000196 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790095138,
+          "_nanoseconds": 702000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "AzqGbrGCa2o0pJnQfLZe",
+      "data": {
+        "userId": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "title": "Hyperion Support",
+        "ticketId": "J60c1UQU8p10BDmk5foA",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000204 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095202,
+          "_nanoseconds": 864000000
+        }
+      }
+    },
+    {
+      "id": "CngY1x5NQeve6w55syOz",
+      "data": {
+        "userId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000190.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095017,
+          "_nanoseconds": 767000000
+        }
+      }
+    },
+    {
+      "id": "EuLbGET48zYG6zQuZbma",
+      "data": {
+        "userId": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+        "title": "Hyperion Support",
+        "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000209.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790102324,
+          "_nanoseconds": 413000000
+        }
+      }
+    },
+    {
+      "id": "F5WsxXdKfJpW4KttDWY5",
+      "data": {
+        "userId": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "title": "Hyperion Support",
+        "ticketId": "w2vGsZb2pPYldU9T5LB2",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000211 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790108743,
+          "_nanoseconds": 200000000
+        }
+      }
+    },
+    {
+      "id": "FyGxapNpKNVyXIBFvmnr",
+      "data": {
+        "userId": "hdT303ULDlgco4XyDlY4QZYdXMH3",
+        "title": "Hyperion Support",
+        "ticketId": "TWcITNT6fnZCUiKli90l",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000202 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095193,
+          "_nanoseconds": 819000000
+        }
+      }
+    },
+    {
+      "id": "IXUzaGgtDq2ytPqAW27I",
+      "data": {
+        "userId": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+        "title": "Hyperion Support",
+        "ticketId": "gdOV0s58NUEbM1SGDDf9",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000203 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095196,
+          "_nanoseconds": 279000000
+        }
+      }
+    },
+    {
+      "id": "JCp0lLItYmEfmP3Arbzp",
+      "data": {
+        "userId": "LVfJoFiDecO4npaSZSNebNUn6Vx2",
+        "title": "Hyperion Support",
+        "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000208.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790096165,
+          "_nanoseconds": 566000000
+        }
+      }
+    },
+    {
+      "id": "LifAKa7QYjrrMT6VRe42",
+      "data": {
+        "userId": "dlW9V2wyM6QuQmHEaDFuQyvtEr23",
+        "title": "Hyperion Support",
+        "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000193 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095043,
+          "_nanoseconds": 440000000
+        }
+      }
+    },
+    {
+      "id": "LpeVhPs5GKPuNjfm5mn1",
+      "data": {
+        "userId": "8BIiqy6sM0UfKVkDoXs3BiCTYTB2",
+        "title": "Hyperion Support",
+        "ticketId": "R8buzA3KjHI6Tntb8kZk",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000210 has been received.",
+        "createdAt": {
+          "_seconds": 1790107115,
+          "_nanoseconds": 519000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "M4KjgNSfokkk02B6WqIH",
+      "data": {
+        "userId": "FPdP7mFl6WXUDzER8HcfDxLSCmV2",
+        "title": "Hyperion Support",
+        "ticketId": "f1RBtiaeF53TzEDkLUhR",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000199 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790095170,
+          "_nanoseconds": 200000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "N4TCRvHilrfZtEreyqzZ",
+      "data": {
+        "userId": "AhJddYXvadRYZNThfC4kXaAXxCi1",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000190.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095354,
+          "_nanoseconds": 533000000
+        }
+      }
+    },
+    {
+      "id": "O5zy9w6zTkG2uzK854BJ",
+      "data": {
+        "userId": "83t3SuSDKdhuvomQ0REUW7S6fyl1",
+        "title": "Hyperion Support",
+        "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000209 has been received.",
+        "createdAt": {
+          "_seconds": 1790102194,
+          "_nanoseconds": 280000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "Php8r0MpwkjjeYlyRnAT",
+      "data": {
+        "userId": "rSojX1cYltMnWduMlD1H20tsID33",
+        "title": "Hyperion Support",
+        "ticketId": "KrJis1bRkOhdFLhs3YeE",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000186 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094892,
+          "_nanoseconds": 480000000
+        }
+      }
+    },
+    {
+      "id": "PhyNpuA3QpQiFwfzAekn",
+      "data": {
+        "userId": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+        "title": "Hyperion Support",
+        "ticketId": "TSQ8sF9kHGGrMYTPAtxZ",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000209 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790102199,
+          "_nanoseconds": 139000000
+        }
+      }
+    },
+    {
+      "id": "TMninlsxe9EB2X0LTYFN",
+      "data": {
+        "userId": "g8fdLQnIoqcP83XaFnX0aLNhUFX2",
+        "title": "Hyperion Support",
+        "ticketId": "O7oGFFAvP63QKI9zvXGs",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000183 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094866,
+          "_nanoseconds": 748000000
+        }
+      }
+    },
+    {
+      "id": "U2gelJ29SElVti8S2x1B",
+      "data": {
+        "userId": "QdkexOcPfTdnSo0lxPo8hMRUYnp2",
+        "title": "Hyperion Support",
+        "ticketId": "EISLEjgZ2SUwxLSYYvwL",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000205 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095345,
+          "_nanoseconds": 638000000
+        }
+      }
+    },
+    {
+      "id": "U5yYSCkyaYA3kvESptn2",
+      "data": {
+        "userId": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+        "title": "Hyperion Support",
+        "ticketId": "4Vlw703u23Iipx5gvS8t",
+        "type": "resolved",
+        "message": "Your ticket PFMSD-2026-000195 has been resolved.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095227,
+          "_nanoseconds": 424000000
+        }
+      }
+    },
+    {
+      "id": "UkveGL9IZPMTcDgwwTP3",
+      "data": {
+        "userId": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+        "title": "Hyperion Support",
+        "ticketId": "OzOsk5BCplsgWCXimsGt",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000189 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094906,
+          "_nanoseconds": 429000000
+        }
+      }
+    },
+    {
+      "id": "WHOGbl7vYkj6NxSGxPJo",
+      "data": {
+        "userId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+        "title": "Hyperion Support",
+        "ticketId": "4Vlw703u23Iipx5gvS8t",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000195 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095128,
+          "_nanoseconds": 265000000
+        }
+      }
+    },
+    {
+      "id": "WPZsfD1J6cjw0kSejGvT",
+      "data": {
+        "userId": "9xXxqlMqagNj4iteJPMmrnIlvSb2",
+        "title": "Hyperion Support",
+        "ticketId": "OzOsk5BCplsgWCXimsGt",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000189.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095225,
+          "_nanoseconds": 233000000
+        }
+      }
+    },
+    {
+      "id": "WfPFcr2MYPA48wAJYYXe",
+      "data": {
+        "userId": "ZteAERCgdbZnDzvLBz7OMH1247w2",
+        "title": "Hyperion Support",
+        "ticketId": "L6uZBG3EULQOlSpDJQrb",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000201 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095185,
+          "_nanoseconds": 95000000
+        }
+      }
+    },
+    {
+      "id": "WgL0LxgBpNUkv7904YEj",
+      "data": {
+        "userId": "wePMoKrEzWb70spjaQscfqBvhlm1",
+        "title": "Hyperion Support",
+        "ticketId": "7Up308L2MkGPaY1jGQGk",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000197.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790167136,
+          "_nanoseconds": 262000000
+        }
+      }
+    },
+    {
+      "id": "cF5r7KdYccUJnlY2t37r",
+      "data": {
+        "userId": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+        "title": "Hyperion Support",
+        "ticketId": "4Vlw703u23Iipx5gvS8t",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000195.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095148,
+          "_nanoseconds": 467000000
+        }
+      }
+    },
+    {
+      "id": "czV7i0AJRzvdtIpP4SiJ",
+      "data": {
+        "userId": "PZGxysvRtBh8O5pnHBIG3K8s0nJ3",
+        "title": "Hyperion Support",
+        "ticketId": "0ri7P84C53Jf8UfyV2dW",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000196 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095137,
+          "_nanoseconds": 959000000
+        }
+      }
+    },
+    {
+      "id": "dbBE7P2XDFvEFCqR90P5",
+      "data": {
+        "userId": "QZQo76CFguYsbNwRcR04MRkY26K2",
+        "title": "Hyperion Support",
+        "ticketId": "paCq3NonYtd1sY6ap1yM",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000200 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095170,
+          "_nanoseconds": 28000000
+        }
+      }
+    },
+    {
+      "id": "dvlvmqMxotBlgLoKFrd5",
+      "data": {
+        "userId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "title": "Hyperion Support",
+        "ticketId": "cnRHGpOcTWSclN5u2ckI",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000184 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094890,
+          "_nanoseconds": 696000000
+        }
+      }
+    },
+    {
+      "id": "dzbQTzf33BBXt8ykE7DW",
+      "data": {
+        "userId": "PaKlP3UB4BPDtgktUbqpdSGFiHc2",
+        "title": "Hyperion Support",
+        "ticketId": "e2MMhScFYn2zDOctTbRd",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000191 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094967,
+          "_nanoseconds": 685000000
+        }
+      }
+    },
+    {
+      "id": "eLBwOWoSVfa7UweWMFqS",
+      "data": {
+        "userId": "1Qks2pAokUXZe3rzqz9pkQAIm102",
+        "title": "Hyperion Support",
+        "ticketId": "0RW9gqF1yywWjIYPWmUK",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000187 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790094893,
+          "_nanoseconds": 514000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "fPfpaIsWQGJJ62bBTXwq",
+      "data": {
+        "userId": "nIcCSZ7s2LX1O0SlTSYOAK0zT7q2",
+        "title": "Hyperion Support",
+        "ticketId": "mslX76tc2axzoBv1k8Bu",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000206 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790095873,
+          "_nanoseconds": 84000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "fiNHC0VUYK35oKZLeKtI",
+      "data": {
+        "userId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "title": "Hyperion Support",
+        "ticketId": "R8buzA3KjHI6Tntb8kZk",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000210 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790107119,
+          "_nanoseconds": 632000000
+        }
+      }
+    },
+    {
+      "id": "foPlurayLur1lLKO44jL",
+      "data": {
+        "userId": "wePMoKrEzWb70spjaQscfqBvhlm1",
+        "title": "Hyperion Support",
+        "ticketId": "7Up308L2MkGPaY1jGQGk",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000197 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095153,
+          "_nanoseconds": 791000000
+        }
+      }
+    },
+    {
+      "id": "gRkcD1VpB2dRyXDWtZeP",
+      "data": {
+        "userId": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+        "title": "Hyperion Support",
+        "ticketId": "f1RBtiaeF53TzEDkLUhR",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000199.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790161518,
+          "_nanoseconds": 889000000
+        }
+      }
+    },
+    {
+      "id": "gmEpEhKCrxEUrcKAu8GD",
+      "data": {
+        "userId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "title": "Hyperion Support",
+        "ticketId": "cnRHGpOcTWSclN5u2ckI",
+        "type": "resolved",
+        "message": "Your ticket PFMSD-2026-000184 has been resolved.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790161565,
+          "_nanoseconds": 514000000
+        }
+      }
+    },
+    {
+      "id": "hLWRGjfBXkLDbOKxp5YV",
+      "data": {
+        "userId": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+        "title": "Hyperion Support",
+        "ticketId": "TWcITNT6fnZCUiKli90l",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000202 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095194,
+          "_nanoseconds": 476000000
+        }
+      }
+    },
+    {
+      "id": "hLrhSI3JHwGhsz8qYOqe",
+      "data": {
+        "userId": "8OE3WGqLfQbZLFAzAJfkCFX1U4M2",
+        "title": "Hyperion Support",
+        "ticketId": "XwvPexZOQ6RjQXKHvL4H",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000192 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095036,
+          "_nanoseconds": 769000000
+        }
+      }
+    },
+    {
+      "id": "huIKq1xbfCsksvW2geXe",
+      "data": {
+        "userId": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+        "title": "Hyperion Support",
+        "ticketId": "f1RBtiaeF53TzEDkLUhR",
+        "type": "resolved",
+        "message": "Your ticket PFMSD-2026-000199 has been resolved.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790161547,
+          "_nanoseconds": 71000000
+        }
+      }
+    },
+    {
+      "id": "icortEl1q9bGIgACpy21",
+      "data": {
+        "userId": "mWvST23CpcZIn0mUXcZTLwEd5D32",
+        "title": "Hyperion Support",
+        "ticketId": "7Up308L2MkGPaY1jGQGk",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000197 has been assigned to you.",
+        "createdAt": {
+          "_seconds": 1790095154,
+          "_nanoseconds": 713000000
+        },
+        "read": true
+      }
+    },
+    {
+      "id": "jy73FQVozJFIDhFHFe1q",
+      "data": {
+        "userId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "title": "Hyperion Support",
+        "ticketId": "paCq3NonYtd1sY6ap1yM",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000200 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095170,
+          "_nanoseconds": 742000000
+        }
+      }
+    },
+    {
+      "id": "l8tln2VMnt6eiYHatq5X",
+      "data": {
+        "userId": "ZeMq7sh42FaGJaXQYLFI029qbYJ3",
+        "title": "Hyperion Support",
+        "ticketId": "BCtjlfhOCik9QMpIBAGD",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000198 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095156,
+          "_nanoseconds": 775000000
+        }
+      }
+    },
+    {
+      "id": "lTr7RJZZkGhX72Yr5nLx",
+      "data": {
+        "userId": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "title": "Hyperion Support",
+        "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000194.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095290,
+          "_nanoseconds": 356000000
+        }
+      }
+    },
+    {
+      "id": "mBxlU9V3FmxFNEnShmWJ",
+      "data": {
+        "userId": "vq4Vbouob3SdNQ1mYoMB80olBJu1",
+        "title": "Hyperion Support",
+        "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000194 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095049,
+          "_nanoseconds": 365000000
+        }
+      }
+    },
+    {
+      "id": "mbHqp98MqGfqP45pnSqd",
+      "data": {
+        "userId": "urQeSiKRZJXLj9odxk8tzVCMbgL2",
+        "title": "Hyperion Support",
+        "ticketId": "e2MMhScFYn2zDOctTbRd",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000191 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094968,
+          "_nanoseconds": 662000000
+        }
+      }
+    },
+    {
+      "id": "n1warP9FUiNNLkbIqw5T",
+      "data": {
+        "userId": "zcujbeOusjZvDF6q9ccqSmwq2NI3",
+        "title": "Hyperion Support",
+        "ticketId": "Ux01FNXCa2B0cCyGcyfj",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000193.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095090,
+          "_nanoseconds": 209000000
+        }
+      }
+    },
+    {
+      "id": "n91KrTYYB3bfxxsEP1KX",
+      "data": {
+        "userId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000190.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095046,
+          "_nanoseconds": 163000000
+        }
+      }
+    },
+    {
+      "id": "nvZogm6cE8jc0aZBywyv",
+      "data": {
+        "userId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "title": "Hyperion Support",
+        "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000208 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790096081,
+          "_nanoseconds": 192000000
+        }
+      }
+    },
+    {
+      "id": "oHhmnghNixItmd1sWqYu",
+      "data": {
+        "userId": "KsyfI2hMpZPsqtoExehclMuoGut2",
+        "title": "Hyperion Support",
+        "ticketId": "L6uZBG3EULQOlSpDJQrb",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000201.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095199,
+          "_nanoseconds": 139000000
+        }
+      }
+    },
+    {
+      "id": "owqoML2CZZdfpjjGPdzC",
+      "data": {
+        "userId": "Kj7UWGrVEKYP8Ec3PbXrsypdToI2",
+        "title": "Hyperion Support",
+        "ticketId": "UQiXVy3UexNMopjyVIVB",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000185 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094891,
+          "_nanoseconds": 587000000
+        }
+      }
+    },
+    {
+      "id": "qhT7LvMjzju4PS0fnwL2",
+      "data": {
+        "userId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+        "title": "Hyperion Support",
+        "ticketId": "njICBvqVYYBwH3VE5yIm",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000207 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095933,
+          "_nanoseconds": 685000000
+        }
+      }
+    },
+    {
+      "id": "qvUQ0fnG4JxUs9C93oKB",
+      "data": {
+        "userId": "rSojX1cYltMnWduMlD1H20tsID33",
+        "title": "Hyperion Support",
+        "ticketId": "KrJis1bRkOhdFLhs3YeE",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000186.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095035,
+          "_nanoseconds": 200000000
+        }
+      }
+    },
+    {
+      "id": "rEwArbiRGy4SicSiMaua",
+      "data": {
+        "userId": "26sH11CjzQU1rMBf2fCeF8jJiTW2",
+        "title": "Hyperion Support",
+        "ticketId": "YdXj3Ww2nEHXtWzJda8i",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000194 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095048,
+          "_nanoseconds": 778000000
+        }
+      }
+    },
+    {
+      "id": "sEeE2x1tF6c35hqV265g",
+      "data": {
+        "userId": "mVa4vaVuUTcetWoOvSNYIq43kAM2",
+        "title": "Hyperion Support",
+        "ticketId": "0RW9gqF1yywWjIYPWmUK",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000187 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094892,
+          "_nanoseconds": 940000000
+        }
+      }
+    },
+    {
+      "id": "sbGXb9cCrgHsqFQpGLWt",
+      "data": {
+        "userId": "PZGxysvRtBh8O5pnHBIG3K8s0nJ3",
+        "title": "Hyperion Support",
+        "ticketId": "0ri7P84C53Jf8UfyV2dW",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000196.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095180,
+          "_nanoseconds": 495000000
+        }
+      }
+    },
+    {
+      "id": "tEEC6ikrCqbU0iYJTRtU",
+      "data": {
+        "userId": "imd9WQ8nsHfQZSNNDnmS1y7QAvJ2",
+        "title": "Hyperion Support",
+        "ticketId": "4Vlw703u23Iipx5gvS8t",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000195 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095127,
+          "_nanoseconds": 649000000
+        }
+      }
+    },
+    {
+      "id": "uHls6wrhrm81eNgJ69gw",
+      "data": {
+        "userId": "zp5UTfJGcNd2ZQRI3SOVFuNFmPq2",
+        "title": "Hyperion Support",
+        "ticketId": "ztGv7Y7sBTyXvbf2V1U2",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000190 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094960,
+          "_nanoseconds": 556000000
+        }
+      }
+    },
+    {
+      "id": "uM0kYyXbtQbt7JYy0wnZ",
+      "data": {
+        "userId": "tNwt72PbmeVqA58p0dlcuEfOXX73",
+        "title": "Hyperion Support",
+        "ticketId": "UQiXVy3UexNMopjyVIVB",
+        "type": "assigned",
+        "message": "Ticket PFMSD-2026-000185 has been assigned to you.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790094893,
+          "_nanoseconds": 88000000
+        }
+      }
+    },
+    {
+      "id": "uM7d5YI9RzaRXDmtgiBD",
+      "data": {
+        "userId": "1ScTAmsXK5aFAZgNCiy2rOJnjub2",
+        "title": "Hyperion Support",
+        "ticketId": "f1RBtiaeF53TzEDkLUhR",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000199 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095169,
+          "_nanoseconds": 569000000
+        }
+      }
+    },
+    {
+      "id": "vH5mrC9aLd6bBHGTTg6x",
+      "data": {
+        "userId": "rSojX1cYltMnWduMlD1H20tsID33",
+        "title": "Hyperion Support",
+        "ticketId": "KrJis1bRkOhdFLhs3YeE",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000186.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095062,
+          "_nanoseconds": 786000000
+        }
+      }
+    },
+    {
+      "id": "x2wclOafOsLyQe23YOxi",
+      "data": {
+        "userId": "pWUEFtEw5LW8i3fOGZMbaHjec3G3",
+        "title": "Hyperion Support",
+        "ticketId": "mslX76tc2axzoBv1k8Bu",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000206.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790096142,
+          "_nanoseconds": 155000000
+        }
+      }
+    },
+    {
+      "id": "xlpUthq55o5ly29TGAaq",
+      "data": {
+        "userId": "LVfJoFiDecO4npaSZSNebNUn6Vx2",
+        "title": "Hyperion Support",
+        "ticketId": "PLwgAAYI6lVKDaBq1ZiA",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000208 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790096079,
+          "_nanoseconds": 580000000
+        }
+      }
+    },
+    {
+      "id": "y1ZXH82SM2YuZsVrkaMw",
+      "data": {
+        "userId": "YMwMeoOKgCeUJ6cyaIl8QIWey4s1",
+        "title": "Hyperion Support",
+        "ticketId": "EISLEjgZ2SUwxLSYYvwL",
+        "type": "ticket_received",
+        "message": "Your ticket PFMSD-2026-000205 has been received.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095344,
+          "_nanoseconds": 861000000
+        }
+      }
+    },
+    {
+      "id": "z2InEqDivCnf2sg8v5t3",
+      "data": {
+        "userId": "FALNR2NSFxcrDPHhSCIfpgudGPv1",
+        "title": "Hyperion Support",
+        "ticketId": "njICBvqVYYBwH3VE5yIm",
+        "type": "commented",
+        "message": "New message on ticket PFMSD-2026-000207.",
+        "read": false,
+        "createdAt": {
+          "_seconds": 1790095945,
+          "_nanoseconds": 971000000
+        }
+      }
+    }
+  ]
+}

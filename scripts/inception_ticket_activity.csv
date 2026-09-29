@@ -1,0 +1,166 @@
+timestamp,ticketReference,ticketId,actorId,actorName,action,fromValue,toValue,note
+2026-09-09T13:04:22.621Z,PFMSD-2026-000081,TOQmSW51YA0yYfqAye6q,RBc3ULANJSSzisJhSKsyGf279v53,Abukari Iddrisu,created,,open,
+2026-09-09T13:04:27.257Z,PFMSD-2026-000081,TOQmSW51YA0yYfqAye6q,system,system,assigned,,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Auto-assigned by category rules
+2026-09-09T15:48:08.532Z,PFMSD-2026-000082,dkJzexOkgdvDE3bfkdBD,cEazovptKWM0TTap1HtAljnpGv93,Emmanuel Esson,created,,open,
+2026-09-09T15:48:12.398Z,PFMSD-2026-000082,dkJzexOkgdvDE3bfkdBD,system,system,assigned,,vq4Vbouob3SdNQ1mYoMB80olBJu1,Auto-assigned by category rules
+2026-09-11T09:27:32.033Z,PFMSD-2026-000082,dkJzexOkgdvDE3bfkdBD,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,commented,,,"Hi Emma Nelson
+Kindly describe your request for swift response 
+Thank you"
+2026-09-11T09:29:05.874Z,PFMSD-2026-000081,TOQmSW51YA0yYfqAye6q,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,commented,,,Kindly provide which platform you need the password to access
+2026-09-14T11:14:28.979Z,PFMSD-2026-000113,AMj5p9cEscX0xuNM04ht,56yFE3kZSAaLdSPhq0n9ea0sbMz1,William Ekow Tawiah,created,,open,
+2026-09-14T11:14:32.622Z,PFMSD-2026-000113,AMj5p9cEscX0xuNM04ht,system,system,assigned,,urQeSiKRZJXLj9odxk8tzVCMbgL2,Auto-assigned by category rules
+2026-09-16T06:21:24.934Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,83t3SuSDKdhuvomQ0REUW7S6fyl1,Hope Seyram Amesimeku,created,,open,
+2026-09-16T06:21:30.192Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,system,system,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Auto-assigned by category rules
+2026-09-16T10:54:39.595Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,f2GkQYz00RPfhroqP8WmAGW6U1w2,Theophilus Dzidzienyo,created,,open,
+2026-09-16T10:54:43.588Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,system,system,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Auto-assigned by category rules
+2026-09-16T11:58:26.523Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,f2GkQYz00RPfhroqP8WmAGW6U1w2,Theophilus Dzidzienyo,commented,,,Hello
+2026-09-16T12:02:48.792Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,f2GkQYz00RPfhroqP8WmAGW6U1w2,Theophilus Dzidzienyo,commented,,,"What does:
+""Kindly take note of the ""s"" in the link for the live session"" mean please
+FPM 50"
+2026-09-16T12:16:43.946Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,bNzS5lf8P4SL86iGDraupsRB5ti1,Prince Asante Frimpong,created,,open,
+2026-09-16T12:16:48.110Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,system,system,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Auto-assigned by category rules
+2026-09-16T12:38:37.962Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,xpayNY7mgAQUVorBeWrrfF8niFu1,JOHN AMPEM-DARKO,created,,open,
+2026-09-16T12:38:42.092Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,system,system,assigned,,1Qks2pAokUXZe3rzqz9pkQAIm102,Auto-assigned by category rules
+2026-09-16T14:23:15.797Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,in_progress,
+2026-09-16T14:41:42.937Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,created,,open,
+2026-09-16T14:41:47.306Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,system,system,assigned,,FALNR2NSFxcrDPHhSCIfpgudGPv1,Auto-assigned by category rules
+2026-09-16T15:11:04.900Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Hi good afternoon
+2026-09-16T15:11:37.906Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Please do you have a User credential?
+2026-09-16T15:16:31.479Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,"Yes please, I do have"
+2026-09-16T15:26:03.479Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Have you changed your password or check the dash in the username. It underscore and not dash
+2026-09-16T16:47:23.597Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,"No.  I have neither changed the password not the User Name, please."
+2026-09-16T16:54:55.331Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Share your Username with me
+2026-09-16T16:55:32.352Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Not the password
+2026-09-16T16:56:28.728Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,RAYAMGA_UER
+2026-09-16T16:57:06.812Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Hello Sir
+2026-09-16T16:59:42.583Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,"Kindly find the link to the live production:
+
+https://ghana-bm.mofep.gov.gh/workspace/index.jsp"
+2026-09-16T17:00:58.418Z,PFMSD-2026-000155,HZh8rUijTI3yDbEWLzrM,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,resolved,https://ghana-bm.mofep.gov.gh/workspace/index.jsp
+2026-09-16T17:03:30.153Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,"Good afternoon, Prince"
+2026-09-16T17:03:38.363Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,in_progress,
+2026-09-16T17:05:37.392Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Your username is PAsanteFrimpong_JNDA
+2026-09-16T17:08:57.119Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,"Your username is same in our master sheet, I you may have changed the password"
+2026-09-16T17:13:02.904Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,I have not changed the password after the temporal one.
+2026-09-16T17:14:01.257Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,I have not encountered any challenges intill this afternoon when I tried logging in to no avail.
+2026-09-16T17:14:08.296Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,"The default password is Welcome123
+
+If you change the password and you forgot the new password, you will need to officially write to us in order to reset the the password for you"
+2026-09-16T17:14:32.325Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Thank you
+2026-09-16T17:14:51.554Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Ok
+2026-09-16T17:15:06.451Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Will get back
+2026-09-16T17:15:37.065Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,"Alright, sir."
+2026-09-16T17:16:55.608Z,PFMSD-2026-000156,8KQQhw9HW53hpiGnJaSS,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,in_progress,resolved,"Username: PAsanteFrimpong_JNDA
+Default Password: Welcome123"
+2026-09-16T17:20:42.375Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,in_progress,resolved,"You will receive an official communication when the HR, Statistics and Birth & Death departments are created on the Hyperion 
+
+Thank you"
+2026-09-16T22:42:49.853Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,escalated,,YhGjpL6QgJNnpx88db4lFKS42RC3,
+2026-09-17T09:59:47.745Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,status_changed,escalated,resolved,follow up to be made
+2026-09-17T10:02:00.865Z,PFMSD-2026-000153,ECeH68kzKAinF3ZmNCMu,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,closed,,,
+2026-09-17T10:34:40.770Z,PFMSD-2026-000160,HbBpbgV3OG4pbtQ0zC8g,i03PP6frAUhqs5fQpQtVB2VGYUt1,Jane Afua Ntiforo,created,,open,
+2026-09-17T10:34:44.628Z,PFMSD-2026-000160,HbBpbgV3OG4pbtQ0zC8g,system,system,assigned,,ZteAERCgdbZnDzvLBz7OMH1247w2,Auto-assigned by category rules
+2026-09-17T11:01:39.504Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,d1zOisRPgsMatTzVqXkDAHPjOlK2,John Atelu,created,,open,
+2026-09-17T11:01:43.427Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,system,system,assigned,,gn81lNHcCdXEe9GA1WZI8yv6P003,Auto-assigned by category rules
+2026-09-17T11:35:17.044Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,
+2026-09-17T11:39:48.338Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Good morning Mr Atelu
+2026-09-17T11:41:42.426Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Microsoft Teams is not able to verify your email address that's why we are unable to assign you to a breakout room
+2026-09-17T11:42:45.445Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Kindly try and sign in with your official email or a different email
+2026-09-17T11:45:54.389Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,"Also if you are using a link a colleague has used to join the webinar, we cannot assign you to room because the colleague has already been assigned a room"
+2026-09-17T11:46:09.462Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Thank you
+2026-09-17T11:50:47.607Z,PFMSD-2026-000161,8aj7XH0I1ZwgM2UZN7J9,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,resolved,Join the webinar with an official email
+2026-09-17T12:01:51.856Z,PFMSD-2026-000162,vPty1vNBBDzhGbo626Bg,v0KOX8Dr8SRqacLM4AUbKT0xPlO2,Thomas Hamelo,created,,open,
+2026-09-17T12:01:55.896Z,PFMSD-2026-000162,vPty1vNBBDzhGbo626Bg,system,system,assigned,,urQeSiKRZJXLj9odxk8tzVCMbgL2,Auto-assigned by category rules
+2026-09-17T12:07:45.249Z,PFMSD-2026-000163,oPUPuvaa2CBI7VjMC0GP,v0KOX8Dr8SRqacLM4AUbKT0xPlO2,Thomas Hamelo,created,,open,
+2026-09-17T12:07:46.830Z,PFMSD-2026-000163,oPUPuvaa2CBI7VjMC0GP,system,system,assigned,,ZteAERCgdbZnDzvLBz7OMH1247w2,Auto-assigned by category rules
+2026-09-17T12:08:34.466Z,PFMSD-2026-000163,oPUPuvaa2CBI7VjMC0GP,v0KOX8Dr8SRqacLM4AUbKT0xPlO2,Thomas Hamelo,commented,,,hello
+2026-09-17T12:53:30.473Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,ls9q7G8m7rOQTnViApHMlBx2v2c2,Cephas Desmond Ofori Agboka,created,,open,
+2026-09-17T12:53:34.000Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,system,system,assigned,,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Auto-assigned by category rules
+2026-09-17T12:54:01.879Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,ls9q7G8m7rOQTnViApHMlBx2v2c2,Cephas Desmond Ofori Agboka,commented,,,Good afternoon please
+2026-09-17T21:07:38.750Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,Good Evening
+2026-09-17T21:07:47.043Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,How may I Assist you
+2026-09-17T21:07:50.105Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,?
+2026-09-18T12:12:01.533Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Good morning
+2026-09-18T12:16:14.915Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,You had changed your password.  Use the default password of Welcome 123 to login.
+2026-09-18T14:28:57.567Z,PFMSD-2026-000163,oPUPuvaa2CBI7VjMC0GP,ZteAERCgdbZnDzvLBz7OMH1247w2,Prince Edward Amponsah-Donkor,commented,,,Hi
+2026-09-18T16:49:27.374Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,Please you will have to request for a password change from the appropriate channels
+2026-09-21T10:12:53.218Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,ls9q7G8m7rOQTnViApHMlBx2v2c2,Cephas Desmond Ofori Agboka,commented,,,please may i know the appropriate channel?
+2026-09-21T17:09:13.808Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,"Good day, sir. 
+
+I have used the Welcome123 and still have not been successful logging in."
+2026-09-21T17:12:15.977Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,You will have to Write an official letter through to your RCC for a password reset or change
+2026-09-21T17:12:51.349Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,commented,,,Thank you very much and have a nice day
+2026-09-21T17:13:16.906Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,status_changed,assigned,resolved,issue has been resolved
+2026-09-21T17:13:19.235Z,PFMSD-2026-000164,PfMeHLP75SaFs3GNdEo2,nIcCSZ7s2LX1O0SlTSYOAK0zT7q2,Justin Osei Poku,status_changed,resolved,resolved,issue has been resolved
+2026-09-22T10:02:07.760Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,commented,,,Good afternoon
+2026-09-22T10:06:25.708Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,status_changed,assigned,resolved,greeting
+2026-09-22T10:06:29.312Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,status_changed,resolved,resolved,greeting
+2026-09-22T10:06:32.749Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,status_changed,resolved,resolved,greeting
+2026-09-22T10:06:35.655Z,PFMSD-2026-000157,dFwbd7dtraW5BpM06wwS,1Qks2pAokUXZe3rzqz9pkQAIm102,Jerome Ankrah,status_changed,resolved,resolved,greeting
+2026-09-22T10:12:16.963Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,commented,,,Kindly officially write for password reset.
+2026-09-22T11:55:34.490Z,PFMSD-2026-000162,vPty1vNBBDzhGbo626Bg,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,commented,,,Hu
+2026-09-22T11:56:09.479Z,PFMSD-2026-000162,vPty1vNBBDzhGbo626Bg,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,8OE3WGqLfQbZLFAzAJfkCFX1U4M2,
+2026-09-22T11:56:24.472Z,PFMSD-2026-000160,HbBpbgV3OG4pbtQ0zC8g,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,ZteAERCgdbZnDzvLBz7OMH1247w2,
+2026-09-22T11:56:43.492Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,QdkexOcPfTdnSo0lxPo8hMRUYnp2,
+2026-09-22T11:57:05.452Z,PFMSD-2026-000113,AMj5p9cEscX0xuNM04ht,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,zp5UTfJGcNd2ZQRI3SOVFuNFmPq2,
+2026-09-22T12:06:47.717Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,QdkexOcPfTdnSo0lxPo8hMRUYnp2,Edward Nsubi,status_changed,assigned,resolved,closed
+2026-09-22T12:06:50.185Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,QdkexOcPfTdnSo0lxPo8hMRUYnp2,Edward Nsubi,status_changed,resolved,resolved,closed
+2026-09-22T12:10:21.532Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,MKGoW62Iuaf5KXTj3a4LyRxrsaa2,Nana Adjei,assigned,,FALNR2NSFxcrDPHhSCIfpgudGPv1,
+2026-09-22T12:12:23.275Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,FALNR2NSFxcrDPHhSCIfpgudGPv1,Andrews Kwame Amoah,status_changed,assigned,resolved,Issue Resolved
+2026-09-22T12:51:04.005Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,reopened,,,
+2026-09-22T15:36:25.557Z,PFMSD-2026-000158,tdIHiTFC6E4QCGopUlII,5tuJ075iN5NSKaMpIWlTq2WC5lG2,RICHARD ANOGSEEM AYAMGA,commented,,,"Thank you sir, 
+
+It has been resolved now. 
+
+I was still using the training link instead of the live link."
+2026-09-22T16:33:31.387Z,PFMSD-2026-000182,fnrxdbZZ3VEYZAn0uWW0,UUdgBcp8spdcg2kkP5iAdYQ1Xpx1,David Era,created,,open,
+2026-09-22T16:33:34.746Z,PFMSD-2026-000182,fnrxdbZZ3VEYZAn0uWW0,system,system,assigned,,mWvST23CpcZIn0mUXcZTLwEd5D32,Auto-assigned by category rules
+2026-09-23T09:59:02.237Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,I3MZcQoMb1NaFCFbU018wtVkBDI3,Nuhu Braimah,created,,open,
+2026-09-23T09:59:06.409Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,system,system,assigned,,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Auto-assigned by category rules
+2026-09-23T10:27:19.896Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,j69ZGRiMLMhJvh7JHwRSyKAU3pS2,Martha Kumordji,created,,open,
+2026-09-23T10:27:23.585Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,system,system,assigned,,YhGjpL6QgJNnpx88db4lFKS42RC3,Auto-assigned by category rules
+2026-09-23T10:28:44.080Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,commented,,,"Good day, please do you mean you have forgotten your password to Hyperion?"
+2026-09-23T11:04:17.755Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Evans Appiah,commented,,,"Hi, Goodafternoon.
+The password is ""Welcome123"""
+2026-09-23T11:12:44.843Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Evans Appiah,commented,,,Have you been able to access your mail now.
+2026-09-23T11:15:04.674Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,I3MZcQoMb1NaFCFbU018wtVkBDI3,Nuhu Braimah,commented,,,"Not yet but I have been able to access the hyperion now, so I'm ok now. Thank you"
+2026-09-23T12:24:31.410Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,0SU8T2Bjq7TaPIUoRU9UdgeRT6g1,Bright Opong,created,,open,
+2026-09-23T12:24:35.455Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,system,system,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Auto-assigned by category rules
+2026-09-23T12:36:25.515Z,PFMSD-2026-000182,fnrxdbZZ3VEYZAn0uWW0,mWvST23CpcZIn0mUXcZTLwEd5D32,Naa-Dey Ashie,commented,,,"Hello David,
+Kindly share a screenshot of the form he/she is saving to guide me."
+2026-09-23T17:09:21.069Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,in_progress,
+2026-09-23T17:09:49.615Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Hi Bright
+2026-09-23T17:10:44.455Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,We have received the email and currently working on it
+2026-09-23T17:10:48.912Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Thank you
+2026-09-23T17:17:03.304Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FdDbbt6kiZPFOfleqhm2WwtFH5y2,REBECCA EFUA SAM,created,,open,
+2026-09-23T17:17:07.918Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,system,system,assigned,,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Auto-assigned by category rules
+2026-09-23T17:33:44.915Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Hi Rebecca
+2026-09-23T17:33:57.564Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Good evening
+2026-09-23T17:34:48.813Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Kindly login with your username and the default password
+2026-09-23T17:35:18.763Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,commented,,,Default Password: Pa55word
+2026-09-23T17:37:04.386Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,assigned,in_progress,
+2026-09-23T17:39:53.787Z,PFMSD-2026-000214,2uItTQEMaokLX8kvwhXA,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,in_progress,resolved,Hyperion credentials being worked on and will be communicated to new users
+2026-09-23T17:41:21.126Z,PFMSD-2026-000215,oFcfemDWGdX9Tx34MsHe,FPdP7mFl6WXUDzER8HcfDxLSCmV2,Christian M. Adigbo,status_changed,in_progress,resolved,"Login with your username: RSam_MINT
+Default Password: Pa55word"
+2026-09-24T07:22:19.990Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,commented,,,"Kindly write through your head of institution to ministry of Finance requesting for a password reset.
+Thank you"
+2026-09-24T07:38:28.103Z,PFMSD-2026-000216,8DskPFX5coikNIvuEGRx,qe7cXuzmMbfYcRekdtCyAf5Oemy2,Hamdallatu Alhassan,created,,open,
+2026-09-24T07:38:31.420Z,PFMSD-2026-000216,8DskPFX5coikNIvuEGRx,system,system,assigned,,urQeSiKRZJXLj9odxk8tzVCMbgL2,Auto-assigned by category rules
+2026-09-24T08:52:22.491Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,9znXE1jpLGTROqjqfiYh3CUvJEI3,Siino Issaka,created,,open,
+2026-09-24T08:52:26.143Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,system,system,assigned,,vq4Vbouob3SdNQ1mYoMB80olBJu1,Auto-assigned by category rules
+2026-09-24T12:39:57.806Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,Good afternoon Siino
+2026-09-24T12:46:01.967Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,We sincerely apologize for the inconvenience caused.
+2026-09-24T12:46:53.438Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,"The team is currently working on the issue, and the necessary resolution is being addressed."
+2026-09-24T12:47:41.890Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,Kindly note that the system may need to be refreshed before the resolved complaint becomes visible.
+2026-09-24T12:48:16.953Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,"Please assess the system tomorrow and, if the issue persists or you encounter any further challenges, kindly get back to the team for further assistance."
+2026-09-24T12:48:54.996Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,commented,,,Thank you
+2026-09-24T13:09:14.420Z,PFMSD-2026-000217,DgGxPmLumQcjBoeEN5z4,vq4Vbouob3SdNQ1mYoMB80olBJu1,Lydia Kyei Baffour,status_changed,assigned,resolved,"The user has been asked  to assess the system tomorrow, as a system refresh may be required for the resolution to become visible."
+2026-09-24T13:29:33.480Z,PFMSD-2026-000218,34p4oCjD5XLC6gJr1Pch,STcAQToEZPWlnOsvz1uW4AJpOLD2,Desmond Appiah,created,,open,
+2026-09-24T13:29:36.860Z,PFMSD-2026-000218,34p4oCjD5XLC6gJr1Pch,system,system,assigned,,urQeSiKRZJXLj9odxk8tzVCMbgL2,Auto-assigned by category rules
+2026-09-24T13:29:51.510Z,PFMSD-2026-000218,34p4oCjD5XLC6gJr1Pch,STcAQToEZPWlnOsvz1uW4AJpOLD2,Desmond Appiah,commented,,,Hello
+2026-09-24T13:34:42.171Z,PFMSD-2026-000113,AMj5p9cEscX0xuNM04ht,zp5UTfJGcNd2ZQRI3SOVFuNFmPq2,David Kojo Brown-Pobee,status_changed,assigned,resolved,relsoevd
+2026-09-24T13:34:44.005Z,PFMSD-2026-000113,AMj5p9cEscX0xuNM04ht,zp5UTfJGcNd2ZQRI3SOVFuNFmPq2,David Kojo Brown-Pobee,status_changed,resolved,resolved,relsoevd
+2026-09-25T08:41:57.877Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,status_changed,assigned,in_progress,
+2026-09-25T08:42:43.950Z,PFMSD-2026-000213,Zti1CZGgGbkCSF185Xtq,YhGjpL6QgJNnpx88db4lFKS42RC3,David Kyei,status_changed,in_progress,resolved,user hasn't responded to chat but the way for resolution has been sent in the chat
+2026-09-26T18:18:43.140Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Evans Appiah,commented,,,Thank you
+2026-09-26T18:19:03.924Z,PFMSD-2026-000212,8pGmXhRXvpD4Xznf9R1v,dlW9V2wyM6QuQmHEaDFuQyvtEr23,Evans Appiah,status_changed,assigned,resolved,Issue Resolved.

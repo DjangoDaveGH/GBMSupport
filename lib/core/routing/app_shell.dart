@@ -31,13 +31,11 @@ class AppShell extends ConsumerWidget {
 
   const AppShell({super.key, required this.child});
 
+  // Requester and support-side roles currently share the same 4 tabs (only
+  // the labels differ — see _supportLabelOverrides below); kept as one
+  // constant rather than two identical lists so a future edit to one can't
+  // silently stop applying to the other.
   static const _tabs = ['/home', '/tickets', '/notifications', '/profile'];
-  static const _supportTabs = [
-    '/home',
-    '/tickets',
-    '/notifications',
-    '/profile',
-  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +44,7 @@ class AppShell extends ConsumerWidget {
 
     if (isDesktopWidth(context) && isSupportSide) return child;
 
-    final tabs = isSupportSide ? _supportTabs : _tabs;
+    final tabs = _tabs;
 
     final location = GoRouterState.of(context).matchedLocation;
     var currentIndex = tabs.indexOf(location);
@@ -100,11 +98,12 @@ class _BottomBar extends StatelessWidget {
   // each is a single two-tone (navy + light-blue) glyph, not an outline/
   // filled pair, so selected vs. unselected is expressed with opacity
   // instead of icon-swapping.
+  // Only ever looked up by a key from AppShell._tabs above — no entry here
+  // for a path that isn't one of those 4.
   static const _icons = {
     '/home': ('assets/images/icon_home.png', 'Home'),
     '/tickets': ('assets/images/icon_tickets.png', 'Tickets'),
     '/notifications': ('assets/images/icon_notifications.png', 'Notifications'),
-    '/knowledge-base': ('assets/images/icon_knowledge_base.png', 'Knowledge'),
     '/profile': ('assets/images/icon_profile.png', 'Profile'),
   };
 

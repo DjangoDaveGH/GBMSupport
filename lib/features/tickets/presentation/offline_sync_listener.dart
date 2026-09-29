@@ -37,18 +37,26 @@ class _OfflineSyncListenerState extends ConsumerState<OfflineSyncListener> {
       final pending = draftRepo.getAllForUser(user.id).where((d) => d.pendingSync).toList();
       for (final draft in pending) {
         try {
-          await ticketRepo.createTicket(
-            createdBy: draft.createdBy,
-            institutionId: draft.institutionId,
-            category: draft.category,
-            subCategory: draft.subCategory,
-            title: draft.title,
-            description: draft.description,
-            attachmentUrls: const [], // local attachments are uploaded separately, see DECISIONS.md
-            priority: draft.priority,
-            impact: draft.impact,
-            affectsMultipleUsers: draft.affectsMultipleUsers,
-          );
+          // A submittedTicketId already present means a previous sync's
+          // createTicket() succeeded but the app died before the delete
+          // below ran — the ticket already exists, so just finish the
+          // cleanup instead of calling createTicket() again and creating a
+          // duplicate.
+          if (draft.submittedTicketId == null) {
+            final ticket = await ticketRepo.createTicket(
+              createdBy: draft.createdBy,
+              institutionId: draft.institutionId,
+              category: draft.category,
+              subCategory: draft.subCategory,
+              title: draft.title,
+              description: draft.description,
+              attachmentUrls: const [], // local attachments are uploaded separately, see DECISIONS.md
+              priority: draft.priority,
+              impact: draft.impact,
+              affectsMultipleUsers: draft.affectsMultipleUsers,
+            );
+            await draftRepo.save(draft.copyWith(submittedTicketId: ticket.id));
+          }
           await draftRepo.delete(draft.localId);
         } catch (_) {
           // Leave this draft queued; it will be retried on the next

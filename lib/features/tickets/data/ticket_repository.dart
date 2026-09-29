@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 
@@ -334,16 +335,19 @@ class TicketRepository {
     );
   }
 
-  /// Live map of uid -> when that participant last viewed this ticket's
-  /// chat (tickets/{id}/chatReceipts/{uid}, written by markChatRead below).
-  /// TicketChatScreen compares the *other* participant's timestamp here
-  /// against each of your own sent messages to decide its Delivered/Read tick.
-  Stream<Map<String, DateTime>> watchChatReceipts(String ticketId) {
+  /// Live map of uid -> that participant's delivery/read state on this
+  /// ticket's chat (tickets/{id}/chatReceipts/{uid}). TicketChatScreen
+  /// compares the *other* participant's receipt against each of your own
+  /// sent messages to decide its Sent/Delivered/Read tick.
+  Stream<Map<String, ChatReceipt>> watchChatReceipts(String ticketId) {
     return _chatReceiptsFor(ticketId).snapshots().map((snap) {
-      final receipts = <String, DateTime>{};
+      final receipts = <String, ChatReceipt>{};
       for (final doc in snap.docs) {
-        final ts = doc.data()['lastReadAt'] as Timestamp?;
-        if (ts != null) receipts[doc.id] = ts.toDate();
+        final data = doc.data();
+        receipts[doc.id] = ChatReceipt(
+          lastDeliveredAt: (data['lastDeliveredAt'] as Timestamp?)?.toDate(),
+          lastReadAt: (data['lastReadAt'] as Timestamp?)?.toDate(),
+        );
       }
       return receipts;
     });
@@ -363,38 +367,6 @@ class TicketRepository {
       {'lastReadAt': FieldValue.serverTimestamp()},
       SetOptions(merge: true),
     );
-  }
-
-  Future<void> reopen({
-    required String ticketId,
-    required String actorId,
-    String? note,
-  }) async {
-    final batch = _db.batch();
-    batch.update(_tickets.doc(ticketId), {
-      'status': TicketStatus.reopened.wireValue,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'closedAt': null,
-      'closedBy': null,
-      // Clear the resolution stamp too — a reopened ticket is no longer
-      // resolved, so it must stop counting toward "Tickets Resolved",
-      // resolution-time averages, and SLA compliance. changeStatus() re-sets
-      // it if the ticket is resolved again.
-      'resolvedAt': null,
-    });
-    final activityRef = _activityFor(ticketId).doc();
-    batch.set(activityRef, {
-      ...TicketActivity(
-        id: activityRef.id,
-        ticketId: ticketId,
-        actorId: actorId,
-        action: TicketActivityAction.reopened,
-        note: note,
-        timestamp: DateTime.now(),
-      ).toMap(),
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-    await batch.commit();
   }
 
   Future<void> close({

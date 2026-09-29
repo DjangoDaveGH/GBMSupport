@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to attach screenshots or photos to tickets and chat messages.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Used to take photos to attach to tickets and chat messages.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

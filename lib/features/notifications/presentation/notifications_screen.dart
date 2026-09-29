@@ -26,21 +26,26 @@ IconData _iconFor(NotificationType type) => switch (type) {
 // Mockup screen 7 groups notifications into All/Tickets/System/
 // Announcements tabs, but the data model (NotificationType) predates that
 // split and has no explicit "announcement" vs "system" distinction — it's
-// all ticket-lifecycle events plus two ops-style types. Mapped by closest
-// fit: ticket-lifecycle events under Tickets; an outage/downtime alert is
-// the "something is currently wrong" System case; scheduled maintenance
-// reads as the "heads up, this is planned" Announcements case in the
-// mockup's own example ("Announcement: System maintenance on May 25...").
+// all ticket-lifecycle events plus three admin-broadcast types (see
+// BROADCAST_TYPES in functions/index.js: system_downtime, deadline_reminder,
+// maintenance — none of them ever fire from a ticket-lifecycle trigger).
+// Mapped by closest fit: ticket-lifecycle events under Tickets; an
+// outage/downtime alert is the "something is currently wrong" System case;
+// scheduled maintenance and deadline reminders both read as the "heads up,
+// this is planned" Announcements case in the mockup's own example
+// ("Announcement: System maintenance on May 25...").
 bool _isTicketNotification(NotificationType type) => switch (type) {
       NotificationType.ticketReceived ||
       NotificationType.assigned ||
       NotificationType.escalated ||
       NotificationType.pendingAction ||
       NotificationType.resolved ||
-      NotificationType.deadlineReminder ||
       NotificationType.chatMessage => true,
-      NotificationType.systemDowntime || NotificationType.maintenance => false,
+      NotificationType.systemDowntime || NotificationType.maintenance || NotificationType.deadlineReminder => false,
     };
+
+bool _isAnnouncementNotification(NotificationType type) =>
+    type == NotificationType.maintenance || type == NotificationType.deadlineReminder;
 
 Color _colorFor(NotificationType type) => switch (type) {
       NotificationType.ticketReceived => AppTheme.accentBlue,
@@ -153,7 +158,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                 repo: repo,
               ),
               _NotificationList(
-                notifications: notifications.where((n) => n.type == NotificationType.maintenance).toList(),
+                notifications: notifications.where((n) => _isAnnouncementNotification(n.type)).toList(),
                 repo: repo,
               ),
             ],
