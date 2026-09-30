@@ -15,7 +15,7 @@ const md=`# GBMS Support App — Inception-to-Date Activity Report
 
 This report covers all retained timestamped activity since the earliest available app record. The data contains **${fmt(r.coverage.allUsers)} user records**, **${fmt(included.tickets.length)} operational tickets**, **${fmt(included.activities.length)} related ticket activities**, **${fmt(included.notifications.length)} related notifications**, and **${fmt(included.auditLogs.length)} system audit-log events**.
 
-The test-ticket rule supplied for this report was applied consistently: a ticket is excluded when its creator is an MMDA user and the ticket was created on a Tuesday or Friday. MDA-created tickets were retained. This removed **${fmt(r.rules.excludedTestTicketCount)} test tickets**, plus their associated ticket activities and ticket-linked notifications.
+The configured test-ticket rule was applied consistently: ${r.rules.testTicketRule} This removed **${fmt(r.rules.excludedTestTicketCount)} test tickets**, plus their associated ticket activities and ticket-linked notifications.
 
 ## Overall coverage
 

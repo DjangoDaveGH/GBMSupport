@@ -139,7 +139,7 @@ service cloud.firestore {
 
     // ----- counters (ticket reference sequence) -----
     // TicketRepository.createTicket runs a client-side transaction against
-    // counters/tickets_{year} to mint the human-readable HYP-YYYY-NNNNNN
+    // counters/tickets_{year} to mint the human-readable PFMSD-YYYY-NNNNNN
     // reference. Restrict writes to incrementing `count` by exactly 1 so a
     // client can't forge arbitrary sequence numbers.
     match /counters/{counterId} {
@@ -185,9 +185,22 @@ service cloud.firestore {
         && request.resource.data.assignedTo == null;
 
       allow update: if
-        // Support Coordinator gets unrestricted ticket-field access —
-        // assign/escalate/edit-priority/close are all theirs (Section 3).
-        role() == 'support_coordinator'
+        // Support Coordinator may assign, escalate, and close, but only
+        // through the specific ticket-field combinations below.
+        (role() == 'support_coordinator' && (
+          (onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
+            && resource.data.status != 'closed'
+            && request.resource.data.status == 'assigned'
+            && request.resource.data.assignedTo != null)
+          || (onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes', 'escalationLevel'])
+            && resource.data.status in ['open', 'assigned', 'in_progress', 'escalated', 'reopened']
+            && request.resource.data.status == 'escalated'
+            && request.resource.data.assignedTo != null
+            && request.resource.data.escalationLevel > resource.data.escalationLevel)
+          || (resource.data.status == 'resolved'
+            && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy'])
+            && request.resource.data.status == 'closed')
+        ))
         // PFM Management/Administrator can manually (re)assign a ticket —
         // same write TicketRepository.assignTicket() makes (assignedTo,
         // status -> 'assigned', updatedAt, plus clearing resolvedAt/
@@ -197,7 +210,8 @@ service cloud.firestore {
         // offer every back-office role. Escalate and priority-edit stay
         // Coordinator-only, per the comment above.
         || (role() == 'pfm_management'
-            && ((onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
+            && ((resource.data.status != 'closed'
+                 && onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
                  && request.resource.data.status == 'assigned')
                 || (resource.data.status == 'resolved'
                     && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy'])
@@ -211,6 +225,7 @@ service cloud.firestore {
         // isn't one they can see in the first place, so resolving it
         // shouldn't be reachable either.
         || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2
+            && resource.data.status in ['assigned', 'in_progress', 'escalated', 'reopened']
             && onlyFieldsChanged(['status', 'updatedAt', 'resolutionNotes', 'resolvedAt'])
             && request.resource.data.status == 'resolved')
         // Functional/Technical Lead: Start Work, Resolve, self-service
@@ -220,11 +235,13 @@ service cloud.firestore {
         // category edits stay Coordinator-only, per the comment above.
         || ((isFunctionalLead() || isTechnicalLead())
             && resource.data.assignedTo == request.auth.uid
+            && resource.data.status in ['assigned', 'in_progress', 'escalated', 'reopened', 'resolved']
             && onlyFieldsChanged([
                  'status', 'updatedAt', 'resolvedAt', 'resolutionNotes',
                  'escalationLevel', 'assignedTo', 'closedAt', 'closedBy'
                ])
-            && request.resource.data.status in ['in_progress', 'resolved', 'escalated', 'closed']
+            && ((request.resource.data.status in ['in_progress', 'resolved', 'escalated'] && resource.data.status != 'resolved')
+                || (request.resource.data.status == 'closed' && resource.data.status == 'resolved'))
             && request.resource.data.escalationLevel >= resource.data.escalationLevel
             && request.resource.data.escalationLevel <= 2);
         // Requesters (MDA/MMDA users and focal persons) have no ticket-update
