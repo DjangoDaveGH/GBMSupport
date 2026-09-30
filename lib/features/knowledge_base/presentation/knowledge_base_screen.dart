@@ -11,6 +11,7 @@ import 'package:hyport/features/knowledge_base/domain/knowledge_article.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 
 String _compactViews(int n) {
   if (n < 1000) return '$n';
@@ -64,18 +65,16 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 76,
-        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
           onPressed: () => context.popOrGo('/home'),
         ),
-        centerTitle: true,
+        centerTitle: false,
         title: Text(
           'Knowledge Base',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: AppTheme.navyDark,
-            fontSize: 24,
+                    fontSize: 19,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -102,7 +101,7 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
           ),
           articlesAsync.when(
             loading: () => const BrandedLoaderCenter(),
-            error: (e, _) => Center(child: Text('Could not load articles: $e')),
+            error: (e, _) => AppErrorState(message: 'We could not load the knowledge base.', onRetry: () => ref.invalidate(articleListProvider((category: _category, canEdit: canEdit)))),
             data: (rawArticles) {
               // Drafts/review copies are only ever visible to editors — everyone
               // else only ever sees what's actually published.
@@ -184,7 +183,7 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
+                    crossAxisCount: 2,
                     mainAxisSpacing: 24,
                     crossAxisSpacing: 26,
                     childAspectRatio: 1.15,

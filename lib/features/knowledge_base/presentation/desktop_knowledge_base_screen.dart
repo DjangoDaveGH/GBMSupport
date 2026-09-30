@@ -55,7 +55,7 @@ class _DesktopKnowledgeBaseScreenState extends ConsumerState<DesktopKnowledgeBas
               ),
               child: allArticlesAsync.when(
                 loading: () => const Padding(padding: EdgeInsets.all(16), child: BrandedLoaderCenter()),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => const Text('Categories unavailable'),
                 data: (all) {
                   final visible = canEdit ? all : all.where((a) => a.status == ArticleStatus.published).toList();
                   return Column(

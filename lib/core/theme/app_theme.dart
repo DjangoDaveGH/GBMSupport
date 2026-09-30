@@ -22,6 +22,7 @@ class AppTheme {
   static const Color plum = Color(0xFFB84FE0);
   static const Color ink = Color(0xFF14213D);
   static const Color mist = Color(0xFFF5F8FC);
+  static const Color mutedText = Color(0xFF52627A);
 
   static ColorScheme get _colorScheme =>
       ColorScheme.fromSeed(

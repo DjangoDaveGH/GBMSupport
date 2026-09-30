@@ -16,6 +16,7 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 
 /// Top chip presets (mockup screen 13: All/Open/In Progress/Resolved/
 /// Closed). "Closed" is handled separately — tapping it navigates to the
@@ -238,7 +239,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load tickets: $e')),
+      error: (e, _) => AppErrorState(message: 'We could not load tickets.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, countsFilter)))),
       data: (rawTickets) {
         // Narrow by the advanced filters first so the status tab counts
         // below reflect them too.

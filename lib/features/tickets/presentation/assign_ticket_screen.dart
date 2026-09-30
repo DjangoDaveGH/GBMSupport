@@ -96,7 +96,7 @@ class _AssignTicketScreenState extends ConsumerState<AssignTicketScreen> {
               const SizedBox(height: AppSpacing.md),
               usersAsync.when(
                 loading: () => const Padding(padding: EdgeInsets.all(24), child: BrandedLoaderCenter()),
-                error: (e, _) => Text('Could not load officers: $e'),
+                error: (e, _) => const Text('Officers unavailable'),
                 data: (users) {
                   // Vendor/Specialist is reachable only via "Escalate to
                   // Vendor/Specialist" (sets escalationLevel to 2 in the

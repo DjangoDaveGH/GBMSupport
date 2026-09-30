@@ -23,6 +23,7 @@ import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 
 String _greeting() {
   final hour = DateTime.now().hour;
@@ -617,7 +618,7 @@ class _UserHome extends ConsumerWidget {
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load tickets: $e')),
+      error: (e, _) => AppErrorState(message: 'We could not load your tickets.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, const TicketFilter())))),
       data: (tickets) {
         final openCount = tickets
             .where((t) => t.status == TicketStatus.open)
@@ -780,7 +781,7 @@ class _SupportHome extends ConsumerWidget {
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load tickets: $e')),
+      error: (e, _) => AppErrorState(message: 'We could not load ticket data.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, const TicketFilter())))),
       data: (tickets) {
         final open = tickets.where((t) => t.status == TicketStatus.open).length;
         final resolved = tickets
@@ -822,7 +823,7 @@ class _SupportHome extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
@@ -879,7 +880,7 @@ class _SupportHome extends ConsumerWidget {
               Text('System Overview', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
               GridView.count(
-                crossAxisCount: 3,
+                crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 10,

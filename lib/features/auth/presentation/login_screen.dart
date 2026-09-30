@@ -188,10 +188,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.mutedText),
           ),
           const SizedBox(height: AppSpacing.xxl),
-          Text('Email Address', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.black54)),
+          Text('Email Address', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.mutedText)),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _emailController,
@@ -200,7 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    Text('Password', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.black54)),
+                    Text('Password', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.mutedText)),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _passwordController,
@@ -272,7 +272,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
-                            : const Text('LOGIN'),
+                            : const Text('Sign in'),
                       ),
                     ),
         ],

@@ -161,9 +161,14 @@ class _BottomBar extends StatelessWidget {
           if (onCenterAction != null)
             Positioned(
               top: 0,
-              child: GestureDetector(
-                onTap: onCenterAction,
-                child: Container(
+              child: Semantics(
+                button: true,
+                label: 'Create ticket',
+                child: Tooltip(
+                  message: 'Create ticket',
+                  child: GestureDetector(
+                    onTap: onCenterAction,
+                    child: Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
@@ -178,10 +183,12 @@ class _BottomBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                      child: const Icon(
                     Icons.add_rounded,
                     color: Colors.white,
                     size: 26,
+                  ),
+                    ),
                   ),
                 ),
               ),
@@ -203,9 +210,15 @@ class _BottomBar extends StatelessWidget {
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Expanded(
-      child: InkWell(
-        onTap: () => onTap(index),
-        child: Padding(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: Tooltip(
+          message: label,
+          child: InkWell(
+            onTap: () => onTap(index),
+            child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -218,7 +231,7 @@ class _BottomBar extends StatelessWidget {
               Text(
                 label,
                 maxLines: 1,
-                overflow: TextOverflow.visible,
+                overflow: TextOverflow.ellipsis,
                 softWrap: false,
                 style: TextStyle(
                   fontFamily: AppTheme.fontFamily,
@@ -228,6 +241,8 @@ class _BottomBar extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+            ),
           ),
         ),
       ),

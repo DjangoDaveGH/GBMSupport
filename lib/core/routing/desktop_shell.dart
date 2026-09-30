@@ -298,6 +298,7 @@ class _TopBar extends StatelessWidget {
           const PwaInstallButton(compact: true),
           IconButton(
             onPressed: () => context.go('/notifications'),
+            tooltip: 'Notifications',
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
