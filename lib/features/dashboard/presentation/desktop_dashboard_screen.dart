@@ -7,6 +7,7 @@ import 'package:hyport/core/models/audit_log.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/scrollable_table.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
@@ -69,7 +70,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load dashboard data: $e')),
+      error: (e, _) => AppErrorState(message: 'We could not load dashboard data.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, const TicketFilter())))),
       data: (tickets) {
         final users = usersAsync.valueOrNull ?? const <AppUser>[];
         final usersById = <String, AppUser>{for (final u in users) u.id: u};
@@ -136,52 +137,68 @@ class _DashboardBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1050 ? 4 : 2;
+              final cardWidth = (constraints.maxWidth - (16 * (columns - 1))) / columns;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: _StatCard(
                   label: 'Total Tickets',
                   value: totalTrend.count,
                   delta: totalTrend.delta,
                   onTap: () => context.push('/tickets', extra: const TicketFilter()),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _StatCard(
+                  SizedBox(
+                    width: cardWidth,
+                    child: _StatCard(
                   label: 'Open Tickets',
                   value: openTrend.count,
                   delta: openTrend.delta,
                   onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _StatCard(
+                  SizedBox(
+                    width: cardWidth,
+                    child: _StatCard(
                   label: 'In Progress',
                   value: inProgressTrend.count,
                   delta: inProgressTrend.delta,
                   onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.inProgress})),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _StatCard(
+                  SizedBox(
+                    width: cardWidth,
+                    child: _StatCard(
                   label: 'Resolved',
                   value: resolvedTrend.count,
                   delta: resolvedTrend.delta,
                   onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
                 ),
               ),
-            ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
           Text('System Overview', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _SimpleStatCard(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900 ? 3 : 2;
+              final cardWidth = (constraints.maxWidth - (16 * (columns - 1))) / columns;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: _SimpleStatCard(
                   icon: Icons.people_alt_outlined,
                   label: 'Active Users',
                   value: activeUserCount,
@@ -191,25 +208,27 @@ class _DashboardBody extends StatelessWidget {
                   onTap: isPfmManagement ? () => context.push('/admin/users') : null,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _SimpleStatCard(
+                  SizedBox(
+                    width: cardWidth,
+                    child: _SimpleStatCard(
                   icon: Icons.apartment_outlined,
                   label: 'Institutions',
                   value: institutionCount,
                   onTap: isPfmManagement ? () => context.push('/admin/institutions') : null,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _SimpleStatCard(
+                  SizedBox(
+                    width: cardWidth,
+                    child: _SimpleStatCard(
                   icon: Icons.menu_book_outlined,
                   label: 'Knowledge Base Articles',
                   value: articleCount,
                   onTap: () => context.push('/knowledge-base'),
                 ),
               ),
-            ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
           IntrinsicHeight(

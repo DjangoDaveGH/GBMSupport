@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
@@ -160,7 +161,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           Expanded(
             child: ticketsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load report: $e')),
+              error: (e, _) => const AppErrorState(message: 'We could not load this report.'),
               data: (tickets) {
                 final filtered = tickets.where(_matchesSearch).toList();
                 final sections = reportSectionDataFor(widget.reportType, filtered, usersAsync.valueOrNull ?? const [], slaPolicy);

@@ -193,7 +193,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
           title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
           content: usersAsync.when(
             loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
-            error: (e, _) => Text('Could not load users: $e'),
+            error: (e, _) => const Text('Users unavailable'),
             data: (users) {
               final eligible = users.where((u) {
                 if (targetLevel == 1) {
@@ -427,7 +427,7 @@ class _TimelineView extends ConsumerWidget {
     final activityAsync = ref.watch(ticketActivityProvider(ticketId));
     return activityAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load timeline: $e')),
+      error: (e, _) => const Center(child: Text('Timeline unavailable')),
       data: (activity) {
         if (activity.isEmpty) return const Center(child: Text('No activity yet.'));
         return ListView.builder(
@@ -484,7 +484,7 @@ class _ConversationView extends ConsumerWidget {
     final activityAsync = ref.watch(ticketActivityProvider(ticketId));
     return activityAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load comments: $e')),
+      error: (e, _) => const Center(child: Text('Conversation unavailable')),
       data: (activity) {
         final comments = activity.where((a) => a.action == TicketActivityAction.commented).toList()
           ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -695,7 +695,7 @@ class _AssigneeInfo extends ConsumerWidget {
     final userAsync = ref.watch(userByIdProvider(userId));
     return userAsync.when(
       loading: () => const SizedBox(height: 40, child: BrandedLoaderCenter()),
-      error: (e, _) => Text('Could not load: $e'),
+      error: (e, _) => const Text('Unavailable'),
       data: (user) {
         if (user == null) return const Text('Not found.');
         var subtitle = user.role.shortLabel;

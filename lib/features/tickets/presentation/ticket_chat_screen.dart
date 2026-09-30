@@ -228,7 +228,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     return Scaffold(
       body: ticketAsync.when(
         loading: () => const Scaffold(body: BrandedLoaderCenter()),
-        error: (e, _) => Scaffold(body: Center(child: Text('Could not load ticket: $e'))),
+        error: (e, _) => const Scaffold(body: Center(child: Text('We could not load this ticket.'))),
         data: (ticket) {
           if (ticket == null || viewer == null) return const BrandedLoaderCenter();
           return _ChatBody(

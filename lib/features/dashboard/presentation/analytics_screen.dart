@@ -6,6 +6,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
+import 'package:hyport/core/widgets/app_error_state.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/percent_ring.dart';
 import 'package:hyport/core/widgets/sparkline.dart';
@@ -115,7 +116,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           Expanded(
             child: ticketsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load analytics data: $e')),
+              error: (e, _) => const AppErrorState(message: 'We could not load analytics data.'),
               data: (tickets) => _AnalyticsBody(
                 tickets: tickets
                     .where(_matchesSearch)

@@ -386,7 +386,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
           title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
           content: usersAsync.when(
             loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
-            error: (e, _) => Text('Could not load users: $e'),
+            error: (e, _) => const Text('Users unavailable'),
             data: (users) {
               final eligible = users.where((u) {
                 if (targetLevel == 1) {
@@ -597,7 +597,7 @@ class _AssignedCard extends ConsumerWidget {
     return _SectionCard(
       child: userAsync.when(
         loading: () => const SizedBox(height: 44, child: BrandedLoaderCenter()),
-        error: (e, _) => Text('Could not load assignee: $e'),
+        error: (e, _) => const Text('Assignee unavailable'),
         data: (user) {
           if (user == null) return const Text('Assignee not found.');
           return Row(
@@ -772,7 +772,7 @@ class _SlaTab extends ConsumerWidget {
     final policyAsync = ref.watch(slaPolicyProvider);
     return policyAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load SLA policy: $e')),
+        error: (e, _) => const Center(child: Text('SLA information unavailable')),
       data: (policy) {
         final targetHours = policy.targetHoursFor(ticket.priority);
         final resolvedAt = ticket.resolvedAt ?? ticket.closedAt;
@@ -978,7 +978,7 @@ class _RequestedByCard extends ConsumerWidget {
     return _SectionCard(
       child: userAsync.when(
         loading: () => const SizedBox(height: 44, child: BrandedLoaderCenter()),
-        error: (e, _) => Text('Could not load requester: $e'),
+        error: (e, _) => const Text('Requester unavailable'),
         data: (user) {
           if (user == null) return const Text('Requester not found.');
           // Resolve the requester's specific assembly/MDA name from their
