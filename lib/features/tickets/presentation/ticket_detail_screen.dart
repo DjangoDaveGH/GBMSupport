@@ -275,7 +275,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
 
     if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canStartWork) {
       overflow.add(('Start Work', Icons.play_arrow_rounded, () {
-        _confirmStatusChange(context, ref, TicketStatus.inProgress);
+        _changeStatus(ref, TicketStatus.inProgress);
       }));
     }
     if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canResolve) {
@@ -283,7 +283,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
         'Resolve',
         Icons.check_circle_outline_rounded,
         () {
-          _confirmStatusChange(context, ref, TicketStatus.resolved);
+          _changeStatus(ref, TicketStatus.resolved);
         },
       ));
     }
@@ -292,7 +292,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
         'Resolve',
         Icons.check_circle_outline_rounded,
         () {
-          _confirmStatusChange(context, ref, TicketStatus.resolved);
+          _changeStatus(ref, TicketStatus.resolved);
         },
       ));
     }
@@ -335,22 +335,6 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
           ),
       ],
     );
-  }
-
-  Future<void> _confirmStatusChange(BuildContext context, WidgetRef ref, TicketStatus status) async {
-    final action = status == TicketStatus.resolved ? 'resolve' : 'start work on';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(status == TicketStatus.resolved ? 'Resolve ticket?' : 'Start work?'),
-        content: Text('Are you sure you want to $action this ticket?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Confirm')),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) await _changeStatus(ref, status);
   }
 
   void _showMoreSheet(BuildContext context, List<(String, IconData, VoidCallback)> items) {
