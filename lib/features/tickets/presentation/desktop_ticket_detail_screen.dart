@@ -148,16 +148,16 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
         if (canEscalate) PopupMenuItem(onTap: () => _showEscalateDialog(context, ticket, viewer), child: const Text('Escalate')),
         if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && canStartWork)
           PopupMenuItem(
-            onTap: () => _confirmStatusChange(context, ticket, viewer, TicketStatus.inProgress),
+            onTap: () => _changeStatus(ticket, viewer, TicketStatus.inProgress),
             child: const Text('Start Work'),
           ),
         if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && canResolve)
           PopupMenuItem(
-            onTap: () => _confirmStatusChange(context, ticket, viewer, TicketStatus.resolved),
+            onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
             child: const Text('Resolve'),
           ),
         if (viewer.role == UserRole.vendorSupport && canResolve)
-          PopupMenuItem(onTap: () => _confirmStatusChange(context, ticket, viewer, TicketStatus.resolved), child: const Text('Resolve')),
+          PopupMenuItem(onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved), child: const Text('Resolve')),
         if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved)
           PopupMenuItem(
             onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
@@ -179,22 +179,6 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
           to: status,
           actorId: viewer.id,
         );
-  }
-
-  Future<void> _confirmStatusChange(BuildContext context, Ticket ticket, AppUser viewer, TicketStatus status) async {
-    final action = status == TicketStatus.resolved ? 'resolve' : 'start work on';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(status == TicketStatus.resolved ? 'Resolve ticket?' : 'Start work?'),
-        content: Text('Are you sure you want to $action this ticket?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Confirm')),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) await _changeStatus(ticket, viewer, status);
   }
 
   void _showEscalateDialog(BuildContext context, Ticket ticket, AppUser viewer) {
