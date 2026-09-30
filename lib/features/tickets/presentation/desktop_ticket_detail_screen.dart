@@ -96,7 +96,7 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               IntrinsicWidth(
                 child: FilledButton.icon(
                   key: _actionsButtonKey,
-                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate),
+                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate, canStartWork, canResolve),
                   icon: const Icon(Icons.more_horiz_rounded, size: 18),
                   label: const Text('Actions'),
                 ),
@@ -126,6 +126,8 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     bool isAssignee,
     bool canAssign,
     bool canEscalate,
+    bool canStartWork,
+    bool canResolve,
   ) {
     final button = _actionsButtonKey.currentContext!.findRenderObject() as RenderBox;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
