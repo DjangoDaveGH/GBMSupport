@@ -13,7 +13,7 @@ s=doc.add_paragraph('Inception-to-Date Activity Report'); s.alignment=WD_ALIGN_P
 doc.add_paragraph(f"Reporting period: {r['inception']['firstRetainedRecord'][:10]} to {r['inception']['lastRetainedRecord'][:10]}\nPrepared: {r['generatedAt'][:10]}\nSource: Firebase Firestore production activity records, project mofapp-60963")
 doc.add_heading('Executive summary',1)
 doc.add_paragraph(f"The report covers all retained timestamped activity since the earliest available app record: {r['coverage']['allUsers']:,} user records, {len(inc['tickets']):,} operational tickets, {len(inc['activities']):,} related ticket activities, {len(inc['notifications']):,} related notifications, and {len(inc['auditLogs']):,} system audit-log events.")
-doc.add_paragraph(f"The test-ticket rule was applied: exclude tickets created by MMDA users on Tuesdays or Fridays; retain MDA-created tickets. This removed {r['rules']['excludedTestTicketCount']} test tickets and their related ticket activities and ticket-linked notifications.")
+doc.add_paragraph(f"Configured test-ticket rule: {r['rules']['testTicketRule']} This removed {r['rules']['excludedTestTicketCount']} test tickets and their related ticket activities and ticket-linked notifications.")
 def table(title, data):
     doc.add_heading(title,2); tb=doc.add_table(rows=1,cols=2); tb.style='Light Shading Accent 1'; tb.alignment=WD_TABLE_ALIGNMENT.CENTER; tb.rows[0].cells[0].text='Item'; tb.rows[0].cells[1].text='Count'
     for k,v in data.items(): c=tb.add_row().cells; c[0].text=str(k); c[1].text=f'{v:,}'

@@ -266,6 +266,10 @@ class TicketRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       };
       if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
+      if (from == TicketStatus.resolved && to != TicketStatus.resolved) {
+        updates['resolvedAt'] = null;
+        updates['resolutionNotes'] = null;
+      }
       if (note != null && note.isNotEmpty) updates['resolutionNotes'] = note;
       tx.update(ticketRef, updates);
 

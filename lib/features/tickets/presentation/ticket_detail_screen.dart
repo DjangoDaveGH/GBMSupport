@@ -246,11 +246,20 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
       ticket.status != TicketStatus.closed;
 
   bool get _canEscalate =>
-      (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed) ||
+      (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed && ticket.status != TicketStatus.resolved) ||
       ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
           _isAssignee &&
           ticket.status != TicketStatus.closed &&
+          ticket.status != TicketStatus.resolved &&
           ticket.escalationLevel < 2);
+
+  bool get _canStartWork =>
+      _isAssignee &&
+      const {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
+
+  bool get _canResolve =>
+      _isAssignee &&
+      const {TicketStatus.assigned, TicketStatus.inProgress, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
 
   Widget _buildActions(BuildContext context, WidgetRef ref) {
     if (viewer.role.isSupportSide) return _buildAdminToolbar(context, ref);
@@ -264,26 +273,26 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   Widget _buildAdminToolbar(BuildContext context, WidgetRef ref) {
     final overflow = <(String, IconData, VoidCallback)>[];
 
-    if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
-        _isAssignee &&
-        ticket.status != TicketStatus.closed) {
+    if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canStartWork) {
       overflow.add(('Start Work', Icons.play_arrow_rounded, () {
-        _changeStatus(ref, TicketStatus.inProgress);
+        _confirmStatusChange(context, ref, TicketStatus.inProgress);
       }));
+    }
+    if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canResolve) {
       overflow.add((
         'Resolve',
         Icons.check_circle_outline_rounded,
         () {
-          _changeStatus(ref, TicketStatus.resolved);
+          _confirmStatusChange(context, ref, TicketStatus.resolved);
         },
       ));
     }
-    if (viewer.role == UserRole.vendorSupport && _isAssignee && ticket.status != TicketStatus.closed) {
+    if (viewer.role == UserRole.vendorSupport && _canResolve) {
       overflow.add((
         'Resolve',
         Icons.check_circle_outline_rounded,
         () {
-          _changeStatus(ref, TicketStatus.resolved);
+          _confirmStatusChange(context, ref, TicketStatus.resolved);
         },
       ));
     }
@@ -326,6 +335,22 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
           ),
       ],
     );
+  }
+
+  Future<void> _confirmStatusChange(BuildContext context, WidgetRef ref, TicketStatus status) async {
+    final action = status == TicketStatus.resolved ? 'resolve' : 'start work on';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(status == TicketStatus.resolved ? 'Resolve ticket?' : 'Start work?'),
+        content: Text('Are you sure you want to $action this ticket?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) await _changeStatus(ref, status);
   }
 
   void _showMoreSheet(BuildContext context, List<(String, IconData, VoidCallback)> items) {

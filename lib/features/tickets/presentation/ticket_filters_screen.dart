@@ -22,8 +22,8 @@ class _StatusGroup {
 
 const _statusGroups = [
   _StatusGroup('Open', {TicketStatus.open}),
-  _StatusGroup('In Progress', {TicketStatus.inProgress, TicketStatus.escalated}),
-  _StatusGroup('Pending User', {TicketStatus.assigned, TicketStatus.reopened}),
+  _StatusGroup('In Progress', {TicketStatus.inProgress}),
+  _StatusGroup('Pending User', {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened}),
   _StatusGroup('Resolved', {TicketStatus.resolved}),
   _StatusGroup('Closed', {TicketStatus.closed}),
 ];

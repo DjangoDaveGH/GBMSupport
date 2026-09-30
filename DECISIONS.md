@@ -1678,7 +1678,7 @@ later, the models are small enough to port in an afternoon.
 
 ## Ticket reference generation: client-side transaction, not a Cloud Function
 
-`HYP-{year}-{6-digit sequence}` references are generated via a Firestore
+`PFMSD-{year}-{6-digit sequence}` references are generated via a Firestore
 transaction against a `counters/tickets_{year}` document
 (`TicketRepository.createTicket`), run directly from the client, rather than
 through a callable Cloud Function. This keeps ticket creation working
