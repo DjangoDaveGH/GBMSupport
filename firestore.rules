@@ -207,7 +207,8 @@ service cloud.firestore {
         // resolutionNotes when reassigning a resolved ticket) — and can
         // close a resolved ticket, matching the Close Ticket action
         // ticket_detail_screen.dart/desktop_ticket_detail_screen.dart now
-        // offer every back-office role. Escalate and priority-edit stay
+        // offer assignment and closing to back-office roles. Reopening is
+        // restricted to PFM Management. Escalate and priority-edit stay
         // Coordinator-only, per the comment above.
         || (role() == 'pfm_management'
             && ((resource.data.status != 'closed'
@@ -215,7 +216,10 @@ service cloud.firestore {
                  && request.resource.data.status == 'assigned')
                 || (resource.data.status == 'resolved'
                     && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy'])
-                    && request.resource.data.status == 'closed')))
+                    && request.resource.data.status == 'closed')
+                || (resource.data.status in ['resolved', 'closed']
+                    && onlyFieldsChanged(['status', 'updatedAt', 'resolvedAt', 'resolutionNotes', 'closedAt', 'closedBy'])
+                    && request.resource.data.status == 'reopened')))
         // Vendor/Specialist's only granted action is resolving a ticket
         // escalated to them (Section 3: no assign/escalate/close) — the app
         // UI never offers those to Vendor, but the rule shouldn't rely on
@@ -248,7 +252,7 @@ service cloud.firestore {
         // path at all — reopening and closing are staff-only actions (see
         // ticket_detail_screen.dart's requester actions, which offer Chat
         // only). Once resolved, a ticket only moves again via staff closing
-        // it; there is no reopen action anywhere in the app any more.
+        // it; reopening is restricted to PFM Management.
 
       allow delete: if false; // tickets are closed, never deleted — audit trail must persist
 

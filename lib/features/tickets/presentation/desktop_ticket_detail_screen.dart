@@ -160,6 +160,11 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
           ),
         if (viewer.role == UserRole.vendorSupport && canResolve)
           PopupMenuItem(onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved), child: const Text('Resolve')),
+        if (viewer.role == UserRole.pfmManagement && (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed))
+          PopupMenuItem(
+            onTap: () => _changeStatus(ticket, viewer, TicketStatus.reopened),
+            child: const Text('Reopen Ticket'),
+          ),
         if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved)
           PopupMenuItem(
             onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
