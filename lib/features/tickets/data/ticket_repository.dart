@@ -266,7 +266,12 @@ class TicketRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       };
       if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
-      if (from == TicketStatus.resolved && to != TicketStatus.resolved) {
+      if (to == TicketStatus.reopened) {
+        updates['resolvedAt'] = null;
+        updates['resolutionNotes'] = null;
+        updates['closedAt'] = null;
+        updates['closedBy'] = null;
+      } else if (from == TicketStatus.resolved && to != TicketStatus.resolved) {
         updates['resolvedAt'] = null;
         updates['resolutionNotes'] = null;
       }

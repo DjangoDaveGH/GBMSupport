@@ -296,6 +296,14 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
         },
       ));
     }
+    if (viewer.role == UserRole.pfmManagement &&
+        (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed)) {
+      overflow.add((
+        'Reopen Ticket',
+        Icons.replay_rounded,
+        () => _changeStatus(ref, TicketStatus.reopened),
+      ));
+    }
     if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved) {
       overflow.add((
         'Close Ticket',
