@@ -47,10 +47,16 @@ class AppShell extends ConsumerWidget {
     final tabs = _tabs;
 
     final location = GoRouterState.of(context).matchedLocation;
+    final routeSystem = GoRouterState.of(context).uri.queryParameters['system'];
+    final selectedSystem = appUser?.role == UserRole.supportCoordinator
+        ? null
+        : routeSystem;
     var currentIndex = tabs.indexOf(location);
     if (currentIndex == -1) currentIndex = 0;
 
-    final canCreateTicket = appUser?.role == UserRole.mdaUser || appUser?.role == UserRole.focalPerson;
+    final canCreateTicket =
+        appUser?.role == UserRole.endUser ||
+        appUser?.role == UserRole.focalPerson;
 
     return Scaffold(
       body: Stack(
@@ -67,8 +73,18 @@ class AppShell extends ConsumerWidget {
         tabs: tabs,
         currentIndex: currentIndex,
         isSupportSide: isSupportSide,
-        onTap: (i) => context.go(tabs[i]),
-        onCenterAction: canCreateTicket ? () => context.push('/tickets/new') : null,
+        onTap: (i) => context.go(
+          selectedSystem == null
+              ? tabs[i]
+              : '${tabs[i]}?system=$selectedSystem',
+        ),
+        onCenterAction: canCreateTicket
+            ? () => context.push(
+                selectedSystem == null
+                    ? '/tickets/new'
+                    : '/tickets/new?system=$selectedSystem',
+              )
+            : null,
       ),
     );
   }
@@ -149,11 +165,13 @@ class _BottomBar extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.only(bottom: bottomInset),
                 child: Row(
-                  children: [
-                    ...leftTabs.map((t) => _tabButton(context, t)),
-                    const Expanded(child: SizedBox()),
-                    ...rightTabs.map((t) => _tabButton(context, t)),
-                  ],
+                  children: onCenterAction == null
+                      ? tabs.map((t) => _tabButton(context, t)).toList()
+                      : [
+                          ...leftTabs.map((t) => _tabButton(context, t)),
+                          const Expanded(child: SizedBox()),
+                          ...rightTabs.map((t) => _tabButton(context, t)),
+                        ],
                 ),
               ),
             ),
@@ -169,25 +187,25 @@ class _BottomBar extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onCenterAction,
                     child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppTheme.navy,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.navy.withValues(alpha: 0.25),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: AppTheme.navy,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.navy.withValues(alpha: 0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                       child: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                     ),
                   ),
                 ),
@@ -219,29 +237,29 @@ class _BottomBar extends StatelessWidget {
           child: InkWell(
             onTap: () => onTap(index),
             child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Opacity(
-                opacity: selected ? 1 : 0.45,
-                child: Image.asset(iconAsset, width: 22, height: 22),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Opacity(
+                    opacity: selected ? 1 : 0.45,
+                    child: Image.asset(iconAsset, width: 22, height: 22),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontFamily,
+                      fontSize: 9.5,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: TextStyle(
-                  fontFamily: AppTheme.fontFamily,
-                  fontSize: 9.5,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
             ),
           ),
         ),

@@ -16,7 +16,8 @@ class TicketRepository {
 
   TicketRepository(this._db);
 
-  CollectionReference<Map<String, dynamic>> get _tickets => _db.collection('tickets');
+  CollectionReference<Map<String, dynamic>> get _tickets =>
+      _db.collection('tickets');
 
   CollectionReference<Map<String, dynamic>> _activityFor(String ticketId) =>
       _tickets.doc(ticketId).collection('activity');
@@ -39,9 +40,12 @@ class TicketRepository {
   /// even open.
   Query<Map<String, dynamic>> scopedQuery(AppUser viewer) {
     if (viewer.role == UserRole.vendorSupport) {
-      return _tickets.where('assignedTo', isEqualTo: viewer.id).where('escalationLevel', isEqualTo: 2);
+      return _tickets
+          .where('assignedTo', isEqualTo: viewer.id)
+          .where('escalationLevel', isEqualTo: 2);
     }
-    if (viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) {
+    if (viewer.role == UserRole.functionalLead ||
+        viewer.role == UserRole.technicalLead) {
       // One Applications Systems Unit — both roles see any ticket assigned
       // to them, at any escalation level (category auto-assignment places
       // level-0 tickets directly with an APPS member).
@@ -69,36 +73,76 @@ class TicketRepository {
   /// just the page size).
   Stream<List<Ticket>> watchTickets(
     AppUser viewer, {
+    String? system,
+    Set<String> systems = const {},
     Set<TicketStatus> statuses = const {},
     TicketCategory? category,
     Set<TicketPriority> priorities = const {},
     int? limit = ticketPageSize,
   }) {
     Query<Map<String, dynamic>> query = scopedQuery(viewer);
-    if (statuses.isNotEmpty) {
-      query = query.where('status', whereIn: statuses.map((s) => s.wireValue).toList());
+    if (systems.isNotEmpty) {
+      query = query.where('system', whereIn: systems.toList());
+    } else if (system != null && system != 'gbms') {
+      query = query.where('system', isEqualTo: system);
     }
-    if (category != null) query = query.where('category', isEqualTo: category.wireValue);
+    // Firestore permits only one whereIn clause per query. When products are
+    // selected as a set, apply status chips after the system-scoped query.
+    if (statuses.isNotEmpty && systems.isEmpty) {
+      query = query.where(
+        'status',
+        whereIn: statuses.map((s) => s.wireValue).toList(),
+      );
+    }
+    if (category != null) {
+      query = query.where('category', isEqualTo: category.wireValue);
+    }
     query = query.orderBy('createdAt', descending: true);
-    if (limit != null) query = query.limit(limit);
+    // GBMS includes legacy records without a `system` field. Fetch all rows
+    // before client-side defaulting those records to GBMS so mixed-product
+    // pages cannot silently under-count or omit older GBMS tickets.
+    final effectiveLimit = system == 'gbms' || systems.isNotEmpty
+        ? null
+        : limit;
+    if (effectiveLimit != null) query = query.limit(effectiveLimit);
 
     return query.snapshots().map((snap) {
-      final tickets = snap.docs.map((d) => Ticket.fromMap(d.id, d.data())).toList();
-      if (priorities.isEmpty) return tickets;
-      return tickets.where((t) => priorities.contains(t.priority)).toList();
+      final tickets = snap.docs
+          .map((d) => Ticket.fromMap(d.id, d.data()))
+          .toList();
+      return tickets
+          .where(
+            (t) =>
+                (system == null ||
+                    (system == 'gbms' ? t.system == 'gbms' : true)) &&
+                (systems.isEmpty || systems.contains(t.system)) &&
+                (systems.isEmpty ||
+                    statuses.isEmpty ||
+                    statuses.contains(t.status)) &&
+                (priorities.isEmpty || priorities.contains(t.priority)),
+          )
+          .take(systems.isNotEmpty && limit != null ? limit : 0x7fffffff)
+          .toList();
     });
   }
 
   Stream<Ticket?> watchTicket(String ticketId) {
-    return _tickets.doc(ticketId).snapshots().map(
-          (doc) => doc.exists ? Ticket.fromMap(doc.id, doc.data()!) : null,
-        );
+    return _tickets
+        .doc(ticketId)
+        .snapshots()
+        .map((doc) => doc.exists ? Ticket.fromMap(doc.id, doc.data()!) : null);
   }
 
   Stream<List<TicketActivity>> watchActivity(String ticketId) {
-    return _activityFor(ticketId).orderBy('timestamp', descending: true).snapshots().map(
-          (snap) => snap.docs.map((d) => TicketActivity.fromMap(d.id, d.data())).toList(),
-        );
+    // Reading without Firestore orderBy keeps legacy activity records that
+    // predate the timestamp field from disappearing from the chat feed.
+    return _activityFor(ticketId).snapshots().map((snap) {
+      final activities = snap.docs
+          .map((d) => TicketActivity.fromMap(d.id, d.data()))
+          .toList();
+      activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return activities;
+    });
   }
 
   /// Creates a ticket with an auto-generated human-readable reference
@@ -117,6 +161,10 @@ class TicketRepository {
     required TicketPriority priority,
     required TicketImpact impact,
     required bool affectsMultipleUsers,
+    String system = 'gbms',
+    String? productCategoryId,
+    String? productCategoryLabel,
+    String? requesterType,
   }) async {
     final now = DateTime.now();
     final year = now.year;
@@ -126,7 +174,8 @@ class TicketRepository {
     late final Ticket ticket;
     await _db.runTransaction<void>((tx) async {
       final counterSnap = await tx.get(counterRef);
-      final nextSeq = ((counterSnap.data()?['count'] as num?)?.toInt() ?? 0) + 1;
+      final nextSeq =
+          ((counterSnap.data()?['count'] as num?)?.toInt() ?? 0) + 1;
       tx.set(counterRef, {'count': nextSeq}, SetOptions(merge: true));
 
       final ref = 'PFMSD-$year-${nextSeq.toString().padLeft(6, '0')}';
@@ -139,6 +188,10 @@ class TicketRepository {
       ticket = Ticket(
         id: ticketRef.id,
         ticketReference: ref,
+        system: system,
+        productCategoryId: productCategoryId,
+        productCategoryLabel: productCategoryLabel,
+        requesterType: requesterType,
         createdBy: createdBy,
         institutionId: institutionId,
         category: category,
@@ -259,13 +312,17 @@ class TicketRepository {
 
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ticketRef);
-      final from = TicketStatus.fromWire(snap.data()?['status'] as String? ?? '');
+      final from = TicketStatus.fromWire(
+        snap.data()?['status'] as String? ?? '',
+      );
 
       final updates = <String, dynamic>{
         'status': to.wireValue,
         'updatedAt': FieldValue.serverTimestamp(),
       };
-      if (to == TicketStatus.resolved) updates['resolvedAt'] = FieldValue.serverTimestamp();
+      if (to == TicketStatus.resolved) {
+        updates['resolvedAt'] = FieldValue.serverTimestamp();
+      }
       if (to == TicketStatus.reopened) {
         updates['resolvedAt'] = null;
         updates['resolutionNotes'] = null;
@@ -372,10 +429,9 @@ class TicketRepository {
   }
 
   Future<void> markChatRead(String ticketId, String uid) {
-    return _chatReceiptsFor(ticketId).doc(uid).set(
-      {'lastReadAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
+    return _chatReceiptsFor(ticketId).doc(uid).set({
+      'lastReadAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> close({

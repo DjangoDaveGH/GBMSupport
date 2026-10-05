@@ -17,6 +17,16 @@ class NotificationRepository {
         .map((snap) => snap.docs.map((d) => AppNotification.fromMap(d.id, d.data())).toList());
   }
 
+  /// The feed is limited for UI performance, but the badge must include every
+  /// unread alert.
+  Stream<int> watchUnreadCount(String userId) {
+    return _notifications
+        .where('userId', isEqualTo: userId)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .map((snap) => snap.size);
+  }
+
   Future<void> markRead(String notificationId) {
     return _notifications.doc(notificationId).update({'read': true});
   }

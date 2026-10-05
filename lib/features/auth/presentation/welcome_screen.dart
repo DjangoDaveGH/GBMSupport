@@ -12,14 +12,7 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          onPressed: () => context.go('/login'),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -72,7 +65,32 @@ class WelcomeScreen extends StatelessWidget {
                     onPressed: () => context.go('/login'),
                     child: const SizedBox(
                       width: double.infinity,
-                      child: Text('GET STARTED', textAlign: TextAlign.center),
+                      child: Text(
+                        'HYPERION Support',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FilledButton(
+                    onPressed: () => context.go('/support/ghaneps'),
+                    child: const SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        'GHANEPS Support',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  FilledButton(
+                    onPressed: () => context.go('/support/gifmis'),
+                    child: const SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        'GIFMIS Support',
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

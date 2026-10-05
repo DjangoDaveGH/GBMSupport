@@ -20,7 +20,7 @@ const _supportOfficerRoles = {
   UserRole.pfmManagement,
   UserRole.vendorSupport,
 };
-const _mdaRoles = {UserRole.mdaUser, UserRole.focalPerson};
+const _mdaRoles = {UserRole.endUser, UserRole.focalPerson};
 
 /// Admin app screen 25 — PFM Management only (see adminOnlyPaths). Every
 /// count and online dot here is real: online/offline is "active within the

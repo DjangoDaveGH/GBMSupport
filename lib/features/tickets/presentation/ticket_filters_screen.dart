@@ -23,7 +23,11 @@ class _StatusGroup {
 const _statusGroups = [
   _StatusGroup('Open', {TicketStatus.open}),
   _StatusGroup('In Progress', {TicketStatus.inProgress}),
-  _StatusGroup('Pending User', {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened}),
+  _StatusGroup('Pending User', {
+    TicketStatus.assigned,
+    TicketStatus.escalated,
+    TicketStatus.reopened,
+  }),
   _StatusGroup('Resolved', {TicketStatus.resolved}),
   _StatusGroup('Closed', {TicketStatus.closed}),
 ];
@@ -34,11 +38,13 @@ class TicketFiltersScreen extends ConsumerStatefulWidget {
   const TicketFiltersScreen({super.key, required this.initialFilter});
 
   @override
-  ConsumerState<TicketFiltersScreen> createState() => _TicketFiltersScreenState();
+  ConsumerState<TicketFiltersScreen> createState() =>
+      _TicketFiltersScreenState();
 }
 
 class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
   late Set<TicketStatus> _statuses = {...widget.initialFilter.statuses};
+  late String? _system = widget.initialFilter.system;
   late Set<TicketPriority> _priorities = {...widget.initialFilter.priorities};
   late TicketCategory? _category = widget.initialFilter.category;
   late String? _institutionId = widget.initialFilter.institutionId;
@@ -79,10 +85,12 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
     setState(() {
       if (isFrom) {
         _createdAfter = picked;
-        if (_createdBefore != null && _createdBefore!.isBefore(picked)) _createdBefore = picked;
+        if (_createdBefore != null && _createdBefore!.isBefore(picked))
+          _createdBefore = picked;
       } else {
         _createdBefore = picked;
-        if (_createdAfter != null && _createdAfter!.isAfter(picked)) _createdAfter = picked;
+        if (_createdAfter != null && _createdAfter!.isAfter(picked))
+          _createdAfter = picked;
       }
     });
   }
@@ -90,6 +98,7 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
   void _reset() {
     setState(() {
       _statuses = {};
+      _system = null;
       _priorities = {};
       _category = null;
       _institutionId = null;
@@ -103,6 +112,7 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
   void _apply() {
     final filter = TicketFilter(
       statuses: _statuses,
+      system: _system,
       category: _category,
       priorities: _priorities,
       institutionId: _institutionId,
@@ -125,8 +135,11 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
     // Institution / date / SLA filters are triage tools — only the
     // support-side queue ("Ticket Queue") needs them; on a requester's
     // "My Tickets" list they'd add only noise.
-    final isSupportSide = ref.watch(currentAppUserProvider).valueOrNull?.role.isSupportSide ?? false;
-    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]..sort((a, b) => a.name.compareTo(b.name));
+    final isSupportSide =
+        ref.watch(currentAppUserProvider).valueOrNull?.role.isSupportSide ??
+        false;
+    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]
+      ..sort((a, b) => a.name.compareTo(b.name));
 
     return Scaffold(
       appBar: AppBar(
@@ -146,6 +159,27 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   children: [
                     _sectionLabel(context, 'Status'),
+                    if (isSupportSide) ...[
+                      _sectionLabel(context, 'Support system'),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final option in const [
+                            ('All systems', null),
+                            ('GBMS', 'gbms'),
+                            ('GHANEPS', 'ghaneps'),
+                            ('GIFMIS', 'gifmis'),
+                          ])
+                            ChoiceChip(
+                              label: Text(option.$1),
+                              selected: _system == option.$2,
+                              onSelected: (_) =>
+                                  setState(() => _system = option.$2),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                     for (final group in _statusGroups)
                       _FilterCheckboxRow(
                         label: group.label,
@@ -165,10 +199,18 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                     const SizedBox(height: 6),
                     DropdownButtonFormField<TicketCategory?>(
                       initialValue: _category,
-                      decoration: const InputDecoration(hintText: 'All categories'),
+                      decoration: const InputDecoration(
+                        hintText: 'All categories',
+                      ),
                       items: [
-                        const DropdownMenuItem<TicketCategory?>(value: null, child: Text('All categories')),
-                        ...TicketCategory.values.map((c) => DropdownMenuItem(value: c, child: Text(c.label))),
+                        const DropdownMenuItem<TicketCategory?>(
+                          value: null,
+                          child: Text('All categories'),
+                        ),
+                        ...TicketCategory.values.map(
+                          (c) =>
+                              DropdownMenuItem(value: c, child: Text(c.label)),
+                        ),
                       ],
                       onChanged: (v) => setState(() => _category = v),
                     ),
@@ -190,22 +232,43 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                               showCheckmark: false,
                               selectedColor: AppTheme.navy,
                               labelStyle: TextStyle(
-                                color: _institutionType == option.$2 ? Colors.white : AppTheme.ink,
+                                color: _institutionType == option.$2
+                                    ? Colors.white
+                                    : AppTheme.ink,
                                 fontWeight: FontWeight.w600,
                               ),
-                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-                              onSelected: (_) => setState(() => _institutionType = option.$2),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
+                              onSelected: (_) =>
+                                  setState(() => _institutionType = option.$2),
                             ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String?>(
-                        initialValue: institutions.any((i) => i.id == _institutionId) ? _institutionId : null,
+                        initialValue:
+                            institutions.any((i) => i.id == _institutionId)
+                            ? _institutionId
+                            : null,
                         isExpanded: true,
-                        decoration: const InputDecoration(hintText: 'All institutions'),
+                        decoration: const InputDecoration(
+                          hintText: 'All institutions',
+                        ),
                         items: [
-                          const DropdownMenuItem<String?>(value: null, child: Text('All institutions')),
-                          ...institutions.map((i) => DropdownMenuItem(value: i.id, child: Text(i.name, overflow: TextOverflow.ellipsis))),
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('All institutions'),
+                          ),
+                          ...institutions.map(
+                            (i) => DropdownMenuItem(
+                              value: i.id,
+                              child: Text(
+                                i.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() => _institutionId = v),
                       ),
@@ -219,7 +282,8 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                               label: 'From',
                               value: _createdAfter,
                               onPick: () => _pickDate(isFrom: true),
-                              onClear: () => setState(() => _createdAfter = null),
+                              onClear: () =>
+                                  setState(() => _createdAfter = null),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -228,7 +292,8 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                               label: 'To',
                               value: _createdBefore,
                               onPick: () => _pickDate(isFrom: false),
-                              onClear: () => setState(() => _createdBefore = null),
+                              onClear: () =>
+                                  setState(() => _createdBefore = null),
                             ),
                           ),
                         ],
@@ -251,12 +316,18 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(onPressed: _reset, child: const Text('Reset')),
+                        child: OutlinedButton(
+                          onPressed: _reset,
+                          child: const Text('Reset'),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 2,
-                        child: FilledButton(onPressed: _apply, child: const Text('Apply Filters')),
+                        child: FilledButton(
+                          onPressed: _apply,
+                          child: const Text('Apply Filters'),
+                        ),
                       ),
                     ],
                   ),
@@ -271,9 +342,9 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
 }
 
 Widget _sectionLabel(BuildContext context, String text) => Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(text, style: Theme.of(context).textTheme.titleSmall),
-    );
+  padding: const EdgeInsets.only(bottom: 4),
+  child: Text(text, style: Theme.of(context).textTheme.titleSmall),
+);
 
 class _DateField extends StatelessWidget {
   final String label;
@@ -281,7 +352,12 @@ class _DateField extends StatelessWidget {
   final VoidCallback onPick;
   final VoidCallback onClear;
 
-  const _DateField({required this.label, required this.value, required this.onPick, required this.onClear});
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onPick,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -291,10 +367,16 @@ class _DateField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           suffixIcon: value == null
               ? const Icon(Icons.calendar_today_rounded, size: 16)
-              : IconButton(icon: const Icon(Icons.close_rounded, size: 16), onPressed: onClear),
+              : IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 16),
+                  onPressed: onClear,
+                ),
         ),
         child: Text(
           value == null ? 'Any' : DateFormat.yMMMd().format(value!),
@@ -310,7 +392,11 @@ class _FilterCheckboxRow extends StatelessWidget {
   final bool checked;
   final ValueChanged<bool> onChanged;
 
-  const _FilterCheckboxRow({required this.label, required this.checked, required this.onChanged});
+  const _FilterCheckboxRow({
+    required this.label,
+    required this.checked,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {

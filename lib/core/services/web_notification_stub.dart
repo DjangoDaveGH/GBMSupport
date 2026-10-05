@@ -3,3 +3,5 @@
 /// web_notification.dart for the conditional export that picks this vs.
 /// the real web implementation.
 void showWebNotification({required String title, required String body, String? ticketId}) {}
+
+Future<void> setWebAppBadge(int count) async {}

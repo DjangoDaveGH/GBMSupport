@@ -31,8 +31,10 @@ messaging.onBackgroundMessage(function (payload) {
   const data = (payload && payload.data) || {};
   const count = Number(data.unreadCount);
   try {
-    if (!Number.isNaN(count) && count > 0 && self.registration && self.navigator.setAppBadge) {
-      self.navigator.setAppBadge(count);
+    if (!Number.isNaN(count) && count > 0 && self.registration && self.registration.setAppBadge) {
+      self.registration.setAppBadge(count);
+    } else if (!Number.isNaN(count) && count <= 0 && self.registration && self.registration.clearAppBadge) {
+      self.registration.clearAppBadge();
     }
   } catch (e) {}
 });
@@ -53,9 +55,28 @@ self.addEventListener('push', function (event) {
   if (Number.isNaN(count)) return;
   event.waitUntil((async function () {
     try {
-      if (count > 0 && self.navigator.setAppBadge) await self.navigator.setAppBadge(count);
-      else if (self.navigator.clearAppBadge) await self.navigator.clearAppBadge();
+      if (count > 0 && self.registration.setAppBadge) await self.registration.setAppBadge(count);
+      else if (count <= 0 && self.registration.clearAppBadge) await self.registration.clearAppBadge();
     } catch (e) {}
+  })());
+});
+
+// Foreground notifications are created by the page, so route their taps here.
+// Background FCM notifications remain handled by the Firebase compat SDK.
+self.addEventListener('notificationclick', function (event) {
+  const data = event.notification && event.notification.data;
+  if (!data || !data.hyportForeground) return;
+
+  event.notification.close();
+  const target = new URL(data.url || '/', self.location.origin).href;
+  event.waitUntil((async function () {
+    const windows = await clients.matchAll({type: 'window', includeUncontrolled: true});
+    for (const client of windows) {
+      if (new URL(client.url).origin !== self.location.origin) continue;
+      if (client.navigate) await client.navigate(target);
+      return client.focus();
+    }
+    return clients.openWindow(target);
   })());
 });
 

@@ -88,17 +88,6 @@ class _KnowledgeBaseScreenState extends ConsumerState<KnowledgeBaseScreen> {
           : null,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.035,
-                child: Image.asset(
-                  'assets/images/bg_hex_pattern.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
           articlesAsync.when(
             loading: () => const BrandedLoaderCenter(),
             error: (e, _) => AppErrorState(message: 'We could not load the knowledge base.', onRetry: () => ref.invalidate(articleListProvider((category: _category, canEdit: canEdit)))),

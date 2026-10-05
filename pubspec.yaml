@@ -141,6 +141,7 @@ flutter:
   # vector approximations used while the actual files weren't available.
   assets:
     - assets/images/mof_logo.png
+    - assets/images/ghaneps_logo.png
     - assets/images/bg_hex_pattern.png
     - assets/images/illustration_agent.png
     - assets/images/illustration_otp.png

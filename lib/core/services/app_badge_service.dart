@@ -1,5 +1,6 @@
 import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hyport/core/services/web_notification.dart';
 
 /// Sets the unread-count badge on the app's launcher / dock / taskbar icon.
 ///
@@ -17,6 +18,10 @@ class AppBadgeService {
 
   static Future<void> set(int count) async {
     try {
+      if (kIsWeb) {
+        await setWebAppBadge(count);
+        return;
+      }
       if (count > 0) {
         await AppBadgePlus.updateBadge(count);
       } else {

@@ -14,7 +14,8 @@ class OfflineSyncListener extends ConsumerStatefulWidget {
   const OfflineSyncListener({super.key, required this.child});
 
   @override
-  ConsumerState<OfflineSyncListener> createState() => _OfflineSyncListenerState();
+  ConsumerState<OfflineSyncListener> createState() =>
+      _OfflineSyncListenerState();
 }
 
 class _OfflineSyncListenerState extends ConsumerState<OfflineSyncListener> {
@@ -34,7 +35,10 @@ class _OfflineSyncListenerState extends ConsumerState<OfflineSyncListener> {
     try {
       final draftRepo = ref.read(draftTicketRepositoryProvider);
       final ticketRepo = ref.read(ticketRepositoryProvider);
-      final pending = draftRepo.getAllForUser(user.id).where((d) => d.pendingSync).toList();
+      final pending = draftRepo
+          .getAllForUser(user.id)
+          .where((d) => d.pendingSync)
+          .toList();
       for (final draft in pending) {
         try {
           // A submittedTicketId already present means a previous sync's
@@ -50,10 +54,15 @@ class _OfflineSyncListenerState extends ConsumerState<OfflineSyncListener> {
               subCategory: draft.subCategory,
               title: draft.title,
               description: draft.description,
-              attachmentUrls: const [], // local attachments are uploaded separately, see DECISIONS.md
+              attachmentUrls:
+                  const [], // local attachments are uploaded separately, see DECISIONS.md
               priority: draft.priority,
               impact: draft.impact,
               affectsMultipleUsers: draft.affectsMultipleUsers,
+              system: draft.system,
+              productCategoryId: draft.productCategoryId,
+              productCategoryLabel: draft.productCategoryLabel,
+              requesterType: draft.requesterType,
             );
             await draftRepo.save(draft.copyWith(submittedTicketId: ticket.id));
           }

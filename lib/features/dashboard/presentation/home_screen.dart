@@ -42,7 +42,8 @@ String _relativeTime(DateTime dt) {
 }
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+  final String? initialSystem;
+  const HomeScreen({super.key, this.initialSystem});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +51,7 @@ class HomeScreen extends ConsumerWidget {
     final isSupportSide = appUser?.role.isSupportSide ?? false;
 
     return Scaffold(
-      backgroundColor: AppTheme.mist,
+      backgroundColor: Colors.transparent,
       drawer: isSupportSide ? _AdminDrawer(appUser: appUser!) : null,
       body: appUser == null
           ? const BrandedLoaderCenter()
@@ -61,8 +62,14 @@ class HomeScreen extends ConsumerWidget {
                   _HomeHeader(appUser: appUser, showMenu: isSupportSide),
                   Expanded(
                     child: isSupportSide
-                        ? _SupportHome(appUser: appUser)
-                        : _UserHome(appUser: appUser),
+                        ? _SupportHome(
+                            appUser: appUser,
+                            initialSystem: initialSystem,
+                          )
+                        : _UserHome(
+                            appUser: appUser,
+                            initialSystem: initialSystem,
+                          ),
                   ),
                 ],
               ),
@@ -79,12 +86,16 @@ class _HomeHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unread = ref.watch(unreadNotificationCountProvider(appUser.id));
-    final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
-    final institutionName = [
-      for (final i in institutions)
-        if (i.id == appUser.institutionId) i.name,
-    ].firstOrNull ?? appUser.institutionType.wireValue;
+    final unread =
+        ref.watch(unreadNotificationCountProvider(appUser.id)).valueOrNull ?? 0;
+    final institutions =
+        ref.watch(institutionListProvider).valueOrNull ?? const [];
+    final institutionName =
+        [
+          for (final i in institutions)
+            if (i.id == appUser.institutionId) i.name,
+        ].firstOrNull ??
+        appUser.institutionType.wireValue;
 
     return Material(
       color: Colors.white,
@@ -438,10 +449,12 @@ class _StatNumberCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
             boxShadow: softShadow(),
           ),
           child: Column(
@@ -450,7 +463,7 @@ class _StatNumberCard extends StatelessWidget {
                 value,
                 style: Theme.of(
                   context,
-                ).textTheme.headlineMedium?.copyWith(color: color),
+                ).textTheme.titleLarge?.copyWith(color: color),
               ),
               const SizedBox(height: 4),
               Text(
@@ -488,7 +501,9 @@ class _QuickActionItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Material(
           color: Colors.transparent,
@@ -504,7 +519,10 @@ class _QuickActionItem extends StatelessWidget {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      shape: BoxShape.circle,
+                    ),
                     child: Icon(icon, color: fg, size: 22),
                   ),
                   const SizedBox(height: 8),
@@ -512,9 +530,9 @@ class _QuickActionItem extends StatelessWidget {
                     label,
                     textAlign: TextAlign.center,
                     maxLines: 2,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -607,8 +625,14 @@ void _showContactSupportSheet(BuildContext context) {
 
 class _UserHome extends ConsumerWidget {
   final AppUser appUser;
+  final String? initialSystem;
 
-  const _UserHome({required this.appUser});
+  const _UserHome({required this.appUser, this.initialSystem});
+
+  String get _newTicketRoute =>
+      initialSystem == 'ghaneps' || initialSystem == 'gifmis'
+      ? '/tickets/new?system=$initialSystem'
+      : '/tickets/new';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -618,7 +642,12 @@ class _UserHome extends ConsumerWidget {
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => AppErrorState(message: 'We could not load your tickets.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, const TicketFilter())))),
+      error: (e, _) => AppErrorState(
+        message: 'We could not load your tickets.',
+        onRetry: () => ref.invalidate(
+          ticketAnalyticsProvider((appUser, const TicketFilter())),
+        ),
+      ),
       data: (tickets) {
         final openCount = tickets
             .where((t) => t.status == TicketStatus.open)
@@ -654,7 +683,10 @@ class _UserHome extends ConsumerWidget {
                     value: '$openCount',
                     label: 'Open Tickets',
                     color: AppTheme.accentBlue,
-                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
+                    onTap: () => context.push(
+                      '/tickets',
+                      extra: const TicketFilter(statuses: {TicketStatus.open}),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -663,12 +695,17 @@ class _UserHome extends ConsumerWidget {
                     value: '$pendingCount',
                     label: 'Pending',
                     color: AppTheme.gold,
-                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {
-                      TicketStatus.assigned,
-                      TicketStatus.inProgress,
-                      TicketStatus.escalated,
-                      TicketStatus.reopened,
-                    })),
+                    onTap: () => context.push(
+                      '/tickets',
+                      extra: const TicketFilter(
+                        statuses: {
+                          TicketStatus.assigned,
+                          TicketStatus.inProgress,
+                          TicketStatus.escalated,
+                          TicketStatus.reopened,
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -677,7 +714,12 @@ class _UserHome extends ConsumerWidget {
                     value: '$resolvedCount',
                     label: 'Resolved',
                     color: AppTheme.success,
-                    onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
+                    onTap: () => context.push(
+                      '/tickets',
+                      extra: const TicketFilter(
+                        statuses: {TicketStatus.resolved, TicketStatus.closed},
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -695,7 +737,7 @@ class _UserHome extends ConsumerWidget {
                   label: 'Create Ticket',
                   bg: AppTheme.navy,
                   fg: Colors.white,
-                  onTap: () => context.push('/tickets/new'),
+                  onTap: () => context.push(_newTicketRoute),
                 ),
                 const SizedBox(width: 10),
                 _QuickActionItem(
@@ -751,13 +793,24 @@ class _UserHome extends ConsumerWidget {
 /// same math as AnalyticsScreen.
 class _SupportHome extends ConsumerWidget {
   final AppUser appUser;
+  final String? initialSystem;
 
-  const _SupportHome({required this.appUser});
+  const _SupportHome({required this.appUser, this.initialSystem});
+
+  bool get _isCoordinator => appUser.role == UserRole.supportCoordinator;
+
+  TicketFilter get _systemFilter => _isCoordinator
+      ? const TicketFilter(systems: {'ghaneps', 'gifmis'})
+      : TicketFilter(system: initialSystem);
+
+  String get _ticketsRoute => _isCoordinator || initialSystem == null
+      ? '/tickets'
+      : '/tickets?system=$initialSystem';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketsAsync = ref.watch(
-      ticketAnalyticsProvider((appUser, const TicketFilter())),
+      ticketAnalyticsProvider((appUser, _systemFilter)),
     );
     final slaPolicy =
         ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
@@ -770,18 +823,40 @@ class _SupportHome extends ConsumerWidget {
     // knowledge_articles are readable by anyone signed in, so those stay
     // unconditional.
     final hasBackOfficeAccess = appUser.role.hasBackOfficeAccess;
-    final allUsers = hasBackOfficeAccess ? ref.watch(allUsersProvider).valueOrNull ?? const <AppUser>[] : const <AppUser>[];
+    final allUsers = hasBackOfficeAccess
+        ? ref.watch(allUsersProvider).valueOrNull ?? const <AppUser>[]
+        : const <AppUser>[];
     final activeUserCount = allUsers.where((u) => u.isActive).length;
-    final institutionCount = ref.watch(institutionListProvider).valueOrNull?.length ?? 0;
-    final articleCount = ref.watch(articleListProvider((category: null, canEdit: hasBackOfficeAccess))).valueOrNull?.length ?? 0;
+    final institutionCount =
+        ref.watch(institutionListProvider).valueOrNull?.length ?? 0;
+    final articleCount =
+        ref
+            .watch(
+              articleListProvider((
+                category: null,
+                canEdit: hasBackOfficeAccess,
+              )),
+            )
+            .valueOrNull
+            ?.length ??
+        0;
     final recentAdminActions = hasBackOfficeAccess
-        ? ref.watch(adminActionsAuditLogProvider).valueOrNull?.take(5).toList() ?? const <AuditLog>[]
+        ? ref
+                  .watch(adminActionsAuditLogProvider)
+                  .valueOrNull
+                  ?.take(5)
+                  .toList() ??
+              const <AuditLog>[]
         : const <AuditLog>[];
     final usersById = <String, AppUser>{for (final u in allUsers) u.id: u};
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => AppErrorState(message: 'We could not load ticket data.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, const TicketFilter())))),
+      error: (e, _) => AppErrorState(
+        message: 'We could not load ticket data.',
+        onRetry: () =>
+            ref.invalidate(ticketAnalyticsProvider((appUser, _systemFilter))),
+      ),
       data: (tickets) {
         final open = tickets.where((t) => t.status == TicketStatus.open).length;
         final resolved = tickets
@@ -807,6 +882,26 @@ class _SupportHome extends ConsumerWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
+            if (_isCoordinator) ...[
+              Text(
+                'GHANEPS & GIFMIS Support Dashboard',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ] else if (initialSystem == 'ghaneps' ||
+                initialSystem == 'gifmis') ...[
+              Text(
+                '${initialSystem!.toUpperCase()} Support Dashboard',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             Row(
               children: [
                 const Icon(
@@ -823,48 +918,87 @@ class _SupportHome extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: 3,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.05,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 1.35,
               children: [
                 _StatNumberCard(
                   value: '${tickets.length}',
                   label: 'Total Tickets',
                   color: AppTheme.navy,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter()),
+                  onTap: () =>
+                      context.push(_ticketsRoute, extra: _systemFilter),
                 ),
                 _StatNumberCard(
                   value: '$open',
                   label: 'Open',
                   color: AppTheme.accentBlue,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.open})),
+                  onTap: () => context.push(
+                    '/tickets',
+                    extra: TicketFilter(
+                      system: _systemFilter.system,
+                      systems: _systemFilter.systems,
+                      statuses: const {TicketStatus.open},
+                    ),
+                  ),
                 ),
                 _StatNumberCard(
                   value: '$resolved',
                   label: 'Resolved',
                   color: StatusColors.resolved,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.resolved, TicketStatus.closed})),
+                  onTap: () => context.push(
+                    '/tickets',
+                    extra: TicketFilter(
+                      system: _systemFilter.system,
+                      systems: _systemFilter.systems,
+                      statuses: const {
+                        TicketStatus.resolved,
+                        TicketStatus.closed,
+                      },
+                    ),
+                  ),
                 ),
                 _StatNumberCard(
                   value: '$inProgress',
                   label: 'In Progress',
                   color: AppTheme.gold,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.inProgress})),
+                  onTap: () => context.push(
+                    '/tickets',
+                    extra: TicketFilter(
+                      system: _systemFilter.system,
+                      systems: _systemFilter.systems,
+                      statuses: const {TicketStatus.inProgress},
+                    ),
+                  ),
                 ),
                 _StatNumberCard(
                   value: '$overdue',
                   label: 'Overdue',
                   color: StatusColors.critical,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter(overdueOnly: true)),
+                  onTap: () => context.push(
+                    '/tickets',
+                    extra: TicketFilter(
+                      system: _systemFilter.system,
+                      systems: _systemFilter.systems,
+                      overdueOnly: true,
+                    ),
+                  ),
                 ),
                 _StatNumberCard(
                   value: '$escalated',
                   label: 'Escalated',
                   color: StatusColors.escalated,
-                  onTap: () => context.push('/tickets', extra: const TicketFilter(statuses: {TicketStatus.escalated})),
+                  onTap: () => context.push(
+                    '/tickets',
+                    extra: TicketFilter(
+                      system: _systemFilter.system,
+                      systems: _systemFilter.systems,
+                      statuses: const {TicketStatus.escalated},
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -877,15 +1011,18 @@ class _SupportHome extends ConsumerWidget {
             // actually read, rather than showing them a wrong "0".
             if (appUser.role.hasBackOfficeAccess) ...[
               const SizedBox(height: AppSpacing.lg),
-              Text('System Overview', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'System Overview',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: AppSpacing.sm),
               GridView.count(
-                crossAxisCount: 2,
+                crossAxisCount: 3,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.05,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 1.35,
                 children: [
                   _StatNumberCard(
                     value: '$activeUserCount',
@@ -895,13 +1032,17 @@ class _SupportHome extends ConsumerWidget {
                     // adminOnlyPaths) — other back-office roles see this card
                     // but would just get bounced back to /home, so leave it
                     // non-interactive for them.
-                    onTap: appUser.role == UserRole.pfmManagement ? () => context.push('/admin/users') : null,
+                    onTap: appUser.role == UserRole.pfmManagement
+                        ? () => context.push('/admin/users')
+                        : null,
                   ),
                   _StatNumberCard(
                     value: '$institutionCount',
                     label: 'Institutions',
                     color: AppTheme.accentBlue,
-                    onTap: appUser.role == UserRole.pfmManagement ? () => context.push('/admin/institutions') : null,
+                    onTap: appUser.role == UserRole.pfmManagement
+                        ? () => context.push('/admin/institutions')
+                        : null,
                   ),
                   _StatNumberCard(
                     value: '$articleCount',
@@ -964,7 +1105,8 @@ class _SupportHome extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xl),
             _SectionHeader(
               title: 'Recent Tickets',
-              onViewAll: () => context.push('/tickets'),
+              onViewAll: () =>
+                  context.push(_ticketsRoute, extra: _systemFilter),
             ),
             const SizedBox(height: AppSpacing.sm),
             if (tickets.isEmpty)
@@ -992,13 +1134,18 @@ class _SupportHome extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: Column(
                     children: [
                       for (var i = 0; i < recentAdminActions.length; i++) ...[
                         if (i > 0) const Divider(height: 1),
-                        _ActivityTile(entry: recentAdminActions[i], usersById: usersById),
+                        _ActivityTile(
+                          entry: recentAdminActions[i],
+                          usersById: usersById,
+                        ),
                       ],
                     ],
                   ),
@@ -1030,14 +1177,25 @@ class _ActivityTile extends StatelessWidget {
               TextSpan(
                 style: Theme.of(context).textTheme.bodySmall,
                 children: [
-                  TextSpan(text: actor, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  TextSpan(text: ' ${adminActionLabel(entry.action).toLowerCase()} '),
-                  TextSpan(text: target, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  TextSpan(
+                    text: actor,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  TextSpan(
+                    text: ' ${adminActionLabel(entry.action).toLowerCase()} ',
+                  ),
+                  TextSpan(
+                    text: target,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ],
               ),
             ),
           ),
-          Text(DateFormat.MMMd().format(entry.timestamp), style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            DateFormat.MMMd().format(entry.timestamp),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );

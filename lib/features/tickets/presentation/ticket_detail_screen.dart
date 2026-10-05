@@ -14,7 +14,8 @@ import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
-import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart' show categoryIcon;
+import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
+    show categoryIcon;
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 
@@ -42,7 +43,11 @@ class TicketDetailScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Center(child: TicketStatusChip(status: ticketAsync.valueOrNull!.status)),
+              child: Center(
+                child: TicketStatusChip(
+                  status: ticketAsync.valueOrNull!.status,
+                ),
+              ),
             ),
           ],
         ],
@@ -51,7 +56,8 @@ class TicketDetailScreen extends ConsumerWidget {
         loading: () => const BrandedLoaderCenter(),
         error: (e, _) => Center(child: Text('Could not load ticket: $e')),
         data: (ticket) {
-          if (ticket == null) return const Center(child: Text('Ticket not found.'));
+          if (ticket == null)
+            return const Center(child: Text('Ticket not found.'));
           if (viewer == null) return const BrandedLoaderCenter();
           return _TicketDetailBody(ticket: ticket, viewer: viewer);
         },
@@ -91,8 +97,12 @@ class _TicketDetailBody extends ConsumerStatefulWidget {
   ConsumerState<_TicketDetailBody> createState() => _TicketDetailBodyState();
 }
 
-class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 3, vsync: this);
+class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(
+    length: 3,
+    vsync: this,
+  );
 
   Ticket get ticket => widget.ticket;
   AppUser get viewer => widget.viewer;
@@ -109,116 +119,156 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Column(
-            children: [
-              _SectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentBlue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+        Flexible(
+          fit: FlexFit.loose,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                _SectionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentBlue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Icon(
+                              categoryIcon(ticket.category),
+                              color: AppTheme.accentBlue,
+                              size: 21,
+                            ),
                           ),
-                          child: Icon(categoryIcon(ticket.category), color: AppTheme.accentBlue, size: 21),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(ticket.title, style: Theme.of(context).textTheme.titleLarge),
-                              const SizedBox(height: 3),
-                              Text('#${ticket.ticketReference}', style: Theme.of(context).textTheme.bodySmall),
-                            ],
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ticket.title,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '#${ticket.ticketReference}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      if (ticket.priority == TicketPriority.critical ||
+                          ticket.priority == TicketPriority.high) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.flag_rounded,
+                              size: 15,
+                              color: StatusColors.critical,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${ticket.priority.label} Priority',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(color: StatusColors.critical),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                    if (ticket.priority == TicketPriority.critical || ticket.priority == TicketPriority.high) ...[
-                      const SizedBox(height: 10),
-                      Row(
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          Icon(Icons.flag_rounded, size: 15, color: StatusColors.critical),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${ticket.priority.label} Priority',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: StatusColors.critical),
+                          TicketPriorityChip(priority: ticket.priority),
+                          _PlainBadge(label: ticket.categoryLabel),
+                          if (ticket.subCategory.isNotEmpty)
+                            _PlainBadge(label: ticket.subCategory),
+                          if (ticket.escalationLevel > 0)
+                            _PlainBadge(
+                              label:
+                                  'Escalation level ${ticket.escalationLevel}',
+                              color: StatusColors.critical,
+                            ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _HeaderInfoCell(
+                              label: 'Category',
+                              value: ticket.categoryLabel,
+                            ),
+                          ),
+                          Expanded(
+                            child: _HeaderInfoCell(
+                              label: 'Created',
+                              value: DateFormat.yMMMd().add_jm().format(
+                                ticket.createdAt,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _HeaderInfoCell(
+                              label: 'Last Updated',
+                              value: DateFormat.yMMMd().add_jm().format(
+                                ticket.updatedAt,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: ticket.assignedTo != null
+                                ? _AssignedToCell(
+                                    userId: ticket.assignedTo!,
+                                    fallbackName: ticket.assignedToName,
+                                    attemptRead: viewer.role.isSupportSide,
+                                  )
+                                : _HeaderInfoCell(
+                                    label: 'Assigned To',
+                                    value: 'Unassigned',
+                                  ),
                           ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        TicketPriorityChip(priority: ticket.priority),
-                        _PlainBadge(label: ticket.category.label),
-                        if (ticket.subCategory.isNotEmpty) _PlainBadge(label: ticket.subCategory),
-                        if (ticket.escalationLevel > 0)
-                          _PlainBadge(label: 'Escalation level ${ticket.escalationLevel}', color: StatusColors.critical),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _HeaderInfoCell(label: 'Category', value: ticket.category.label),
-                        ),
-                        Expanded(
-                          child: _HeaderInfoCell(
-                            label: 'Created',
-                            value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _HeaderInfoCell(
-                            label: 'Last Updated',
-                            value: DateFormat.yMMMd().add_jm().format(ticket.updatedAt),
-                          ),
-                        ),
-                        Expanded(
-                          child: ticket.assignedTo != null
-                              ? _AssignedToCell(
-                                  userId: ticket.assignedTo!,
-                                  fallbackName: ticket.assignedToName,
-                                  attemptRead: viewer.role.isSupportSide,
-                                )
-                              : _HeaderInfoCell(label: 'Assigned To', value: 'Unassigned'),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              _buildActions(context, ref),
-              const SizedBox(height: 12),
-            ],
+                _buildActions(context, ref),
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
           ),
           child: TabBar(
             controller: _tabController,
             labelColor: AppTheme.navy,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant,
             indicatorColor: AppTheme.navy,
             tabs: const [
               Tab(text: 'Timeline'),
@@ -242,12 +292,16 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   }
 
   bool get _canAssign =>
-      (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+      (viewer.role == UserRole.supportCoordinator ||
+          viewer.role == UserRole.pfmManagement) &&
       ticket.status != TicketStatus.closed;
 
   bool get _canEscalate =>
-      (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed && ticket.status != TicketStatus.resolved) ||
-      ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
+      (viewer.role == UserRole.supportCoordinator &&
+          ticket.status != TicketStatus.closed &&
+          ticket.status != TicketStatus.resolved) ||
+      ((viewer.role == UserRole.functionalLead ||
+              viewer.role == UserRole.technicalLead) &&
           _isAssignee &&
           ticket.status != TicketStatus.closed &&
           ticket.status != TicketStatus.resolved &&
@@ -255,11 +309,20 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
 
   bool get _canStartWork =>
       _isAssignee &&
-      const {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
+      const {
+        TicketStatus.assigned,
+        TicketStatus.escalated,
+        TicketStatus.reopened,
+      }.contains(ticket.status);
 
   bool get _canResolve =>
       _isAssignee &&
-      const {TicketStatus.assigned, TicketStatus.inProgress, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
+      const {
+        TicketStatus.assigned,
+        TicketStatus.inProgress,
+        TicketStatus.escalated,
+        TicketStatus.reopened,
+      }.contains(ticket.status);
 
   Widget _buildActions(BuildContext context, WidgetRef ref) {
     if (viewer.role.isSupportSide) return _buildAdminToolbar(context, ref);
@@ -273,12 +336,20 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
   Widget _buildAdminToolbar(BuildContext context, WidgetRef ref) {
     final overflow = <(String, IconData, VoidCallback)>[];
 
-    if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canStartWork) {
-      overflow.add(('Start Work', Icons.play_arrow_rounded, () {
-        _changeStatus(ref, TicketStatus.inProgress);
-      }));
+    if ((viewer.role == UserRole.functionalLead ||
+            viewer.role == UserRole.technicalLead) &&
+        _canStartWork) {
+      overflow.add((
+        'Start Work',
+        Icons.play_arrow_rounded,
+        () {
+          _changeStatus(ref, TicketStatus.inProgress);
+        },
+      ));
     }
-    if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && _canResolve) {
+    if ((viewer.role == UserRole.functionalLead ||
+            viewer.role == UserRole.technicalLead) &&
+        _canResolve) {
       overflow.add((
         'Resolve',
         Icons.check_circle_outline_rounded,
@@ -297,18 +368,22 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
       ));
     }
     if (viewer.role == UserRole.pfmManagement &&
-        (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed)) {
+        (ticket.status == TicketStatus.resolved ||
+            ticket.status == TicketStatus.closed)) {
       overflow.add((
         'Reopen Ticket',
         Icons.replay_rounded,
         () => _changeStatus(ref, TicketStatus.reopened),
       ));
     }
-    if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved) {
+    if (viewer.role.hasBackOfficeAccess &&
+        ticket.status == TicketStatus.resolved) {
       overflow.add((
         'Close Ticket',
         Icons.lock_outline_rounded,
-        () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
+        () => ref
+            .read(ticketRepositoryProvider)
+            .close(ticketId: ticket.id, actorId: viewer.id),
       ));
     }
 
@@ -331,7 +406,11 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
           ),
         if (_canEscalate)
           Expanded(
-            child: _ToolbarButton(icon: Icons.arrow_upward_rounded, label: 'Escalate', onTap: () => _showEscalateDialog(context, ref)),
+            child: _ToolbarButton(
+              icon: Icons.arrow_upward_rounded,
+              label: 'Escalate',
+              onTap: () => _showEscalateDialog(context, ref),
+            ),
           ),
         if (overflow.isNotEmpty)
           Expanded(
@@ -345,7 +424,10 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
     );
   }
 
-  void _showMoreSheet(BuildContext context, List<(String, IconData, VoidCallback)> items) {
+  void _showMoreSheet(
+    BuildContext context,
+    List<(String, IconData, VoidCallback)> items,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -355,14 +437,16 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: items
-              .map((item) => ListTile(
-                    leading: Icon(item.$2, color: AppTheme.accentBlue),
-                    title: Text(item.$1),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop();
-                      item.$3();
-                    },
-                  ))
+              .map(
+                (item) => ListTile(
+                  leading: Icon(item.$2, color: AppTheme.accentBlue),
+                  title: Text(item.$1),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    item.$3();
+                  },
+                ),
+              )
               .toList(),
         ),
       ),
@@ -388,39 +472,51 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
     final targetLevel = ticket.escalationLevel < 1 ? 1 : 2;
     showDialog(
       context: context,
-      builder: (context) => Consumer(builder: (context, ref, _) {
-        final usersAsync = ref.watch(assignableUsersProvider);
-        return AlertDialog(
-          title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
-          content: usersAsync.when(
-            loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
-            error: (e, _) => const Text('Users unavailable'),
-            data: (users) {
-              final eligible = users.where((u) {
-                if (targetLevel == 1) {
-                  // One Applications Systems Unit now — the functional/
-                  // technical split no longer maps to distinct people, so
-                  // level-1 escalation targets any active APPS member.
-                  return u.role == UserRole.functionalLead || u.role == UserRole.technicalLead;
-                }
-                return u.role == UserRole.vendorSupport;
-              }).toList();
-              return SizedBox(
-                width: 320,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: noteController,
-                      decoration: const InputDecoration(labelText: 'Escalation note (optional)'),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 8),
-                    ...eligible.map((u) => ListTile(
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final usersAsync = ref.watch(assignableUsersProvider);
+          return AlertDialog(
+            title: Text(
+              targetLevel == 1
+                  ? 'Escalate to Applications Systems Unit'
+                  : 'Escalate to Vendor/Specialist',
+            ),
+            content: usersAsync.when(
+              loading: () =>
+                  const SizedBox(height: 80, child: BrandedLoaderCenter()),
+              error: (e, _) => const Text('Users unavailable'),
+              data: (users) {
+                final eligible = users.where((u) {
+                  if (targetLevel == 1) {
+                    // One Applications Systems Unit now — the functional/
+                    // technical split no longer maps to distinct people, so
+                    // level-1 escalation targets any active APPS member.
+                    return u.role == UserRole.functionalLead ||
+                        u.role == UserRole.technicalLead;
+                  }
+                  return u.role == UserRole.vendorSupport;
+                }).toList();
+                return SizedBox(
+                  width: 320,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Escalation note (optional)',
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 8),
+                      ...eligible.map(
+                        (u) => ListTile(
                           title: Text(u.name),
                           subtitle: Text(u.role.shortLabel),
                           onTap: () async {
-                            await ref.read(ticketRepositoryProvider).escalate(
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .escalate(
                                   ticketId: ticket.id,
                                   toLevel: targetLevel,
                                   assigneeId: u.id,
@@ -429,27 +525,34 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody> with Singl
                                 );
                             if (context.mounted) Navigator.of(context).pop();
                           },
-                        )),
-                    if (eligible.isEmpty) const Text('No eligible staff found for this category.'),
-                  ],
-                ),
-              );
-            },
-          ),
-          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))],
-        );
-      }),
+                        ),
+                      ),
+                      if (eligible.isEmpty)
+                        const Text(
+                          'No eligible staff found for this category.',
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
   Future<void> _changeStatus(WidgetRef ref, TicketStatus status) {
-    return ref.read(ticketRepositoryProvider).changeStatus(
-          ticketId: ticket.id,
-          to: status,
-          actorId: viewer.id,
-        );
+    return ref
+        .read(ticketRepositoryProvider)
+        .changeStatus(ticketId: ticket.id, to: status, actorId: viewer.id);
   }
-
 }
 
 class _TimelineTab extends ConsumerWidget {
@@ -479,47 +582,69 @@ class _DetailsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(currentAppUserProvider).valueOrNull;
-    final canReassign = viewer != null &&
-        (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+    final canReassign =
+        viewer != null &&
+        (viewer.role == UserRole.supportCoordinator ||
+            viewer.role == UserRole.pfmManagement) &&
         ticket.status != TicketStatus.closed;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (viewer?.role.isSupportSide ?? false) _RequestedByCard(userId: ticket.createdBy),
+        if (viewer?.role.isSupportSide ?? false)
+          _RequestedByCard(userId: ticket.createdBy),
         _SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Description', style: Theme.of(context).textTheme.titleSmall),
+              Text(
+                'Description',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: 8),
-              Text(ticket.description, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                ticket.description,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               if (ticket.attachmentUrls.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
               ],
-              if (ticket.resolutionNotes != null && ticket.resolutionNotes!.isNotEmpty) ...[
+              if (ticket.resolutionNotes != null &&
+                  ticket.resolutionNotes!.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: StatusColors.resolved.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: StatusColors.resolved.withValues(alpha: 0.25)),
+                    border: Border.all(
+                      color: StatusColors.resolved.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.task_alt_rounded, size: 16, color: StatusColors.resolved),
+                          const Icon(
+                            Icons.task_alt_rounded,
+                            size: 16,
+                            color: StatusColors.resolved,
+                          ),
                           const SizedBox(width: 6),
-                          Text('Resolution notes',
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: StatusColors.resolved)),
+                          Text(
+                            'Resolution notes',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: StatusColors.resolved),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(ticket.resolutionNotes!, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        ticket.resolutionNotes!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -529,21 +654,35 @@ class _DetailsTab extends ConsumerWidget {
         ),
         if (ticket.assignedTo != null)
           if (viewer?.role.isSupportSide ?? false)
-            _AssignedCard(userId: ticket.assignedTo!, ticketId: ticket.id, canReassign: canReassign)
+            _AssignedCard(
+              userId: ticket.assignedTo!,
+              ticketId: ticket.id,
+              canReassign: canReassign,
+            )
           else
             // Requester: no read access to the assignee's users/{uid} doc,
             // so show the denormalized name from the ticket instead.
             _SectionCard(
               child: Row(
                 children: [
-                  const Icon(Icons.support_agent_rounded, size: 18, color: AppTheme.accentBlue),
+                  const Icon(
+                    Icons.support_agent_rounded,
+                    size: 18,
+                    color: AppTheme.accentBlue,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Assigned to', style: Theme.of(context).textTheme.labelSmall),
-                        Text(ticket.assignedToName ?? 'A support agent', style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          'Assigned to',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        Text(
+                          ticket.assignedToName ?? 'A support agent',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                       ],
                     ),
                   ),
@@ -554,16 +693,31 @@ class _DetailsTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ticket information', style: Theme.of(context).textTheme.titleSmall),
+              Text(
+                'Ticket information',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: 12),
-              _InfoRow(label: 'Category', value: ticket.category.label),
-              if (ticket.subCategory.isNotEmpty) _InfoRow(label: 'Sub-category', value: ticket.subCategory),
+              _InfoRow(label: 'Category', value: ticket.categoryLabel),
+              if (ticket.subCategory.isNotEmpty)
+                _InfoRow(label: 'Sub-category', value: ticket.subCategory),
               _InfoRow(label: 'Priority', value: ticket.priority.label),
               _InfoRow(label: 'Impact', value: ticket.impact.label),
               _InfoRow(label: 'Status', value: ticket.status.label),
-              _InfoRow(label: 'Created', value: DateFormat.yMMMd().add_jm().format(ticket.createdAt)),
-              if (ticket.resolvedAt != null) _InfoRow(label: 'Resolved', value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!)),
-              if (ticket.closedAt != null) _InfoRow(label: 'Closed', value: DateFormat.yMMMd().add_jm().format(ticket.closedAt!)),
+              _InfoRow(
+                label: 'Created',
+                value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
+              ),
+              if (ticket.resolvedAt != null)
+                _InfoRow(
+                  label: 'Resolved',
+                  value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!),
+                ),
+              if (ticket.closedAt != null)
+                _InfoRow(
+                  label: 'Closed',
+                  value: DateFormat.yMMMd().add_jm().format(ticket.closedAt!),
+                ),
             ],
           ),
         ),
@@ -584,8 +738,13 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          SizedBox(width: 110, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
-          Expanded(child: Text(value, style: Theme.of(context).textTheme.bodyMedium)),
+          SizedBox(
+            width: 110,
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          Expanded(
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          ),
         ],
       ),
     );
@@ -597,7 +756,11 @@ class _AssignedCard extends ConsumerWidget {
   final String ticketId;
   final bool canReassign;
 
-  const _AssignedCard({required this.userId, required this.ticketId, required this.canReassign});
+  const _AssignedCard({
+    required this.userId,
+    required this.ticketId,
+    required this.canReassign,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -615,7 +778,10 @@ class _AssignedCard extends ConsumerWidget {
                 backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
                 child: Text(
                   user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -623,8 +789,14 @@ class _AssignedCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Assigned to', style: Theme.of(context).textTheme.bodySmall),
-                    Text(user.name, style: Theme.of(context).textTheme.titleSmall),
+                    Text(
+                      'Assigned to',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                      user.name,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                   ],
                 ),
               ),
@@ -634,7 +806,10 @@ class _AssignedCard extends ConsumerWidget {
                   child: const Text('Change'),
                 )
               else
-                _PlainBadge(label: user.role.shortLabel, color: AppTheme.accentBlue),
+                _PlainBadge(
+                  label: user.role.shortLabel,
+                  color: AppTheme.accentBlue,
+                ),
             ],
           );
         },
@@ -658,7 +833,10 @@ class _PlainBadge extends StatelessWidget {
         color: c.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
-      child: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c)),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c),
+      ),
     );
   }
 }
@@ -697,38 +875,52 @@ class _AssignedToCell extends ConsumerWidget {
   /// false here so no denied read is even attempted.
   final bool attemptRead;
 
-  const _AssignedToCell({required this.userId, this.fallbackName, this.attemptRead = true});
+  const _AssignedToCell({
+    required this.userId,
+    this.fallbackName,
+    this.attemptRead = true,
+  });
 
   Widget _cell(BuildContext context, String name) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('Assigned To', style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 4),
+      Row(
         children: [
-          Text('Assigned To', style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
-                ),
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
-              ),
-            ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
         ],
-      );
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!attemptRead) return _cell(context, fallbackName ?? 'A support agent');
     final userAsync = ref.watch(userByIdProvider(userId));
     return userAsync.when(
-      loading: () => _HeaderInfoCell(label: 'Assigned To', value: fallbackName ?? '…'),
+      loading: () =>
+          _HeaderInfoCell(label: 'Assigned To', value: fallbackName ?? '…'),
       error: (e, _) => fallbackName != null
           ? _cell(context, fallbackName!)
           : const _HeaderInfoCell(label: 'Assigned To', value: '—'),
@@ -746,7 +938,11 @@ class _AssignedToCell extends ConsumerWidget {
                   backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
                   child: Text(
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -780,11 +976,13 @@ class _SlaTab extends ConsumerWidget {
     final policyAsync = ref.watch(slaPolicyProvider);
     return policyAsync.when(
       loading: () => const BrandedLoaderCenter(),
-        error: (e, _) => const Center(child: Text('SLA information unavailable')),
+      error: (e, _) => const Center(child: Text('SLA information unavailable')),
       data: (policy) {
         final targetHours = policy.targetHoursFor(ticket.priority);
         final resolvedAt = ticket.resolvedAt ?? ticket.closedAt;
-        final elapsed = (resolvedAt ?? DateTime.now()).difference(ticket.createdAt);
+        final elapsed = (resolvedAt ?? DateTime.now()).difference(
+          ticket.createdAt,
+        );
         final elapsedHours = elapsed.inHours;
         final overdue = resolvedAt == null
             ? SlaCalculator.isOverdue(ticket, policy)
@@ -814,7 +1012,10 @@ class _SlaTab extends ConsumerWidget {
                     children: [
                       Icon(Icons.timer_outlined, size: 18, color: statusColor),
                       const SizedBox(width: 8),
-                      Text('SLA status', style: Theme.of(context).textTheme.titleSmall),
+                      Text(
+                        'SLA status',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
                       const Spacer(),
                       _PlainBadge(label: statusLabel, color: statusColor),
                     ],
@@ -829,7 +1030,9 @@ class _SlaTab extends ConsumerWidget {
                   if (resolvedAt == null)
                     _InfoRow(
                       label: overdue ? 'Overdue by' : 'Time remaining',
-                      value: _formatDuration(Duration(hours: (elapsedHours - targetHours).abs())),
+                      value: _formatDuration(
+                        Duration(hours: (elapsedHours - targetHours).abs()),
+                      ),
                     ),
                 ],
               ),
@@ -850,24 +1053,24 @@ String _formatDuration(Duration d) {
 }
 
 IconData _activityIcon(TicketActivityAction action) => switch (action) {
-      TicketActivityAction.created => Icons.add_circle_outline_rounded,
-      TicketActivityAction.assigned => Icons.person_add_alt_rounded,
-      TicketActivityAction.statusChanged => Icons.sync_alt_rounded,
-      TicketActivityAction.escalated => Icons.arrow_upward_rounded,
-      TicketActivityAction.commented => Icons.chat_bubble_outline_rounded,
-      TicketActivityAction.reopened => Icons.replay_rounded,
-      TicketActivityAction.closed => Icons.lock_outline_rounded,
-    };
+  TicketActivityAction.created => Icons.add_circle_outline_rounded,
+  TicketActivityAction.assigned => Icons.person_add_alt_rounded,
+  TicketActivityAction.statusChanged => Icons.sync_alt_rounded,
+  TicketActivityAction.escalated => Icons.arrow_upward_rounded,
+  TicketActivityAction.commented => Icons.chat_bubble_outline_rounded,
+  TicketActivityAction.reopened => Icons.replay_rounded,
+  TicketActivityAction.closed => Icons.lock_outline_rounded,
+};
 
 Color _activityColor(TicketActivityAction action) => switch (action) {
-      TicketActivityAction.created => AppTheme.accentBlue,
-      TicketActivityAction.assigned => StatusColors.assigned,
-      TicketActivityAction.statusChanged => AppTheme.accentBlue,
-      TicketActivityAction.escalated => StatusColors.critical,
-      TicketActivityAction.commented => StatusColors.closed,
-      TicketActivityAction.reopened => StatusColors.critical,
-      TicketActivityAction.closed => StatusColors.closed,
-    };
+  TicketActivityAction.created => AppTheme.accentBlue,
+  TicketActivityAction.assigned => StatusColors.assigned,
+  TicketActivityAction.statusChanged => AppTheme.accentBlue,
+  TicketActivityAction.escalated => StatusColors.critical,
+  TicketActivityAction.commented => StatusColors.closed,
+  TicketActivityAction.reopened => StatusColors.critical,
+  TicketActivityAction.closed => StatusColors.closed,
+};
 
 class _ActivityTrail extends StatelessWidget {
   final List<TicketActivity> activity;
@@ -896,7 +1099,10 @@ class _ActivityTrail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activity.isEmpty) {
-      return Text('No activity yet.', style: Theme.of(context).textTheme.bodyMedium);
+      return Text(
+        'No activity yet.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
     }
     return Column(
       children: [
@@ -942,10 +1148,19 @@ class _TimelineRow extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(icon, size: 16, color: color),
               ),
-              if (!isLast) Expanded(child: Container(width: 2, color: Theme.of(context).colorScheme.outlineVariant)),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
             ],
           ),
           const SizedBox(width: 12),
@@ -957,8 +1172,16 @@ class _TimelineRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(title, style: Theme.of(context).textTheme.titleSmall)),
-                      Text(DateFormat.MMMd().add_jm().format(timestamp), style: Theme.of(context).textTheme.bodySmall),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      Text(
+                        DateFormat.MMMd().add_jm().format(timestamp),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                   if (note != null && note!.isNotEmpty) ...[
@@ -992,7 +1215,8 @@ class _RequestedByCard extends ConsumerWidget {
           // Resolve the requester's specific assembly/MDA name from their
           // institutionId; fall back to the broad MDA/MMDA type while the
           // institution list is still loading or if the id has no match.
-          final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+          final institutions =
+              ref.watch(institutionListProvider).valueOrNull ?? const [];
           var institutionLabel = user.institutionType.wireValue;
           for (final i in institutions) {
             if (i.id == user.institutionId) {
@@ -1007,7 +1231,10 @@ class _RequestedByCard extends ConsumerWidget {
                 backgroundColor: AppTheme.accentBlue.withValues(alpha: 0.12),
                 child: Text(
                   user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.accentBlue, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: AppTheme.accentBlue,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1015,9 +1242,18 @@ class _RequestedByCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Requested By', style: Theme.of(context).textTheme.bodySmall),
-                    Text(user.name, style: Theme.of(context).textTheme.titleSmall),
-                    Text('${user.role.shortLabel} · $institutionLabel', style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      'Requested By',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                      user.name,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Text(
+                      '${user.role.shortLabel} · $institutionLabel',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
@@ -1034,7 +1270,11 @@ class _ToolbarButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _ToolbarButton({required this.icon, required this.label, required this.onTap});
+  const _ToolbarButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1053,7 +1293,9 @@ class _ToolbarButton extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.navy),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: AppTheme.navy),
             ),
           ],
         ),

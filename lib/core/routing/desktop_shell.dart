@@ -99,14 +99,23 @@ class DesktopShell extends ConsumerWidget {
     final isPfmManagement = appUser?.role == UserRole.pfmManagement;
     final unread = appUser == null
         ? 0
-        : ref.watch(unreadNotificationCountProvider(appUser.id));
+        : ref.watch(unreadNotificationCountProvider(appUser.id)).valueOrNull ??
+              0;
     final location = GoRouterState.of(context).matchedLocation;
+    final routeSystem = GoRouterState.of(context).uri.queryParameters['system'];
+    final selectedSystem = appUser?.role == UserRole.supportCoordinator
+        ? null
+        : routeSystem;
 
     return Scaffold(
-      backgroundColor: AppTheme.mist,
+      backgroundColor: Colors.transparent,
       body: Row(
         children: [
-          _Sidebar(currentLocation: location, isPfmManagement: isPfmManagement),
+          _Sidebar(
+            currentLocation: location,
+            isPfmManagement: isPfmManagement,
+            selectedSystem: selectedSystem,
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -140,11 +149,16 @@ class DesktopShell extends ConsumerWidget {
 class _Sidebar extends StatelessWidget {
   final String currentLocation;
   final bool isPfmManagement;
+  final String? selectedSystem;
 
   const _Sidebar({
     required this.currentLocation,
     required this.isPfmManagement,
+    required this.selectedSystem,
   });
+
+  String _pathFor(String path) =>
+      selectedSystem == null ? path : '$path?system=$selectedSystem';
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +223,7 @@ class _Sidebar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          onTap: () => context.go(item.path),
+                          onTap: () => context.go(_pathFor(item.path)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,

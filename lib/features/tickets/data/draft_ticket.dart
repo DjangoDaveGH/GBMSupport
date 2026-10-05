@@ -13,6 +13,10 @@ class DraftTicket {
   final String createdBy;
   final String institutionId;
   final TicketCategory category;
+  final String system;
+  final String? productCategoryId;
+  final String? productCategoryLabel;
+  final String? requesterType;
   final String subCategory;
   final String title;
   final String description;
@@ -34,6 +38,10 @@ class DraftTicket {
     required this.createdBy,
     required this.institutionId,
     required this.category,
+    this.system = 'gbms',
+    this.productCategoryId,
+    this.productCategoryLabel,
+    this.requesterType,
     required this.subCategory,
     required this.title,
     required this.description,
@@ -52,10 +60,16 @@ class DraftTicket {
       createdBy: map['createdBy'] as String,
       institutionId: map['institutionId'] as String,
       category: TicketCategory.fromWire(map['category'] as String),
+      system: map['system'] as String? ?? 'gbms',
+      productCategoryId: map['productCategoryId'] as String?,
+      productCategoryLabel: map['productCategoryLabel'] as String?,
+      requesterType: map['requesterType'] as String?,
       subCategory: map['subCategory'] as String? ?? '',
       title: map['title'] as String,
       description: map['description'] as String,
-      localAttachmentPaths: List<String>.from(map['localAttachmentPaths'] as List? ?? []),
+      localAttachmentPaths: List<String>.from(
+        map['localAttachmentPaths'] as List? ?? [],
+      ),
       priority: TicketPriority.fromWire(map['priority'] as String? ?? 'medium'),
       impact: TicketImpact.fromWire(map['impact'] as String? ?? 'medium'),
       affectsMultipleUsers: map['affectsMultipleUsers'] as bool? ?? false,
@@ -65,11 +79,16 @@ class DraftTicket {
     );
   }
 
-  DraftTicket copyWith({bool? pendingSync, String? submittedTicketId}) => DraftTicket(
+  DraftTicket copyWith({bool? pendingSync, String? submittedTicketId}) =>
+      DraftTicket(
         localId: localId,
         createdBy: createdBy,
         institutionId: institutionId,
         category: category,
+        system: system,
+        productCategoryId: productCategoryId,
+        productCategoryLabel: productCategoryLabel,
+        requesterType: requesterType,
         subCategory: subCategory,
         title: title,
         description: description,
@@ -83,19 +102,23 @@ class DraftTicket {
       );
 
   Map<String, dynamic> toMap() => {
-        'localId': localId,
-        'createdBy': createdBy,
-        'institutionId': institutionId,
-        'category': category.wireValue,
-        'subCategory': subCategory,
-        'title': title,
-        'description': description,
-        'localAttachmentPaths': localAttachmentPaths,
-        'priority': priority.wireValue,
-        'impact': impact.wireValue,
-        'affectsMultipleUsers': affectsMultipleUsers,
-        'createdAt': createdAt.toIso8601String(),
-        'pendingSync': pendingSync,
-        'submittedTicketId': submittedTicketId,
-      };
+    'localId': localId,
+    'createdBy': createdBy,
+    'institutionId': institutionId,
+    'category': category.wireValue,
+    'system': system,
+    'productCategoryId': productCategoryId,
+    'productCategoryLabel': productCategoryLabel,
+    'requesterType': requesterType,
+    'subCategory': subCategory,
+    'title': title,
+    'description': description,
+    'localAttachmentPaths': localAttachmentPaths,
+    'priority': priority.wireValue,
+    'impact': impact.wireValue,
+    'affectsMultipleUsers': affectsMultipleUsers,
+    'createdAt': createdAt.toIso8601String(),
+    'pendingSync': pendingSync,
+    'submittedTicketId': submittedTicketId,
+  };
 }
