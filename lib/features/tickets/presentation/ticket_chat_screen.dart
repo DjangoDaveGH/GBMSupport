@@ -298,6 +298,15 @@ class _ChatBody extends ConsumerWidget {
   /// accepting new messages so it can't turn into an unmonitored channel.
   bool get _chatClosed => ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed;
 
+  /// Chat alignment follows the two conversation participants, not only the
+  /// exact uid of the person viewing the screen. A staff member may reply to
+  /// a ticket from a different support account, and those replies must still
+  /// stay on the staff side of the conversation.
+  bool _isViewerSide(TicketActivity comment) {
+    final isRequesterMessage = comment.actorId == ticket.createdBy;
+    return viewer.role.isSupportSide ? !isRequesterMessage : isRequesterMessage;
+  }
+
   /// Sent/Delivered/Read for one of *your own* messages, from the partner's
   /// receipt on this chat — Read implies Delivered, so it's checked first.
   _MessageStatus _statusFor(TicketActivity comment, ChatReceipt? partnerReceipt) {
@@ -368,7 +377,7 @@ class _ChatBody extends ConsumerWidget {
                 if (capturedReadBefore) {
                   for (var i = 0; i < comments.length; i++) {
                     final c = comments[i];
-                    if (c.actorId != viewer.id &&
+                    if (!_isViewerSide(c) &&
                         (readBeforeOpening == null || c.timestamp.isAfter(readBeforeOpening!))) {
                       unreadDividerIndex = i;
                       break;
@@ -382,7 +391,7 @@ class _ChatBody extends ConsumerWidget {
                   itemCount: comments.length,
                   itemBuilder: (context, i) {
                     final comment = comments[i];
-                    final isSelf = comment.actorId == viewer.id;
+                    final isSelf = _isViewerSide(comment);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

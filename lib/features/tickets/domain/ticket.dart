@@ -2,8 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
 
 class Ticket {
+  String get categoryLabel => productCategoryLabel ?? category.label;
   final String id;
   final String ticketReference;
+
+  /// Product namespace; legacy tickets without this field are GBMS.
+  final String system;
+  final String? productCategoryId;
+  final String? productCategoryLabel;
+  final String? requesterType;
+  final String? requesterEmail;
+  final String? requesterPhone;
   final String createdBy;
   final String institutionId;
   final TicketCategory category;
@@ -16,6 +25,7 @@ class Ticket {
   final bool affectsMultipleUsers;
   final TicketStatus status;
   final String? assignedTo;
+
   /// Denormalized display name of [assignedTo], written by onTicketUpdated.
   /// Lets the requester see who's handling their ticket without needing read
   /// access to the assignee's `users/{uid}` doc (firestore.rules only lets
@@ -33,6 +43,12 @@ class Ticket {
   const Ticket({
     required this.id,
     required this.ticketReference,
+    this.system = 'gbms',
+    this.productCategoryId,
+    this.productCategoryLabel,
+    this.requesterType,
+    this.requesterEmail,
+    this.requesterPhone,
     required this.createdBy,
     required this.institutionId,
     required this.category,
@@ -60,9 +76,17 @@ class Ticket {
     return Ticket(
       id: id,
       ticketReference: map['ticketReference'] as String? ?? '',
+      system: map['system'] as String? ?? 'gbms',
+      productCategoryId: map['productCategoryId'] as String?,
+      productCategoryLabel: map['productCategoryLabel'] as String?,
+      requesterType: map['requesterType'] as String?,
+      requesterEmail: map['requesterEmail'] as String?,
+      requesterPhone: map['requesterPhone'] as String?,
       createdBy: map['createdBy'] as String? ?? '',
       institutionId: map['institutionId'] as String? ?? '',
-      category: TicketCategory.fromWire(map['category'] as String? ?? 'general_enquiry'),
+      category: TicketCategory.fromWire(
+        map['category'] as String? ?? 'general_enquiry',
+      ),
       subCategory: map['subCategory'] as String? ?? '',
       title: map['title'] as String? ?? '',
       description: map['description'] as String? ?? '',
@@ -85,29 +109,37 @@ class Ticket {
   }
 
   Map<String, dynamic> toMap() => {
-        'ticketReference': ticketReference,
-        'createdBy': createdBy,
-        'institutionId': institutionId,
-        'category': category.wireValue,
-        'subCategory': subCategory,
-        'title': title,
-        'description': description,
-        'attachmentUrls': attachmentUrls,
-        'priority': priority.wireValue,
-        'impact': impact.wireValue,
-        'affectsMultipleUsers': affectsMultipleUsers,
-        'status': status.wireValue,
-        'assignedTo': assignedTo,
-        'assignedToName': assignedToName,
-        'escalationLevel': escalationLevel,
-        'resolutionNotes': resolutionNotes,
-        'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': Timestamp.fromDate(updatedAt),
-        'resolvedAt': resolvedAt != null ? Timestamp.fromDate(resolvedAt!) : null,
-        'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
-        'closedBy': closedBy,
-        'firstRespondedAt': firstRespondedAt != null ? Timestamp.fromDate(firstRespondedAt!) : null,
-      };
+    'ticketReference': ticketReference,
+    'system': system,
+    'productCategoryId': productCategoryId,
+    'productCategoryLabel': productCategoryLabel,
+    'requesterType': requesterType,
+    'requesterEmail': requesterEmail,
+    'requesterPhone': requesterPhone,
+    'createdBy': createdBy,
+    'institutionId': institutionId,
+    'category': category.wireValue,
+    'subCategory': subCategory,
+    'title': title,
+    'description': description,
+    'attachmentUrls': attachmentUrls,
+    'priority': priority.wireValue,
+    'impact': impact.wireValue,
+    'affectsMultipleUsers': affectsMultipleUsers,
+    'status': status.wireValue,
+    'assignedTo': assignedTo,
+    'assignedToName': assignedToName,
+    'escalationLevel': escalationLevel,
+    'resolutionNotes': resolutionNotes,
+    'createdAt': Timestamp.fromDate(createdAt),
+    'updatedAt': Timestamp.fromDate(updatedAt),
+    'resolvedAt': resolvedAt != null ? Timestamp.fromDate(resolvedAt!) : null,
+    'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
+    'closedBy': closedBy,
+    'firstRespondedAt': firstRespondedAt != null
+        ? Timestamp.fromDate(firstRespondedAt!)
+        : null,
+  };
 
   Ticket copyWith({
     TicketCategory? category,
@@ -132,6 +164,12 @@ class Ticket {
     return Ticket(
       id: id,
       ticketReference: ticketReference,
+      system: system,
+      productCategoryId: productCategoryId,
+      productCategoryLabel: productCategoryLabel,
+      requesterType: requesterType,
+      requesterEmail: requesterEmail,
+      requesterPhone: requesterPhone,
       createdBy: createdBy,
       institutionId: institutionId,
       category: category ?? this.category,

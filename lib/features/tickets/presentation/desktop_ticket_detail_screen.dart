@@ -30,11 +30,17 @@ class DesktopTicketDetailScreen extends ConsumerStatefulWidget {
   const DesktopTicketDetailScreen({super.key, required this.ticketId});
 
   @override
-  ConsumerState<DesktopTicketDetailScreen> createState() => _DesktopTicketDetailScreenState();
+  ConsumerState<DesktopTicketDetailScreen> createState() =>
+      _DesktopTicketDetailScreenState();
 }
 
-class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 4, vsync: this);
+class _DesktopTicketDetailScreenState
+    extends ConsumerState<DesktopTicketDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(
+    length: 4,
+    vsync: this,
+  );
   final _noteController = TextEditingController();
   final _actionsButtonKey = GlobalKey();
 
@@ -54,7 +60,8 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load ticket: $e')),
       data: (ticket) {
-        if (ticket == null) return const Center(child: Text('Ticket not found.'));
+        if (ticket == null)
+          return const Center(child: Text('Ticket not found.'));
         if (viewer == null) return const BrandedLoaderCenter();
         return _buildBody(context, ticket, viewer);
       },
@@ -64,16 +71,34 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
   Widget _buildBody(BuildContext context, Ticket ticket, AppUser viewer) {
     final isAssignee = viewer.id == ticket.assignedTo;
     final canAssign =
-        (viewer.role == UserRole.supportCoordinator || viewer.role == UserRole.pfmManagement) &&
+        (viewer.role == UserRole.supportCoordinator ||
+            viewer.role == UserRole.pfmManagement) &&
         ticket.status != TicketStatus.closed;
-    final canEscalate = (viewer.role == UserRole.supportCoordinator && ticket.status != TicketStatus.closed && ticket.status != TicketStatus.resolved) ||
-        ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) &&
+    final canEscalate =
+        (viewer.role == UserRole.supportCoordinator &&
+            ticket.status != TicketStatus.closed &&
+            ticket.status != TicketStatus.resolved) ||
+        ((viewer.role == UserRole.functionalLead ||
+                viewer.role == UserRole.technicalLead) &&
             isAssignee &&
             ticket.status != TicketStatus.closed &&
             ticket.status != TicketStatus.resolved &&
             ticket.escalationLevel < 2);
-    final canStartWork = isAssignee && const {TicketStatus.assigned, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
-    final canResolve = isAssignee && const {TicketStatus.assigned, TicketStatus.inProgress, TicketStatus.escalated, TicketStatus.reopened}.contains(ticket.status);
+    final canStartWork =
+        isAssignee &&
+        const {
+          TicketStatus.assigned,
+          TicketStatus.escalated,
+          TicketStatus.reopened,
+        }.contains(ticket.status);
+    final canResolve =
+        isAssignee &&
+        const {
+          TicketStatus.assigned,
+          TicketStatus.inProgress,
+          TicketStatus.escalated,
+          TicketStatus.reopened,
+        }.contains(ticket.status);
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -82,8 +107,16 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
         children: [
           Row(
             children: [
-              TextButton(onPressed: () => context.popOrGo('/tickets'), child: const Text('← Tickets')),
-              Text(' / #${ticket.ticketReference}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+              TextButton(
+                onPressed: () => context.popOrGo('/tickets'),
+                child: const Text('← Tickets'),
+              ),
+              Text(
+                ' / #${ticket.ticketReference}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+              ),
               const Spacer(),
               // Plain FilledButton/FilledButton.icon silently fails to paint
               // here (repro'd: TextButton renders fine in the same spot,
@@ -96,7 +129,16 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
               IntrinsicWidth(
                 child: FilledButton.icon(
                   key: _actionsButtonKey,
-                  onPressed: () => _showActionsMenu(context, ticket, viewer, isAssignee, canAssign, canEscalate, canStartWork, canResolve),
+                  onPressed: () => _showActionsMenu(
+                    context,
+                    ticket,
+                    viewer,
+                    isAssignee,
+                    canAssign,
+                    canEscalate,
+                    canStartWork,
+                    canResolve,
+                  ),
                   icon: const Icon(Icons.more_horiz_rounded, size: 18),
                   label: const Text('Actions'),
                 ),
@@ -108,9 +150,21 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(flex: 3, child: _MainColumn(ticket: ticket, tabController: _tabController, noteController: _noteController)),
+                Expanded(
+                  flex: 3,
+                  child: _MainColumn(
+                    ticket: ticket,
+                    tabController: _tabController,
+                    noteController: _noteController,
+                  ),
+                ),
                 const SizedBox(width: 20),
-                Expanded(flex: 1, child: SingleChildScrollView(child: _SidebarColumn(ticket: ticket))),
+                Expanded(
+                  flex: 1,
+                  child: SingleChildScrollView(
+                    child: _SidebarColumn(ticket: ticket),
+                  ),
+                ),
               ],
             ),
           ),
@@ -129,12 +183,16 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
     bool canStartWork,
     bool canResolve,
   ) {
-    final button = _actionsButtonKey.currentContext!.findRenderObject() as RenderBox;
+    final button =
+        _actionsButtonKey.currentContext!.findRenderObject() as RenderBox;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset(0, button.size.height), ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
       ),
       Offset.zero & overlay.size,
     );
@@ -147,94 +205,138 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
             onTap: () => context.push('/tickets/${ticket.id}/assign'),
             child: Text(ticket.assignedTo == null ? 'Assign' : 'Reassign'),
           ),
-        if (canEscalate) PopupMenuItem(onTap: () => _showEscalateDialog(context, ticket, viewer), child: const Text('Escalate')),
-        if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && canStartWork)
+        if (canEscalate)
+          PopupMenuItem(
+            onTap: () => _showEscalateDialog(context, ticket, viewer),
+            child: const Text('Escalate'),
+          ),
+        if ((viewer.role == UserRole.functionalLead ||
+                viewer.role == UserRole.technicalLead) &&
+            canStartWork)
           PopupMenuItem(
             onTap: () => _changeStatus(ticket, viewer, TicketStatus.inProgress),
             child: const Text('Start Work'),
           ),
-        if ((viewer.role == UserRole.functionalLead || viewer.role == UserRole.technicalLead) && canResolve)
+        if ((viewer.role == UserRole.functionalLead ||
+                viewer.role == UserRole.technicalLead) &&
+            canResolve)
           PopupMenuItem(
             onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
             child: const Text('Resolve'),
           ),
         if (viewer.role == UserRole.vendorSupport && canResolve)
-          PopupMenuItem(onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved), child: const Text('Resolve')),
-        if (viewer.role == UserRole.pfmManagement && (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed))
+          PopupMenuItem(
+            onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
+            child: const Text('Resolve'),
+          ),
+        if (viewer.role == UserRole.pfmManagement &&
+            (ticket.status == TicketStatus.resolved ||
+                ticket.status == TicketStatus.closed))
           PopupMenuItem(
             onTap: () => _changeStatus(ticket, viewer, TicketStatus.reopened),
             child: const Text('Reopen Ticket'),
           ),
-        if (viewer.role.hasBackOfficeAccess && ticket.status == TicketStatus.resolved)
+        if (viewer.role.hasBackOfficeAccess &&
+            ticket.status == TicketStatus.resolved)
           PopupMenuItem(
-            onTap: () => ref.read(ticketRepositoryProvider).close(ticketId: ticket.id, actorId: viewer.id),
+            onTap: () => ref
+                .read(ticketRepositoryProvider)
+                .close(ticketId: ticket.id, actorId: viewer.id),
             child: const Text('Close Ticket'),
           ),
         // Mirrors TicketChatScreen's _chatClosed: once resolved/closed, the
         // chat stops accepting new messages from either side — otherwise a
         // desktop agent could post into a conversation the requester was
         // just told had ended.
-        if (ticket.status != TicketStatus.resolved && ticket.status != TicketStatus.closed)
-          PopupMenuItem(onTap: () => _showCommentDialog(context, ticket, viewer), child: const Text('Add Chat Message')),
+        if (ticket.status != TicketStatus.resolved &&
+            ticket.status != TicketStatus.closed)
+          PopupMenuItem(
+            onTap: () => _showCommentDialog(context, ticket, viewer),
+            child: const Text('Add Chat Message'),
+          ),
       ],
     );
   }
 
-  Future<void> _changeStatus(Ticket ticket, AppUser viewer, TicketStatus status) {
-    return ref.read(ticketRepositoryProvider).changeStatus(
-          ticketId: ticket.id,
-          to: status,
-          actorId: viewer.id,
-        );
+  Future<void> _changeStatus(
+    Ticket ticket,
+    AppUser viewer,
+    TicketStatus status,
+  ) {
+    return ref
+        .read(ticketRepositoryProvider)
+        .changeStatus(ticketId: ticket.id, to: status, actorId: viewer.id);
   }
 
-  void _showEscalateDialog(BuildContext context, Ticket ticket, AppUser viewer) {
+  void _showEscalateDialog(
+    BuildContext context,
+    Ticket ticket,
+    AppUser viewer,
+  ) {
     final targetLevel = ticket.escalationLevel < 1 ? 1 : 2;
     showDialog(
       context: context,
-      builder: (dialogContext) => Consumer(builder: (dialogContext, ref, _) {
-        final usersAsync = ref.watch(assignableUsersProvider);
-        return AlertDialog(
-          title: Text(targetLevel == 1 ? 'Escalate to Applications Systems Unit' : 'Escalate to Vendor/Specialist'),
-          content: usersAsync.when(
-            loading: () => const SizedBox(height: 80, child: BrandedLoaderCenter()),
-            error: (e, _) => const Text('Users unavailable'),
-            data: (users) {
-              final eligible = users.where((u) {
-                if (targetLevel == 1) {
-                  // One Applications Systems Unit now — the functional/
-                  // technical split no longer maps to distinct people, so
-                  // level-1 escalation targets any active APPS member.
-                  return u.role == UserRole.functionalLead || u.role == UserRole.technicalLead;
-                }
-                return u.role == UserRole.vendorSupport;
-              }).toList();
-              return SizedBox(
-                width: 320,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: eligible
-                      .map((u) => ListTile(
+      builder: (dialogContext) => Consumer(
+        builder: (dialogContext, ref, _) {
+          final usersAsync = ref.watch(assignableUsersProvider);
+          return AlertDialog(
+            title: Text(
+              targetLevel == 1
+                  ? 'Escalate to Applications Systems Unit'
+                  : 'Escalate to Vendor/Specialist',
+            ),
+            content: usersAsync.when(
+              loading: () =>
+                  const SizedBox(height: 80, child: BrandedLoaderCenter()),
+              error: (e, _) => const Text('Users unavailable'),
+              data: (users) {
+                final eligible = users.where((u) {
+                  if (targetLevel == 1) {
+                    // One Applications Systems Unit now — the functional/
+                    // technical split no longer maps to distinct people, so
+                    // level-1 escalation targets any active APPS member.
+                    return u.role == UserRole.functionalLead ||
+                        u.role == UserRole.technicalLead;
+                  }
+                  return u.role == UserRole.vendorSupport;
+                }).toList();
+                return SizedBox(
+                  width: 320,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: eligible
+                        .map(
+                          (u) => ListTile(
                             title: Text(u.name),
                             subtitle: Text(u.role.shortLabel),
                             onTap: () async {
-                              await ref.read(ticketRepositoryProvider).escalate(
+                              await ref
+                                  .read(ticketRepositoryProvider)
+                                  .escalate(
                                     ticketId: ticket.id,
                                     toLevel: targetLevel,
                                     assigneeId: u.id,
                                     actorId: viewer.id,
                                   );
-                              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                              if (dialogContext.mounted)
+                                Navigator.of(dialogContext).pop();
                             },
-                          ))
-                      .toList(),
-                ),
-              );
-            },
-          ),
-          actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel'))],
-        );
-      }),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                );
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -244,13 +346,26 @@ class _DesktopTicketDetailScreenState extends ConsumerState<DesktopTicketDetailS
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Add Chat Message'),
-        content: TextField(controller: noteController, decoration: const InputDecoration(labelText: 'Message'), maxLines: 3),
+        content: TextField(
+          controller: noteController,
+          decoration: const InputDecoration(labelText: 'Message'),
+          maxLines: 3,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               if (noteController.text.trim().isEmpty) return;
-              await ref.read(ticketRepositoryProvider).addComment(ticketId: ticket.id, actorId: viewer.id, note: noteController.text.trim());
+              await ref
+                  .read(ticketRepositoryProvider)
+                  .addComment(
+                    ticketId: ticket.id,
+                    actorId: viewer.id,
+                    note: noteController.text.trim(),
+                  );
               if (dialogContext.mounted) Navigator.of(dialogContext).pop();
             },
             child: const Text('Post'),
@@ -266,7 +381,11 @@ class _MainColumn extends ConsumerWidget {
   final TabController tabController;
   final TextEditingController noteController;
 
-  const _MainColumn({required this.ticket, required this.tabController, required this.noteController});
+  const _MainColumn({
+    required this.ticket,
+    required this.tabController,
+    required this.noteController,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -279,36 +398,64 @@ class _MainColumn extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(ticket.title, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 10),
-                Wrap(spacing: 8, runSpacing: 8, children: [
-                  TicketStatusChip(status: ticket.status),
-                  TicketPriorityChip(priority: ticket.priority),
-                  _PlainBadge(label: ticket.category.label),
-                ]),
-                const SizedBox(height: 16),
-                Text(ticket.description, style: Theme.of(context).textTheme.bodyMedium),
-                if (ticket.attachmentUrls.isNotEmpty) ...[
+          Flexible(
+            fit: FlexFit.loose,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ticket.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TicketStatusChip(status: ticket.status),
+                      TicketPriorityChip(priority: ticket.priority),
+                      _PlainBadge(label: ticket.categoryLabel),
+                    ],
+                  ),
                   const SizedBox(height: 16),
-                  TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
+                  Text(
+                    ticket.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  if (ticket.attachmentUrls.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    TicketAttachmentsSection(
+                      attachmentUrls: ticket.attachmentUrls,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           Container(
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
+            ),
             child: TabBar(
               controller: tabController,
               isScrollable: true,
               labelColor: AppTheme.navy,
-              unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              unselectedLabelColor: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant,
               indicatorColor: AppTheme.navy,
-              tabs: const [Tab(text: 'Timeline'), Tab(text: 'Chat'), Tab(text: 'Details'), Tab(text: 'SLA')],
+              tabs: const [
+                Tab(text: 'Timeline'),
+                Tab(text: 'Chat'),
+                Tab(text: 'Details'),
+                Tab(text: 'SLA'),
+              ],
               // Chat is a full dedicated page (same one mobile uses), not an
               // inline pane like the other three tabs — TabController.animateTo
               // has already run by the time onTap fires, so this snaps the
@@ -339,33 +486,55 @@ class _MainColumn extends ConsumerWidget {
           // once resolved/closed, mirroring TicketChatScreen's _chatClosed
           // so this screen can't be used to post into a conversation the
           // requester was told had ended.
-          if (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed)
+          if (ticket.status == TicketStatus.resolved ||
+              ticket.status == TicketStatus.closed)
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+              ),
               child: Text(
                 'This ticket is ${ticket.status == TicketStatus.closed ? 'closed' : 'resolved'} — chat is now closed.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             )
           else
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: noteController,
-                      decoration: const InputDecoration(hintText: 'Add chat message...'),
+                      decoration: const InputDecoration(
+                        hintText: 'Add chat message...',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   FilledButton(
                     onPressed: () async {
-                      final viewer = ref.read(currentAppUserProvider).valueOrNull;
-                      if (viewer == null || noteController.text.trim().isEmpty) return;
-                      await ref.read(ticketRepositoryProvider).addComment(
+                      final viewer = ref
+                          .read(currentAppUserProvider)
+                          .valueOrNull;
+                      if (viewer == null || noteController.text.trim().isEmpty)
+                        return;
+                      await ref
+                          .read(ticketRepositoryProvider)
+                          .addComment(
                             ticketId: ticket.id,
                             actorId: viewer.id,
                             note: noteController.text.trim(),
@@ -384,24 +553,24 @@ class _MainColumn extends ConsumerWidget {
 }
 
 IconData _activityIcon(TicketActivityAction action) => switch (action) {
-      TicketActivityAction.created => Icons.add_circle_outline_rounded,
-      TicketActivityAction.assigned => Icons.person_add_alt_rounded,
-      TicketActivityAction.statusChanged => Icons.sync_alt_rounded,
-      TicketActivityAction.escalated => Icons.arrow_upward_rounded,
-      TicketActivityAction.commented => Icons.chat_bubble_outline_rounded,
-      TicketActivityAction.reopened => Icons.replay_rounded,
-      TicketActivityAction.closed => Icons.lock_outline_rounded,
-    };
+  TicketActivityAction.created => Icons.add_circle_outline_rounded,
+  TicketActivityAction.assigned => Icons.person_add_alt_rounded,
+  TicketActivityAction.statusChanged => Icons.sync_alt_rounded,
+  TicketActivityAction.escalated => Icons.arrow_upward_rounded,
+  TicketActivityAction.commented => Icons.chat_bubble_outline_rounded,
+  TicketActivityAction.reopened => Icons.replay_rounded,
+  TicketActivityAction.closed => Icons.lock_outline_rounded,
+};
 
 Color _activityColor(TicketActivityAction action) => switch (action) {
-      TicketActivityAction.created => AppTheme.accentBlue,
-      TicketActivityAction.assigned => StatusColors.assigned,
-      TicketActivityAction.statusChanged => AppTheme.accentBlue,
-      TicketActivityAction.escalated => StatusColors.critical,
-      TicketActivityAction.commented => StatusColors.closed,
-      TicketActivityAction.reopened => StatusColors.critical,
-      TicketActivityAction.closed => StatusColors.closed,
-    };
+  TicketActivityAction.created => AppTheme.accentBlue,
+  TicketActivityAction.assigned => StatusColors.assigned,
+  TicketActivityAction.statusChanged => AppTheme.accentBlue,
+  TicketActivityAction.escalated => StatusColors.critical,
+  TicketActivityAction.commented => StatusColors.closed,
+  TicketActivityAction.reopened => StatusColors.critical,
+  TicketActivityAction.closed => StatusColors.closed,
+};
 
 String _describeActivity(TicketActivity a) {
   switch (a.action) {
@@ -434,7 +603,8 @@ class _TimelineView extends ConsumerWidget {
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => const Center(child: Text('Timeline unavailable')),
       data: (activity) {
-        if (activity.isEmpty) return const Center(child: Text('No activity yet.'));
+        if (activity.isEmpty)
+          return const Center(child: Text('No activity yet.'));
         return ListView.builder(
           padding: const EdgeInsets.all(20),
           itemCount: activity.length,
@@ -448,8 +618,15 @@ class _TimelineView extends ConsumerWidget {
                   Container(
                     width: 30,
                     height: 30,
-                    decoration: BoxDecoration(color: _activityColor(a.action).withValues(alpha: 0.12), shape: BoxShape.circle),
-                    child: Icon(_activityIcon(a.action), size: 15, color: _activityColor(a.action)),
+                    decoration: BoxDecoration(
+                      color: _activityColor(a.action).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _activityIcon(a.action),
+                      size: 15,
+                      color: _activityColor(a.action),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -458,13 +635,24 @@ class _TimelineView extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Expanded(child: Text(_describeActivity(a), style: Theme.of(context).textTheme.titleSmall)),
-                            Text(DateFormat.MMMd().add_jm().format(a.timestamp), style: Theme.of(context).textTheme.bodySmall),
+                            Expanded(
+                              child: Text(
+                                _describeActivity(a),
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                            ),
+                            Text(
+                              DateFormat.MMMd().add_jm().format(a.timestamp),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ],
                         ),
                         if (a.note != null && a.note!.isNotEmpty) ...[
                           const SizedBox(height: 3),
-                          Text(a.note!, style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            a.note!,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ],
                     ),
@@ -491,9 +679,13 @@ class _ConversationView extends ConsumerWidget {
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => const Center(child: Text('Conversation unavailable')),
       data: (activity) {
-        final comments = activity.where((a) => a.action == TicketActivityAction.commented).toList()
-          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        if (comments.isEmpty) return const Center(child: Text('No chat messages yet.'));
+        final comments =
+            activity
+                .where((a) => a.action == TicketActivityAction.commented)
+                .toList()
+              ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        if (comments.isEmpty)
+          return const Center(child: Text('No chat messages yet.'));
         return ListView.builder(
           padding: const EdgeInsets.all(20),
           itemCount: comments.length,
@@ -509,9 +701,15 @@ class _ConversationView extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(c.note ?? '', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    c.note ?? '',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 4),
-                  Text(DateFormat.MMMd().add_jm().format(c.timestamp), style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    DateFormat.MMMd().add_jm().format(c.timestamp),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             );
@@ -532,14 +730,20 @@ class _DetailsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _InfoRow(label: 'Category', value: ticket.category.label),
-        if (ticket.subCategory.isNotEmpty) _InfoRow(label: 'Sub-category', value: ticket.subCategory),
+        _InfoRow(label: 'Category', value: ticket.categoryLabel),
+        if (ticket.subCategory.isNotEmpty)
+          _InfoRow(label: 'Sub-category', value: ticket.subCategory),
         _InfoRow(label: 'Priority', value: ticket.priority.label),
         _InfoRow(label: 'Impact', value: ticket.impact.label),
         _InfoRow(label: 'Status', value: ticket.status.label),
         _InfoRow(label: 'Escalation Level', value: '${ticket.escalationLevel}'),
-        _InfoRow(label: 'Created', value: DateFormat.yMMMd().add_jm().format(ticket.createdAt)),
-        if (ticket.resolutionNotes != null && ticket.resolutionNotes!.isNotEmpty) _InfoRow(label: 'Resolution Notes', value: ticket.resolutionNotes!),
+        _InfoRow(
+          label: 'Created',
+          value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
+        ),
+        if (ticket.resolutionNotes != null &&
+            ticket.resolutionNotes!.isNotEmpty)
+          _InfoRow(label: 'Resolution Notes', value: ticket.resolutionNotes!),
       ],
     );
   }
@@ -552,25 +756,38 @@ class _SlaView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final policy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final policy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
     final targetHours = policy.targetHoursFor(ticket.priority);
     final due = ticket.createdAt.add(Duration(hours: targetHours));
     final resolvedAt = ticket.resolvedAt ?? ticket.closedAt;
-    final met = resolvedAt != null ? SlaCalculator.metSla(ticket, policy) : null;
+    final met = resolvedAt != null
+        ? SlaCalculator.metSla(ticket, policy)
+        : null;
     final overdue = SlaCalculator.isOverdue(ticket, policy);
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _InfoRow(label: 'Target Resolution Window', value: '$targetHours hours (${ticket.priority.label})'),
-        _InfoRow(label: 'SLA Due', value: DateFormat.yMMMd().add_jm().format(due)),
+        _InfoRow(
+          label: 'Target Resolution Window',
+          value: '$targetHours hours (${ticket.priority.label})',
+        ),
+        _InfoRow(
+          label: 'SLA Due',
+          value: DateFormat.yMMMd().add_jm().format(due),
+        ),
         if (resolvedAt != null)
           _InfoRow(
             label: 'Resolved',
-            value: '${DateFormat.yMMMd().add_jm().format(resolvedAt)} · ${met! ? 'Within SLA' : 'Breached SLA'}',
+            value:
+                '${DateFormat.yMMMd().add_jm().format(resolvedAt)} · ${met! ? 'Within SLA' : 'Breached SLA'}',
           )
         else
-          _InfoRow(label: 'Current Status', value: overdue ? 'Overdue' : 'Within SLA'),
+          _InfoRow(
+            label: 'Current Status',
+            value: overdue ? 'Overdue' : 'Within SLA',
+          ),
       ],
     );
   }
@@ -589,8 +806,13 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 160, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
-          Expanded(child: Text(value, style: Theme.of(context).textTheme.bodyMedium)),
+          SizedBox(
+            width: 160,
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          Expanded(
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          ),
         ],
       ),
     );
@@ -604,8 +826,11 @@ class _SidebarColumn extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final policy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
-    final due = ticket.createdAt.add(Duration(hours: policy.targetHoursFor(ticket.priority)));
+    final policy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final due = ticket.createdAt.add(
+      Duration(hours: policy.targetHoursFor(ticket.priority)),
+    );
     final viewer = ref.watch(currentAppUserProvider).valueOrNull;
 
     return Column(
@@ -617,9 +842,15 @@ class _SidebarColumn extends ConsumerWidget {
               _InfoRow(label: 'ID', value: ticket.ticketReference),
               _InfoRow(label: 'Status', value: ticket.status.label),
               _InfoRow(label: 'Priority', value: ticket.priority.label),
-              _InfoRow(label: 'Category', value: ticket.category.label),
-              _InfoRow(label: 'Created', value: DateFormat.yMMMd().format(ticket.createdAt)),
-              _InfoRow(label: 'Last Updated', value: DateFormat.yMMMd().format(ticket.updatedAt)),
+              _InfoRow(label: 'Category', value: ticket.categoryLabel),
+              _InfoRow(
+                label: 'Created',
+                value: DateFormat.yMMMd().format(ticket.createdAt),
+              ),
+              _InfoRow(
+                label: 'Last Updated',
+                value: DateFormat.yMMMd().format(ticket.updatedAt),
+              ),
             ],
           ),
         ),
@@ -627,7 +858,10 @@ class _SidebarColumn extends ConsumerWidget {
         if (viewer?.role.hasBackOfficeAccess ?? false) ...[
           _SidebarCard(
             title: 'Requested By',
-            child: _AssigneeInfo(userId: ticket.createdBy, showInstitution: true),
+            child: _AssigneeInfo(
+              userId: ticket.createdBy,
+              showInstitution: true,
+            ),
           ),
           const SizedBox(height: 16),
         ],
@@ -638,16 +872,26 @@ class _SidebarColumn extends ConsumerWidget {
                 ? _AssigneeInfo(userId: ticket.assignedTo!)
                 // Requester can't read the assignee's users/{uid} doc — show
                 // the denormalized name from the ticket.
-                : Text(ticket.assignedToName ?? 'A support agent', style: Theme.of(context).textTheme.bodyMedium),
+                : Text(
+                    ticket.assignedToName ?? 'A support agent',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
           ),
         const SizedBox(height: 16),
         _SidebarCard(
           title: 'SLA Due',
           child: Row(
             children: [
-              const Icon(Icons.event_outlined, size: 16, color: AppTheme.accentBlue),
+              const Icon(
+                Icons.event_outlined,
+                size: 16,
+                color: AppTheme.accentBlue,
+              ),
               const SizedBox(width: 8),
-              Text(DateFormat.yMMMd().add_jm().format(due), style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                DateFormat.yMMMd().add_jm().format(due),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
           ),
         ),
@@ -705,7 +949,8 @@ class _AssigneeInfo extends ConsumerWidget {
         if (user == null) return const Text('Not found.');
         var subtitle = user.role.shortLabel;
         if (showInstitution) {
-          final institutions = ref.watch(institutionListProvider).valueOrNull ?? const [];
+          final institutions =
+              ref.watch(institutionListProvider).valueOrNull ?? const [];
           var institutionLabel = user.institutionType.wireValue;
           for (final i in institutions) {
             if (i.id == user.institutionId) {
@@ -720,14 +965,23 @@ class _AssigneeInfo extends ConsumerWidget {
             CircleAvatar(
               radius: 18,
               backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
-              child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : '?', style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800)),
+              child: Text(
+                user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    user.name,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
@@ -748,8 +1002,16 @@ class _PlainBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: AppTheme.ink.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(AppRadius.pill)),
-      child: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.ink)),
+      decoration: BoxDecoration(
+        color: AppTheme.ink.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: AppTheme.ink),
+      ),
     );
   }
 }

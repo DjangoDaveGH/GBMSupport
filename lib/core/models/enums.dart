@@ -4,7 +4,7 @@
 library;
 
 enum UserRole {
-  mdaUser,
+  endUser,
   focalPerson,
   supportCoordinator,
   functionalLead,
@@ -13,7 +13,7 @@ enum UserRole {
   vendorSupport;
 
   String get wireValue => switch (this) {
-        UserRole.mdaUser => 'mda_user',
+        UserRole.endUser => 'end_user',
         UserRole.focalPerson => 'focal_person',
         UserRole.supportCoordinator => 'support_coordinator',
         UserRole.functionalLead => 'functional_lead',
@@ -29,17 +29,20 @@ enum UserRole {
   // than take down the whole currentAppUserProvider stream (which otherwise
   // reads as "no user" with no diagnostic and bounces the account to
   // /login in a loop it can never escape without a direct Firestore edit).
-  static UserRole fromWire(String value) => UserRole.values.firstWhere(
+  static UserRole fromWire(String value) {
+    if (value == 'mda_user') return UserRole.endUser;
+    return UserRole.values.firstWhere(
         (r) => r.wireValue == value,
-        orElse: () => UserRole.mdaUser,
+        orElse: () => UserRole.endUser,
       );
+  }
 
   /// Human-readable label only — the wire value (`functional_lead`,
   /// `pfm_management`, …) is what firestore.rules, the Cloud Functions and
   /// scoping logic key on, and never changes. Use [shortLabel] in tight UI
   /// (table cells, list subtitles, chips); [label] in forms/dropdowns.
   String get label => switch (this) {
-        UserRole.mdaUser => 'MDA/MMDA User',
+        UserRole.endUser => 'End User (MDA/MMDA)',
         UserRole.focalPerson => 'MDA/MMDA Focal Person',
         UserRole.supportCoordinator => 'Support Coordinator',
         UserRole.functionalLead => 'Team Member, Applications Systems Unit',
@@ -49,7 +52,7 @@ enum UserRole {
       };
 
   String get shortLabel => switch (this) {
-        UserRole.mdaUser => 'MDA/MMDA User',
+        UserRole.endUser => 'End User',
         UserRole.focalPerson => 'Focal Person',
         UserRole.supportCoordinator => 'Support Coordinator',
         UserRole.functionalLead => 'APPS Team Member',
@@ -64,7 +67,7 @@ enum UserRole {
   /// — see TicketRepository.scopedQuery). Used for home-screen layout choice
   /// (stat-card view vs. "your open tickets" + new-ticket FAB) and similar
   /// "is this a support-handling account at all" checks.
-  bool get isSupportSide => this != UserRole.mdaUser && this != UserRole.focalPerson;
+  bool get isSupportSide => this != UserRole.endUser && this != UserRole.focalPerson;
 
   /// Narrower than [isSupportSide]: Coordinator/Leads/Management only —
   /// mirrors firestore.rules' `isSupportSide()` exactly. Vendor/Specialist
@@ -74,7 +77,7 @@ enum UserRole {
   /// any permission beyond "can see a ticket handed to them."
   bool get hasBackOfficeAccess => switch (this) {
         UserRole.supportCoordinator || UserRole.functionalLead || UserRole.technicalLead || UserRole.pfmManagement => true,
-        UserRole.mdaUser || UserRole.focalPerson || UserRole.vendorSupport => false,
+        UserRole.endUser || UserRole.focalPerson || UserRole.vendorSupport => false,
       };
 }
 

@@ -35,8 +35,15 @@ class AppNotification {
       title: map['title'] as String?,
       message: map['message'] as String? ?? '',
       read: map['read'] as bool? ?? false,
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: _readCreatedAt(map['createdAt']),
     );
+  }
+
+  static DateTime _readCreatedAt(Object? value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
   }
 
   Map<String, dynamic> toMap() => {

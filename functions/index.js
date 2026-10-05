@@ -47,12 +47,266 @@
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated, onDocumentUpdated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {randomBytes} = require("crypto");
+const {randomBytes, randomInt, createHash} = require("crypto");
+const {defineSecret} = require("firebase-functions/params");
+const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 
+const GMAIL_USER = defineSecret("GMAIL_USER");
+const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
+const GUEST_CATEGORIES = [
+  "Login & Account Access", "Registration & Onboarding", "Tender Creation & Publishing",
+  "Bid Submission", "Evaluation & Award", "Payments & Fees", "Notifications & Emails",
+  "User Roles & Permissions", "General Support",
+];
+
+function mailTransport() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value()},
+  });
+}
+
+function cleanText(value, max) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function digest(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+async function consumeRateLimit(db, key, max, windowMs) {
+  const ref = db.collection("guest_rate_limits").doc(digest(key));
+  const now = Date.now();
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const start = data.windowStart || now;
+    const count = now - start > windowMs ? 0 : (data.count || 0);
+    if (count >= max) return false;
+    tx.set(ref, {windowStart: now - start > windowMs ? now : start, count: count + 1, expiresAt: admin.firestore.Timestamp.fromMillis(now + windowMs * 2)});
+    return true;
+  });
+}
+
+exports.submitGuestTicket = onCall({secrets: [GMAIL_USER, GMAIL_APP_PASSWORD]}, async (request) => {
+  const data = request.data || {};
+  const system = cleanText(data.system, 16).toLowerCase();
+  const requesterType = cleanText(data.requesterType, 20).toLowerCase();
+  const email = cleanText(data.email, 254).toLowerCase();
+  const phone = cleanText(data.phone, 40);
+  const category = cleanText(data.category, 80);
+  const title = cleanText(data.title, 120);
+  const description = cleanText(data.description, 4000);
+  const rawAttachments = data.attachments === undefined ? [] : data.attachments;
+  if (!["ghaneps", "gifmis"].includes(system) || requesterType !== "public" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.length < 7 ||
+      !GUEST_CATEGORIES.includes(category) || title.length < 4 || description.length < 10 ||
+      !Array.isArray(rawAttachments) || rawAttachments.length > 3) {
+    throw new HttpsError("invalid-argument", "Please provide valid ticket details.");
+  }
+  const attachments = [];
+  let totalAttachmentBytes = 0;
+  for (const item of rawAttachments) {
+    const name = cleanText(item?.name, 120);
+    const contentType = cleanText(item?.contentType, 40).toLowerCase();
+    const encoded = typeof item?.data === "string" ? item.data : "";
+    const expectedType = contentType === "image/png" ? "png" :
+      contentType === "image/jpeg" ? "jpeg" :
+      contentType === "application/pdf" ? "pdf" : null;
+    if (!expectedType || !name || encoded.length > 7 * 1024 * 1024 ||
+        !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) {
+      throw new HttpsError("invalid-argument", "Attachments must be JPG, PNG, or PDF files.");
+    }
+    const bytes = Buffer.from(encoded, "base64");
+    const signatureOk = expectedType === "png" ? bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")) :
+      expectedType === "jpeg" ? bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff :
+      bytes.subarray(0, 5).toString("ascii") === "%PDF-";
+    if (!signatureOk || bytes.length === 0) {
+      throw new HttpsError("invalid-argument", "An attachment could not be read. Please select it again.");
+    }
+    totalAttachmentBytes += bytes.length;
+    if (totalAttachmentBytes > 5 * 1024 * 1024) {
+      throw new HttpsError("invalid-argument", "Attachments may not exceed 5 MB in total.");
+    }
+    attachments.push({name, contentType, bytes});
+  }
+  const db = admin.firestore();
+  const ip = request.rawRequest?.ip || "unknown";
+  if (!await consumeRateLimit(db, `submit-ip:${ip}`, 8, 60 * 60 * 1000) ||
+      !await consumeRateLimit(db, `submit-email:${email}`, 3, 60 * 60 * 1000)) {
+    throw new HttpsError("resource-exhausted", "Please wait before submitting another ticket.");
+  }
+  const now = new Date();
+  const year = now.getFullYear();
+  const counter = db.collection("counters").doc(`tickets_${year}`);
+  const ticketRef = db.collection("tickets").doc();
+  let ticketReference;
+  const uploadedObjects = [];
+  const attachmentUrls = [];
+  try {
+    if (attachments.length) {
+      const bucket = admin.storage().bucket();
+      for (let i = 0; i < attachments.length; i++) {
+        const attachment = attachments[i];
+        const safeName = attachment.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || `attachment-${i + 1}`;
+        const objectPath = `attachments/guest/${ticketRef.id}/${i + 1}-${safeName}`;
+        const token = randomBytes(24).toString("hex");
+        const file = bucket.file(objectPath);
+        await file.save(attachment.bytes, {
+          resumable: false,
+          metadata: {
+            contentType: attachment.contentType,
+            metadata: {firebaseStorageDownloadTokens: token},
+          },
+        });
+        uploadedObjects.push(file);
+        attachmentUrls.push(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(objectPath)}?alt=media&token=${token}`);
+      }
+    }
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(counter);
+      const sequence = (snap.data()?.count || 0) + 1;
+      ticketReference = `PFMSD-${year}-${String(sequence).padStart(6, "0")}`;
+      tx.set(counter, {count: sequence}, {merge: true});
+      tx.set(ticketRef, {
+        ticketReference, createdBy: "guest", institutionId: "guest",
+        category: "general_enquiry", subCategory: "", system,
+        productCategoryId: category.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
+        productCategoryLabel: category, requesterType, requesterEmail: email, requesterPhone: phone,
+        title, description, attachmentUrls, priority: "medium", impact: "medium",
+        affectsMultipleUsers: false, status: "open", assignedTo: null, assignedToName: null,
+        escalationLevel: 0, createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      const activity = ticketRef.collection("activity").doc();
+      tx.set(activity, {ticketId: ticketRef.id, actorId: "guest", action: "created", toValue: "open", timestamp: admin.firestore.FieldValue.serverTimestamp()});
+    });
+  } catch (error) {
+    await Promise.all(uploadedObjects.map((file) => file.delete().catch(() => {})));
+    throw error;
+  }
+  let confirmationSent = false;
+  try {
+    await mailTransport().sendMail({
+      from: `Hyperion Support <${GMAIL_USER.value()}>`, to: email,
+      subject: `${system.toUpperCase()} support ticket ${ticketReference} received`,
+      text: `Your support ticket has been received.\n\nReference: ${ticketReference}\nProduct: ${system.toUpperCase()}\nCategory: ${category}\nIssue: ${title}\nDetails: ${description}\nSubmitted: ${now.toISOString()}\n\nCheck progress: ${request.rawRequest.headers.origin || "https://gbmsupport.web.app"}/guest/${system}?ticket=${ticketReference}`,
+    });
+    confirmationSent = true;
+  } catch (error) { console.error("Guest confirmation email failed", error); }
+  return {ticketReference, confirmationSent};
+});
+
+exports.requestGuestTicketStatusCode = onCall({secrets: [GMAIL_USER, GMAIL_APP_PASSWORD]}, async (request) => {
+  const reference = cleanText(request.data?.ticketReference, 40).toUpperCase();
+  const db = admin.firestore();
+  const ip = request.rawRequest?.ip || "unknown";
+  const generic = {message: "If the ticket details match, a verification code has been sent."};
+  if (!/^[A-Z0-9-]{8,40}$/.test(reference)) return generic;
+  const ipOk = await consumeRateLimit(db, `status-ip:${ip}`, 15, 60 * 60 * 1000);
+  if (!ipOk) return generic;
+  const matches = await db.collection("tickets").where("ticketReference", "==", reference).limit(1).get();
+  if (matches.empty || !matches.docs[0].data().requesterEmail) return generic;
+  const ticketDoc = matches.docs[0];
+  const ticket = ticketDoc.data();
+  const limiter = await consumeRateLimit(db, `status-ticket:${ticketDoc.id}`, 4, 60 * 60 * 1000);
+  if (!limiter) return generic;
+  const code = String(randomInt(100000, 1000000));
+  const otpRef = db.collection("guest_status_verifications").doc(ticketDoc.id);
+  await otpRef.set({codeHash: digest(`${ticketDoc.id}:${code}`), expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + 10 * 60 * 1000), attempts: 0, used: false, createdAt: admin.firestore.FieldValue.serverTimestamp()});
+  try {
+    await mailTransport().sendMail({from: `Hyperion Support <${GMAIL_USER.value()}>`, to: ticket.requesterEmail, subject: `Status verification for ${reference}`, text: `Your verification code is ${code}. It expires in 10 minutes. Do not share this code.`});
+  } catch (error) { console.error("Guest status code email failed", error); await otpRef.delete(); }
+  return generic;
+});
+
+exports.verifyGuestTicketStatusCode = onCall(async (request) => {
+  const reference = cleanText(request.data?.ticketReference, 40).toUpperCase();
+  const code = cleanText(request.data?.code, 6);
+  const db = admin.firestore();
+  const found = await db.collection("tickets").where("ticketReference", "==", reference).limit(1).get();
+  if (found.empty || !/^\d{6}$/.test(code)) throw new HttpsError("permission-denied", "The code is invalid or expired.");
+  const ticketDoc = found.docs[0];
+  const verifyRef = db.collection("guest_status_verifications").doc(ticketDoc.id);
+  const valid = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(verifyRef);
+    const v = snap.data();
+    if (!v || v.used || v.attempts >= 5 || v.expiresAt.toMillis() < Date.now()) return false;
+    const ok = v.codeHash === digest(`${ticketDoc.id}:${code}`);
+    tx.update(verifyRef, ok ? {used: true, codeHash: ""} : {attempts: v.attempts + 1});
+    return ok;
+  });
+  if (!valid) throw new HttpsError("permission-denied", "The code is invalid or expired.");
+  const ticket = ticketDoc.data();
+  const activities = await ticketDoc.ref.collection("activity").orderBy("timestamp", "asc").limit(50).get();
+  const history = activities.docs.map((doc) => ({status: doc.data().toValue || doc.data().action || "update", date: doc.data().timestamp?.toDate?.().toISOString() || null}));
+  return {ticketReference: ticket.ticketReference, system: ticket.system, category: ticket.productCategoryLabel, status: ticket.status, history};
+});
+
+// Public ticket tracking returns an explicit, allow-listed view from the
+// server. Guest clients never read ticket documents or activity collections.
+// References are rate-limited by client IP and ticket so the screen can match
+// the approved reference-only flow without exposing contact details,
+// attachments, or the full issue description.
+exports.lookupGuestTicketStatus = onCall(async (request) => {
+  const reference = cleanText(request.data?.ticketReference, 40).toUpperCase();
+  const generic = {found: false};
+  if (!/^PFMSD-\d{4}-\d{6}$/.test(reference)) return generic;
+
+  const db = admin.firestore();
+  const ip = request.rawRequest?.ip || "unknown";
+  if (!await consumeRateLimit(db, `status-lookup-ip:${ip}`, 12, 60 * 60 * 1000)) {
+    return generic;
+  }
+
+  const matches = await db.collection("tickets")
+      .where("ticketReference", "==", reference).limit(1).get();
+  if (matches.empty) return generic;
+
+  const ticketDoc = matches.docs[0];
+  const ticket = ticketDoc.data();
+  if (ticket.requesterType !== "public" || !["ghaneps", "gifmis"].includes(ticket.system)) {
+    return generic;
+  }
+  if (!await consumeRateLimit(db, `status-lookup-ticket:${ticketDoc.id}`, 24, 60 * 60 * 1000)) {
+    return generic;
+  }
+
+  const activities = await ticketDoc.ref.collection("activity")
+      .orderBy("timestamp", "asc").limit(50).get();
+  const history = activities.docs.map((doc) => {
+    const activity = doc.data();
+    return {
+      status: activity.toValue || activity.action || "update",
+      ...(activity.action === "commented" && activity.note ? {
+        message: cleanText(activity.note, 2000),
+        from: activity.actorId === "guest" ? "You" : "Support Team",
+      } : {}),
+      date: activity.timestamp?.toDate?.().toISOString() || null,
+    };
+  });
+  return {
+    found: true,
+    ticketReference: ticket.ticketReference,
+    system: ticket.system,
+    title: cleanText(ticket.title, 120),
+    category: cleanText(ticket.productCategoryLabel, 80),
+    status: cleanText(ticket.status, 40),
+    priority: cleanText(ticket.priority, 24),
+    assignedToName: cleanText(ticket.assignedToName, 100),
+    createdAt: ticket.createdAt?.toDate?.().toISOString() || null,
+    updatedAt: ticket.updatedAt?.toDate?.().toISOString() || null,
+    history,
+  };
+});
+
 const VALID_ROLES = [
+  "end_user",
+  // Kept temporarily so existing accounts remain serviceable until their
+  // custom claims are migrated to end_user.
   "mda_user",
   "focal_person",
   "support_coordinator",
@@ -444,7 +698,7 @@ const BROADCAST_AUDIENCES = ["all", "mda", "mmda", "staff"];
 // vendor_support) — "Staff" here means every internal/back-office account,
 // full stop.
 const STAFF_ROLES = ["support_coordinator", "functional_lead", "technical_lead", "pfm_management", "vendor_support"];
-const REQUESTER_ROLES = ["mda_user", "focal_person"];
+const REQUESTER_ROLES = ["end_user", "mda_user", "focal_person"];
 
 function matchesBroadcastAudience(userData, audience) {
   if (audience === "all") return true;
@@ -632,6 +886,20 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
   const ticket = event.data.data();
   const ticketId = event.params.ticketId;
 
+  // Guest tickets have no authenticated requester to notify. GHANEPS/GIFMIS
+  // tickets (including signed-in government users) are kept in the product
+  // queue for coordinator triage and must not enter GBMS auto-assignment.
+  if (ticket.createdBy === "guest") {
+    const msg = `New ${String(ticket.system || "support").toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
+    const coordinators = await notifyUsersWithRole("support_coordinator", {
+      type: "pending_action", message: msg, ticketId,
+    });
+    if (coordinators === 0) await notifyUsersWithRole("pfm_management", {
+      type: "pending_action", message: msg, ticketId,
+    });
+    return;
+  }
+
   // Requester: acknowledgement.
   await notifyUser({
     userId: ticket.createdBy,
@@ -639,6 +907,17 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
     message: `Your ticket ${ticket.ticketReference} has been received.`,
     ticketId,
   });
+
+  if (["ghaneps", "gifmis"].includes(ticket.system)) {
+    const msg = `New ${ticket.system.toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
+    const coordinators = await notifyUsersWithRole("support_coordinator", {
+      type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
+    });
+    if (coordinators === 0) await notifyUsersWithRole("pfm_management", {
+      type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
+    });
+    return;
+  }
 
   // Auto-assign from the category pool. The ticket update triggers
   // onTicketUpdated, which sends the assignee their "assigned to you" push.
@@ -726,17 +1005,15 @@ exports.onTicketUpdated = onDocumentUpdated("tickets/{ticketId}", async (event) 
         ticketId,
       });
     }
-    await notifyUser({
-      userId: after.createdBy,
-      type: "escalated",
-      message: `Your ticket ${after.ticketReference} has been escalated for further review.`,
-      ticketId,
+    if (after.createdBy !== "guest") await notifyUser({
+      userId: after.createdBy, type: "escalated",
+      message: `Your ticket ${after.ticketReference} has been escalated for further review.`, ticketId,
     });
   }
 
   // Resolved.
   if (before.status !== "resolved" && after.status === "resolved") {
-    await notifyUser({
+    if (after.createdBy !== "guest") await notifyUser({
       userId: after.createdBy,
       type: "resolved",
       message: `Your ticket ${after.ticketReference} has been resolved.`,
@@ -757,7 +1034,7 @@ exports.onTicketUpdated = onDocumentUpdated("tickets/{ticketId}", async (event) 
 
   // Closed — confirm to the requester, unless they closed it themselves.
   if (before.status !== "closed" && after.status === "closed" && after.closedBy !== after.createdBy) {
-    await notifyUser({
+    if (after.createdBy !== "guest") await notifyUser({
       userId: after.createdBy,
       type: "resolved",
       message: `Ticket ${after.ticketReference} has been closed.`,
@@ -820,6 +1097,27 @@ exports.onTicketActivityCreated = onDocumentCreated(
               .set({lastDeliveredAt: admin.firestore.FieldValue.serverTimestamp()}, {merge: true});
         } catch (error) {
           console.error(`chat delivered-receipt failed for ${userId} on ${ticketId}:`, error);
+        }
+      }
+
+      // If triage has not assigned the ticket yet, the requester still needs
+      // a live support audience for replies. Without this fallback an admin
+      // could open the ticket and see the chat, but receive no alert for it.
+      if (activity.actorId === ticket.createdBy && !ticket.assignedTo) {
+        const message = `New message on ticket ${ticket.ticketReference}.`;
+        const notified = await notifyUsersWithRole("support_coordinator", {
+          type: "commented",
+          message,
+          ticketId,
+          exclude: activity.actorId,
+        });
+        if (notified === 0) {
+          await notifyUsersWithRole("pfm_management", {
+            type: "commented",
+            message,
+            ticketId,
+            exclude: activity.actorId,
+          });
         }
       }
     },

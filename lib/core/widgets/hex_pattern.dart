@@ -34,3 +34,20 @@ class HexPatternBackground extends StatelessWidget {
     );
   }
 }
+
+/// The shared application canvas behind every routed screen. The pattern is
+/// stronger than the original wash, while remaining low-contrast enough for
+/// tables, forms, and long reading surfaces.
+class AppBackground extends StatelessWidget {
+  final Widget child;
+
+  const AppBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFFF3F6FB),
+      child: HexPatternBackground(opacity: 0.05, child: child),
+    );
+  }
+}

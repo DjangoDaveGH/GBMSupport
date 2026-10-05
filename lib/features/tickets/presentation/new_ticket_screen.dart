@@ -19,6 +19,29 @@ import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
 import 'package:uuid/uuid.dart';
 
 const _stepHeadlines = ['Select Issue Category', 'Describe Your Issue'];
+const _productIssueCategories = <String>[
+  'Login & Account Access',
+  'Registration & Onboarding',
+  'Tender Creation & Publishing',
+  'Bid Submission',
+  'Evaluation & Award',
+  'Payments & Fees',
+  'Notifications & Emails',
+  'User Roles & Permissions',
+  'General Support',
+];
+
+IconData _productCategoryIcon(String label) => switch (label) {
+  'Login & Account Access' => Icons.person_rounded,
+  'Registration & Onboarding' => Icons.account_balance_rounded,
+  'Tender Creation & Publishing' => Icons.gavel_rounded,
+  'Bid Submission' => Icons.check_box_outlined,
+  'Evaluation & Award' => Icons.description_outlined,
+  'Payments & Fees' => Icons.receipt_long_outlined,
+  'Notifications & Emails' => Icons.settings_rounded,
+  'User Roles & Permissions' => Icons.people_alt_rounded,
+  _ => Icons.lock_rounded,
+};
 
 /// The mockup's Step 2 is a single description box — no separate Title
 /// field. `Ticket.title` still exists (ticket-list rows, notifications, etc.
@@ -42,7 +65,8 @@ String _formatFileSize(int? bytes) {
 }
 
 class NewTicketScreen extends ConsumerStatefulWidget {
-  const NewTicketScreen({super.key});
+  final String? initialSystem;
+  const NewTicketScreen({super.key, this.initialSystem});
 
   @override
   ConsumerState<NewTicketScreen> createState() => _NewTicketScreenState();
@@ -54,6 +78,8 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   int _step = 0;
   TicketCategory? _category;
+  String _system = 'gbms';
+  String? _productCategory;
   bool _affectsMultipleUsers = false;
   final List<PlatformFile> _attachments = [];
   bool _submitting = false;
@@ -62,6 +88,9 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSystem == 'ghaneps' || widget.initialSystem == 'gifmis') {
+      _system = widget.initialSystem!;
+    }
     // The Continue button's enabled state depends on the live text in this
     // controller, so it needs a rebuild on every keystroke, not just when
     // the user taps something that already calls setState.
@@ -78,7 +107,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   }
 
   bool get _canAdvance => switch (_step) {
-    0 => _category != null,
+    0 => _system == 'gbms' ? _category != null : _productCategory != null,
     1 => _descriptionController.text.trim().isNotEmpty,
     _ => true,
   };
@@ -107,6 +136,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     setState(() {
       _step = 0;
       _category = null;
+      _productCategory = null;
       _affectsMultipleUsers = false;
       _attachments.clear();
       _submitting = false;
@@ -122,6 +152,15 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     setState(() => _category = c);
   }
 
+  void _selectProductCategory(String category) {
+    setState(() => _productCategory = category);
+  }
+
+  String _categoryId(String label) => label
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+
   Future<void> _pickAttachment() async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -134,7 +173,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   Future<void> _submit() async {
     final appUser = ref.read(currentAppUserProvider).valueOrNull;
-    if (appUser == null || _category == null) {
+    if (appUser == null || !_canAdvance && _step == 0) {
       return;
     }
 
@@ -147,7 +186,10 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     // Impact/Priority are no longer picked by the requester (dropped step
     // in the optimized flow) — both are auto-assigned from category. See
     // ImpactPriorityCalculator's doc comment for the derivation rule.
-    final impact = ImpactPriorityCalculator.deriveImpact(_category!);
+    final ticketCategory = _system == 'gbms'
+        ? _category!
+        : TicketCategory.generalEnquiry;
+    final impact = ImpactPriorityCalculator.deriveImpact(ticketCategory);
     final priority = ImpactPriorityCalculator.derivePriority(impact);
 
     try {
@@ -167,7 +209,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
             .createTicket(
               createdBy: appUser.id,
               institutionId: appUser.institutionId,
-              category: _category!,
+              category: ticketCategory,
               subCategory: '',
               title: title,
               description: description,
@@ -175,13 +217,19 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
               priority: priority,
               impact: impact,
               affectsMultipleUsers: _affectsMultipleUsers,
+              system: _system,
+              productCategoryId: _productCategory == null
+                  ? null
+                  : _categoryId(_productCategory!),
+              productCategoryLabel: _productCategory,
+              requesterType: _system == 'gbms' ? null : 'government',
             );
       } else {
         final draft = DraftTicket(
           localId: const Uuid().v4(),
           createdBy: appUser.id,
           institutionId: appUser.institutionId,
-          category: _category!,
+          category: ticketCategory,
           subCategory: '',
           title: title,
           description: description,
@@ -191,6 +239,12 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           priority: priority,
           impact: impact,
           affectsMultipleUsers: _affectsMultipleUsers,
+          system: _system,
+          productCategoryId: _productCategory == null
+              ? null
+              : _categoryId(_productCategory!),
+          productCategoryLabel: _productCategory,
+          requesterType: _system == 'gbms' ? null : 'government',
           createdAt: DateTime.now(),
         );
         await ref.read(draftTicketRepositoryProvider).save(draft);
@@ -241,7 +295,10 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
     final isOnline = ref.watch(isOnlineProvider).valueOrNull ?? true;
 
     if (_submittedTicket != null) {
-      return _TicketSubmittedScreen(ticket: _submittedTicket!, onCreateAnother: _startAnother);
+      return _TicketSubmittedScreen(
+        ticket: _submittedTicket!,
+        onCreateAnother: _startAnother,
+      );
     }
 
     return Scaffold(
@@ -263,6 +320,52 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           constraints: const BoxConstraints(maxWidth: 480),
           child: Column(
             children: [
+              if (widget.initialSystem == null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _system,
+                    decoration: const InputDecoration(
+                      labelText: 'Support system',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'gbms',
+                        child: Text('Hyperion / GBMS'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'ghaneps',
+                        child: Text('GHANEPS'),
+                      ),
+                      DropdownMenuItem(value: 'gifmis', child: Text('GIFMIS')),
+                    ],
+                    onChanged: _step != 0
+                        ? null
+                        : (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _system = value;
+                              _category = null;
+                              _productCategory = null;
+                            });
+                          },
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.initialSystem!.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
               _StepStepper(step: _step, total: _stepHeadlines.length),
               if (!isOnline)
                 Container(
@@ -295,8 +398,11 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                     key: ValueKey(_step),
                     child: switch (_step) {
                       0 => _CategoryStep(
+                        system: _system,
                         selectedCategory: _category,
+                        selectedProductCategory: _productCategory,
                         onCategorySelected: _selectCategory,
+                        onProductCategorySelected: _selectProductCategory,
                       ),
                       _ => _DetailsStep(
                         formKey: _descriptionFormKey,
@@ -333,7 +439,10 @@ class _TicketSubmittedScreen extends StatefulWidget {
   final Ticket ticket;
   final VoidCallback onCreateAnother;
 
-  const _TicketSubmittedScreen({required this.ticket, required this.onCreateAnother});
+  const _TicketSubmittedScreen({
+    required this.ticket,
+    required this.onCreateAnother,
+  });
 
   @override
   State<_TicketSubmittedScreen> createState() => _TicketSubmittedScreenState();
@@ -411,13 +520,14 @@ class _TicketSubmittedScreenState extends State<_TicketSubmittedScreen> {
                   child: const Text('View My Ticket'),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  _autoCloseTimer?.cancel();
-                  widget.onCreateAnother();
-                },
-                child: const Text('Create Another Ticket'),
-              ),
+              if (widget.ticket.system == 'gbms')
+                TextButton(
+                  onPressed: () {
+                    _autoCloseTimer?.cancel();
+                    widget.onCreateAnother();
+                  },
+                  child: const Text('Create Another Ticket'),
+                ),
             ],
           ),
         ),
@@ -463,12 +573,17 @@ class _StepStepper extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: done ? AppTheme.navy : Colors.white,
-                  border: Border.all(color: done ? AppTheme.navy : outline, width: 1.4),
+                  border: Border.all(
+                    color: done ? AppTheme.navy : outline,
+                    width: 1.4,
+                  ),
                 ),
                 child: Text(
                   '${index + 1}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: done ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: done
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               );
@@ -539,10 +654,22 @@ class _WizardNav extends StatelessWidget {
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : Icon(isLast ? Icons.send_rounded : Icons.arrow_forward_rounded, size: 18),
-                label: Text(isLast ? (submitting ? 'Submitting…' : 'Submit Ticket') : 'Next'),
+                    : Icon(
+                        isLast
+                            ? Icons.send_rounded
+                            : Icons.arrow_forward_rounded,
+                        size: 18,
+                      ),
+                label: Text(
+                  isLast
+                      ? (submitting ? 'Submitting…' : 'Submit Ticket')
+                      : 'Next',
+                ),
               ),
             ),
           ],
@@ -555,65 +682,128 @@ class _WizardNav extends StatelessWidget {
 /// Step 1 — flat, chevron-navigable category list (mockup screen 8).
 /// Selecting a category advances straight to Step 2, same as tapping a
 /// chevron row implies "go" rather than "mark selected, then press Next".
-class _CategoryStep extends StatelessWidget {
+class _CategoryStep extends StatefulWidget {
+  final String system;
   final TicketCategory? selectedCategory;
+  final String? selectedProductCategory;
   final ValueChanged<TicketCategory> onCategorySelected;
+  final ValueChanged<String> onProductCategorySelected;
 
   const _CategoryStep({
+    required this.system,
     required this.selectedCategory,
+    required this.selectedProductCategory,
     required this.onCategorySelected,
+    required this.onProductCategorySelected,
   });
 
   @override
+  State<_CategoryStep> createState() => _CategoryStepState();
+}
+
+class _CategoryStepState extends State<_CategoryStep> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: TicketCategory.values.length,
-      separatorBuilder: (context, i) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final c = TicketCategory.values[i];
-        final selected = c == selectedCategory;
-        return Material(
-          color: selected ? AppTheme.accentBlue.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            onTap: () => onCategorySelected(c),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: selected
-                      ? AppTheme.accentBlue
-                      : Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Icon(categoryIcon(c), size: 18, color: AppTheme.accentBlue),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(c.label, style: Theme.of(context).textTheme.titleSmall),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ],
-              ),
+    final isGbms = widget.system == 'gbms';
+    final labels =
+        (isGbms
+                ? TicketCategory.values.map((category) => category.label)
+                : _productIssueCategories)
+            .where(
+              (label) => label.toLowerCase().contains(_query.toLowerCase()),
+            )
+            .toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _query = value.trim()),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search_rounded),
+              hintText: 'Search Category',
             ),
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+            itemCount: labels.length,
+            separatorBuilder: (context, i) =>
+                const Divider(height: 1, indent: 54),
+            itemBuilder: (context, i) {
+              final label = labels[i];
+              final c = isGbms
+                  ? TicketCategory.values.firstWhere(
+                      (category) => category.label == label,
+                    )
+                  : null;
+              final selected = isGbms
+                  ? c == widget.selectedCategory
+                  : label == widget.selectedProductCategory;
+              return Material(
+                color: selected
+                    ? AppTheme.accentBlue.withValues(alpha: 0.07)
+                    : Colors.white,
+                child: InkWell(
+                  onTap: () => isGbms
+                      ? widget.onCategorySelected(c!)
+                      : widget.onProductCategorySelected(label),
+                  child: SizedBox(
+                    height: 64,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2867D8),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            isGbms
+                                ? categoryIcon(c!)
+                                : _productCategoryIcon(label),
+                            size: 21,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  color: const Color(0xFF10345F),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF10345F),
+                          size: 30,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -681,17 +871,30 @@ class _DetailsStep extends StatelessWidget {
               onTap: isOnline ? onPick : null,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: outline, width: 1.4, style: BorderStyle.solid),
+                  border: Border.all(
+                    color: outline,
+                    width: 1.4,
+                    style: BorderStyle.solid,
+                  ),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.cloud_upload_outlined, size: 34, color: AppTheme.accentBlue),
+                    Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 34,
+                      color: AppTheme.accentBlue,
+                    ),
                     const SizedBox(height: 10),
                     Text(
-                      isOnline ? 'Tap to upload or drag and drop' : 'Attachments unavailable offline',
+                      isOnline
+                          ? 'Tap to upload or drag and drop'
+                          : 'Attachments unavailable offline',
                       style: Theme.of(context).textTheme.titleSmall,
                       textAlign: TextAlign.center,
                     ),
@@ -711,15 +914,24 @@ class _DetailsStep extends StatelessWidget {
             ...attachments.map(
               (f) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.insert_drive_file_outlined, size: 20, color: AppTheme.accentBlue),
+                    const Icon(
+                      Icons.insert_drive_file_outlined,
+                      size: 20,
+                      color: AppTheme.accentBlue,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -730,7 +942,10 @@ class _DetailsStep extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(_formatFileSize(f.size), style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      _formatFileSize(f.size),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     const SizedBox(width: 4),
                     IconButton(
                       onPressed: () => onRemove(f),
@@ -783,7 +998,9 @@ class _AffectsOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppTheme.accentBlue.withValues(alpha: 0.08) : Colors.white,
+      color: selected
+          ? AppTheme.accentBlue.withValues(alpha: 0.08)
+          : Colors.white,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -812,7 +1029,10 @@ class _AffectsOption extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Flexible(
-                child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ],
           ),
@@ -831,4 +1051,3 @@ Widget _stepLabel(BuildContext context, String text) => Padding(
     ).textTheme.labelMedium?.copyWith(color: Colors.black54),
   ),
 );
-

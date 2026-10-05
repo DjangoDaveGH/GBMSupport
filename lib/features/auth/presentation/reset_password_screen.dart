@@ -85,7 +85,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     if (widget.oobCode == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
           title: const SizedBox.shrink(),
         ),
         body: Padding(
@@ -118,7 +118,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         title: const SizedBox.shrink(),
       ),
       body: SafeArea(

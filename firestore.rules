@@ -14,7 +14,7 @@ rules_version = '2';
 // DECISIONS.md ("Custom claims vs. Firestore doc for role/institution").
 //
 // Roles (must match core/models/enums.dart UserRole.wireValue):
-//   mda_user, focal_person, support_coordinator, functional_lead,
+//   end_user, focal_person, support_coordinator, functional_lead,
 //   technical_lead, pfm_management, vendor_support
 
 service cloud.firestore {
@@ -76,6 +76,12 @@ service cloud.firestore {
     function canViewTicketChat(ticketId) {
       let t = get(/databases/$(database)/documents/tickets/$(ticketId)).data;
       return canViewAllTickets()
+        // Every support-side administrator who can open the ticket queue can
+        // also open the ticket's conversation. Keep this explicit here: the
+        // chat stream is a subcollection and Firestore does not inherit the
+        // parent ticket's read rule automatically.
+        || (isSupportSide() && role() == 'support_coordinator')
+        || (isSupportSide() && role() == 'pfm_management')
         || (isFunctionalLead() && t.assignedTo == request.auth.uid)
         || (isTechnicalLead() && t.assignedTo == request.auth.uid)
         || (isVendor() && t.assignedTo == request.auth.uid && t.escalationLevel == 2)
@@ -84,7 +90,7 @@ service cloud.firestore {
     }
 
     function isRequesterSide() {
-      return isSignedIn() && role() in ['mda_user', 'focal_person'];
+      return isSignedIn() && role() in ['end_user', 'mda_user', 'focal_person'];
     }
 
     function isFocalPerson() {
@@ -258,15 +264,10 @@ service cloud.firestore {
 
       // ----- ticket activity (audit trail) -----
       match /activity/{activityId} {
-        allow read: if canViewAllTickets()
-          || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isVendor()
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel == 2)
-          || (isFocalPerson() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.institutionId == institutionId())
-          || (isRequesterSide()
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.createdBy == request.auth.uid);
+        // The chat/timeline stream must use the same ticket-scoped decision
+        // as the chat receipt stream; Firestore does not inherit the parent
+        // ticket's access rule for subcollections.
+        allow read: if canViewTicketChat(ticketId);
 
         // Every status-changing action must leave an activity record
         // (Section 8); anyone who can read the ticket can add one, but only
@@ -275,13 +276,7 @@ service cloud.firestore {
         // rule above — they shouldn't be able to write to a ticket's trail
         // they can't even open. Vendor mirrors the same escalationLevel == 2
         // gate as the read rule above, for the same reason.
-        allow create: if (canViewAllTickets()
-          || (isFunctionalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isTechnicalLead() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid)
-          || (isVendor()
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.assignedTo == request.auth.uid
-              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.escalationLevel == 2)
-          || isRequesterSide())
+        allow create: if canViewTicketChat(ticketId)
           && request.resource.data.actorId == request.auth.uid
           && request.resource.data.ticketId == ticketId;
         allow update, delete: if false;

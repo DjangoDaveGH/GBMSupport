@@ -29,6 +29,14 @@ service firebase.storage {
       allow delete: if false;
     }
 
+    // Anonymous guest uploads are written by the submitGuestTicket callable
+    // via the Admin SDK. Only signed-in support staff may read these objects;
+    // clients cannot upload into or enumerate the guest attachment namespace.
+    match /attachments/guest/{ticketId}/{fileName} {
+      allow read: if isSupportSide();
+      allow write, delete: if false;
+    }
+
     // Ticket chat image attachments (TicketChatScreen), at
     // chat/{uploaderUid}/{filename} — same uid/support-side approximation as
     // attachments above. In practice the Firestore activity doc's own read

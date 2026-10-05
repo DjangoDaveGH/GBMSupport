@@ -28,7 +28,7 @@ class _AddUserScreenState extends ConsumerState<AddUserScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _institutionIdController = TextEditingController();
-  UserRole _role = UserRole.mdaUser;
+  UserRole _role = UserRole.endUser;
   InstitutionType _institutionType = InstitutionType.mda;
   bool _submitting = false;
   String? _error;

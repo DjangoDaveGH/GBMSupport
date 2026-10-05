@@ -90,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// underneath; only the surrounding chrome differs.
   Widget _buildDesktopLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: Row(
         children: [
           Expanded(

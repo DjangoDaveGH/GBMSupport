@@ -17,6 +17,8 @@ class LocalNotificationService {
   LocalNotificationService._();
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static int _nextNotificationId =
+      DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
 
   /// Set by PushNotificationListener — routes a tap on a foreground-shown
   /// local notification to its ticket (FCM's own onMessageOpenedApp doesn't
@@ -58,6 +60,12 @@ class LocalNotificationService {
     await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_androidChannel);
+    // Firebase Messaging requests the FCM permission, but the local
+    // notification plugin also needs the Android 13 runtime permission before
+    // a foreground alert can be posted reliably on every Android build.
+    await _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
 
   /// [badgeCount] — the recipient's unread total, shown on the app-icon
@@ -73,8 +81,12 @@ class LocalNotificationService {
       showWebNotification(title: title, body: body, ticketId: ticketId);
       return;
     }
+    // Android notification IDs are signed 32-bit integers. Millisecond epoch
+    // values overflow that range, while second precision made rapid pushes
+    // overwrite one another. Advance a process-local ID for every alert.
+    _nextNotificationId = (_nextNotificationId + 1) & 0x7fffffff;
     await _plugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      _nextNotificationId,
       title,
       body,
       NotificationDetails(

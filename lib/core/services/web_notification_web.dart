@@ -7,6 +7,13 @@ import 'dart:js_interop';
 @JS('hyportShowNotification')
 external void _showNotificationJS(JSString title, JSString body, JSString ticketId);
 
+@JS('hyportSetAppBadge')
+external void _setAppBadgeJS(JSNumber count);
+
 void showWebNotification({required String title, required String body, String? ticketId}) {
   _showNotificationJS(title.toJS, body.toJS, (ticketId ?? '').toJS);
+}
+
+Future<void> setWebAppBadge(int count) async {
+  _setAppBadgeJS(count.toDouble().toJS);
 }

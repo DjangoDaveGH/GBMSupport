@@ -12,7 +12,7 @@ final userNotificationsProvider =
   return ref.watch(notificationRepositoryProvider).watchForUser(userId);
 });
 
-final unreadNotificationCountProvider = Provider.autoDispose.family<int, String>((ref, userId) {
-  final notifications = ref.watch(userNotificationsProvider(userId)).valueOrNull ?? [];
-  return notifications.where((n) => !n.read).length;
+final unreadNotificationCountProvider =
+    StreamProvider.autoDispose.family<int, String>((ref, userId) {
+  return ref.watch(notificationRepositoryProvider).watchUnreadCount(userId);
 });

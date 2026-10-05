@@ -25,13 +25,17 @@ import 'package:hyport/core/widgets/app_error_state.dart';
 enum StatusTab { all, open, inProgress, resolved }
 
 Set<TicketStatus> statusesForTab(StatusTab tab) => switch (tab) {
-      StatusTab.all => const {},
-      StatusTab.open => const {TicketStatus.open},
-      StatusTab.inProgress => const {TicketStatus.inProgress, TicketStatus.escalated},
-      StatusTab.resolved => const {TicketStatus.resolved},
-    };
+  StatusTab.all => const {},
+  StatusTab.open => const {TicketStatus.open},
+  StatusTab.inProgress => const {
+    TicketStatus.inProgress,
+    TicketStatus.escalated,
+  },
+  StatusTab.resolved => const {TicketStatus.resolved},
+};
 
-bool setEquals<T>(Set<T> a, Set<T> b) => a.length == b.length && a.every(b.contains);
+bool setEquals<T>(Set<T> a, Set<T> b) =>
+    a.length == b.length && a.every(b.contains);
 
 class TicketListScreen extends ConsumerStatefulWidget {
   /// Seeds the filter state from e.g. a dashboard stat card ("Open Tickets"
@@ -48,6 +52,8 @@ class TicketListScreen extends ConsumerStatefulWidget {
 class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   final _searchController = TextEditingController();
   String _search = '';
+  String? _system;
+  Set<String> _systems = {};
   Set<TicketStatus> _statuses = {};
   TicketCategory? _category;
   Set<TicketPriority> _priorities = {};
@@ -62,6 +68,8 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     super.initState();
     final f = widget.initialFilter;
     if (f != null) {
+      _system = f.system;
+      _systems = f.systems;
       _statuses = f.statuses;
       _category = f.category;
       _priorities = f.priorities;
@@ -85,15 +93,17 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   /// Current filter state — re-seeds the Filters screen and drives
   /// [TicketFilter.matchesClientSide]. Search is applied separately.
   TicketFilter get _filter => TicketFilter(
-        statuses: _statuses,
-        category: _category,
-        priorities: _priorities,
-        institutionId: _institutionId,
-        institutionType: _institutionType,
-        createdAfter: _createdAfter,
-        createdBefore: _createdBefore,
-        overdueOnly: _overdueOnly,
-      );
+    system: _system,
+    systems: _systems,
+    statuses: _statuses,
+    category: _category,
+    priorities: _priorities,
+    institutionId: _institutionId,
+    institutionType: _institutionType,
+    createdAfter: _createdAfter,
+    createdBefore: _createdBefore,
+    overdueOnly: _overdueOnly,
+  );
 
   @override
   void dispose() {
@@ -104,11 +114,15 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   bool _matchesSearch(Ticket t) {
     if (_search.isEmpty) return true;
     final q = _search.toLowerCase();
-    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+    return t.title.toLowerCase().contains(q) ||
+        t.ticketReference.toLowerCase().contains(q);
   }
 
   Future<void> _openFilters() async {
-    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
+    final result = await context.push<TicketFilter>(
+      '/tickets/filters',
+      extra: _filter,
+    );
     if (result != null && mounted) {
       setState(() {
         _statuses = result.statuses;
@@ -134,7 +148,11 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
         actions: [
           IconButton(
             onPressed: _openFilters,
-            icon: Icon(_hasAdvancedFilters ? Icons.filter_alt_rounded : Icons.filter_alt_outlined),
+            icon: Icon(
+              _hasAdvancedFilters
+                  ? Icons.filter_alt_rounded
+                  : Icons.filter_alt_outlined,
+            ),
           ),
         ],
       ),
@@ -177,9 +195,13 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
       for (final tab in StatusTab.values)
         tab: tab == StatusTab.all
             ? allTickets.length
-            : allTickets.where((t) => statusesForTab(tab).contains(t.status)).length,
+            : allTickets
+                  .where((t) => statusesForTab(tab).contains(t.status))
+                  .length,
     };
-    final closedCount = allTickets.where((t) => t.status == TicketStatus.closed).length;
+    final closedCount = allTickets
+        .where((t) => t.status == TicketStatus.closed)
+        .length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -211,11 +233,11 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   }
 
   String _tabLabel(StatusTab tab) => switch (tab) {
-        StatusTab.all => 'All',
-        StatusTab.open => 'Open',
-        StatusTab.inProgress => 'In Progress',
-        StatusTab.resolved => 'Resolved',
-      };
+    StatusTab.all => 'All',
+    StatusTab.open => 'Open',
+    StatusTab.inProgress => 'In Progress',
+    StatusTab.resolved => 'Resolved',
+  };
 
   Widget _buildDraftsAndTickets(AppUser appUser, bool isSupportSide) {
     // Fetched without a status filter so the tab chips above can show a
@@ -227,31 +249,54 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     // Only the query-backed filters go to the provider; institution / date /
     // overdue are applied in memory below (TicketFilter.matchesClientSide) so
     // they never change the Firestore query or its family cache key.
-    final countsFilter = TicketFilter(category: _category, priorities: _priorities);
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, countsFilter)));
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final countsFilter = TicketFilter(
+      system: _system,
+      systems: _systems,
+      category: _category,
+      priorities: _priorities,
+    );
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, countsFilter)),
+    );
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
     final institutionTypes = {
-      for (final i in [...?ref.watch(institutionListProvider).valueOrNull]) i.id: i.type,
+      for (final i in [...?ref.watch(institutionListProvider).valueOrNull])
+        i.id: i.type,
     };
     final draftRepo = ref.watch(draftTicketRepositoryProvider);
-    final drafts = draftRepo.getAllForUser(appUser.id).where((d) => d.pendingSync).toList();
+    final drafts = draftRepo
+        .getAllForUser(appUser.id)
+        .where((d) => d.pendingSync)
+        .toList();
     final usersAsync = isSupportSide ? ref.watch(allUsersProvider) : null;
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => AppErrorState(message: 'We could not load tickets.', onRetry: () => ref.invalidate(ticketAnalyticsProvider((appUser, countsFilter)))),
+      error: (e, _) => AppErrorState(
+        message: 'We could not load tickets.',
+        onRetry: () =>
+            ref.invalidate(ticketAnalyticsProvider((appUser, countsFilter))),
+      ),
       data: (rawTickets) {
         // Narrow by the advanced filters first so the status tab counts
         // below reflect them too.
         final allTickets = rawTickets
-            .where((t) => _filter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+            .where(
+              (t) => _filter.matchesClientSide(
+                t,
+                policy: slaPolicy,
+                institutionTypes: institutionTypes,
+              ),
+            )
             .toList();
         final tabs = _buildTabs(allTickets);
         final tickets = allTickets
             .where((t) => _statuses.isEmpty || _statuses.contains(t.status))
             .where(_matchesSearch)
             .toList();
-        final hasActiveFilters = _statuses.isNotEmpty || _search.isNotEmpty || _hasAdvancedFilters;
+        final hasActiveFilters =
+            _statuses.isNotEmpty || _search.isNotEmpty || _hasAdvancedFilters;
 
         if (tickets.isEmpty && drafts.isEmpty) {
           return Column(
@@ -262,7 +307,9 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                   icon: Icons.confirmation_number_outlined,
                   message: hasActiveFilters
                       ? 'No tickets match these filters.'
-                      : (isSupportSide ? 'No tickets have come in yet.' : 'No tickets yet. Tap "New Ticket" to log an issue.'),
+                      : (isSupportSide
+                            ? 'No tickets have come in yet.'
+                            : 'No tickets yet. Tap "New Ticket" to log an issue.'),
                   badgeIcon: hasActiveFilters ? null : Icons.add_rounded,
                 ),
               ),
@@ -284,7 +331,10 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                   for (final draft in drafts) DraftTile(draft: draft),
                   for (final ticket in tickets)
                     isSupportSide
-                        ? AdminTicketTile(ticket: ticket, assignee: usersById[ticket.assignedTo])
+                        ? AdminTicketTile(
+                            ticket: ticket,
+                            assignee: usersById[ticket.assignedTo],
+                          )
                         : TicketTile(ticket: ticket),
                 ],
               ),
@@ -301,7 +351,11 @@ class _TabChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _TabChip({required this.label, required this.selected, required this.onTap});
+  const _TabChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +364,10 @@ class _TabChip extends StatelessWidget {
       selected: selected,
       showCheckmark: false,
       selectedColor: AppTheme.navy,
-      labelStyle: TextStyle(color: selected ? Colors.white : AppTheme.ink, fontWeight: FontWeight.w600),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : AppTheme.ink,
+        fontWeight: FontWeight.w600,
+      ),
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       onSelected: (_) => onTap(),
     );
@@ -318,19 +375,19 @@ class _TabChip extends StatelessWidget {
 }
 
 IconData categoryIcon(TicketCategory category) => switch (category) {
-      TicketCategory.access => Icons.key_rounded,
-      TicketCategory.workflow => Icons.alt_route_rounded,
-      TicketCategory.budgetForms => Icons.description_rounded,
-      TicketCategory.reports => Icons.summarize_rounded,
-      TicketCategory.smartView => Icons.grid_view_rounded,
-      TicketCategory.businessRules => Icons.rule_rounded,
-      TicketCategory.metadata => Icons.account_tree_rounded,
-      TicketCategory.dataValidation => Icons.fact_check_rounded,
-      TicketCategory.essbase => Icons.dns_rounded,
-      TicketCategory.systemPerformance => Icons.speed_rounded,
-      TicketCategory.mobileAppIssue => Icons.phone_iphone_rounded,
-      TicketCategory.generalEnquiry => Icons.help_outline_rounded,
-    };
+  TicketCategory.access => Icons.key_rounded,
+  TicketCategory.workflow => Icons.alt_route_rounded,
+  TicketCategory.budgetForms => Icons.description_rounded,
+  TicketCategory.reports => Icons.summarize_rounded,
+  TicketCategory.smartView => Icons.grid_view_rounded,
+  TicketCategory.businessRules => Icons.rule_rounded,
+  TicketCategory.metadata => Icons.account_tree_rounded,
+  TicketCategory.dataValidation => Icons.fact_check_rounded,
+  TicketCategory.essbase => Icons.dns_rounded,
+  TicketCategory.systemPerformance => Icons.speed_rounded,
+  TicketCategory.mobileAppIssue => Icons.phone_iphone_rounded,
+  TicketCategory.generalEnquiry => Icons.help_outline_rounded,
+};
 
 class DraftTile extends StatelessWidget {
   final DraftTicket draft;
@@ -356,16 +413,28 @@ class DraftTile extends StatelessWidget {
               color: AppTheme.gold.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(Icons.cloud_off_rounded, size: 19, color: AppTheme.gold),
+            child: const Icon(
+              Icons.cloud_off_rounded,
+              size: 19,
+              color: AppTheme.gold,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(draft.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  draft.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const SizedBox(height: 2),
-                Text('Pending — will submit when online', style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  'Pending — will submit when online',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -387,11 +456,11 @@ class TicketTile extends StatelessWidget {
   const TicketTile({super.key, required this.ticket});
 
   Color get _priorityColor => switch (ticket.priority) {
-        TicketPriority.critical => StatusColors.critical,
-        TicketPriority.high => StatusColors.high,
-        TicketPriority.medium => StatusColors.medium,
-        TicketPriority.low => StatusColors.low,
-      };
+    TicketPriority.critical => StatusColors.critical,
+    TicketPriority.high => StatusColors.high,
+    TicketPriority.medium => StatusColors.medium,
+    TicketPriority.low => StatusColors.low,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -416,22 +485,35 @@ class TicketTile extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('#${ticket.ticketReference}', style: Theme.of(context).textTheme.bodySmall),
+                      child: Text(
+                        '#${ticket.ticketReference}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
                     TicketStatusChip(status: ticket.status),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(ticket.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  ticket.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Text(
                       ticket.priority.label,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: _priorityColor),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelMedium?.copyWith(color: _priorityColor),
                     ),
                     const Spacer(),
-                    Text(_relativeTimeShort(ticket.createdAt), style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      _relativeTimeShort(ticket.createdAt),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ],
@@ -451,14 +533,18 @@ class AdminTicketTile extends StatelessWidget {
   final Ticket ticket;
   final AppUser? assignee;
 
-  const AdminTicketTile({super.key, required this.ticket, required this.assignee});
+  const AdminTicketTile({
+    super.key,
+    required this.ticket,
+    required this.assignee,
+  });
 
   Color get _priorityColor => switch (ticket.priority) {
-        TicketPriority.critical => StatusColors.critical,
-        TicketPriority.high => StatusColors.high,
-        TicketPriority.medium => StatusColors.medium,
-        TicketPriority.low => StatusColors.low,
-      };
+    TicketPriority.critical => StatusColors.critical,
+    TicketPriority.high => StatusColors.high,
+    TicketPriority.medium => StatusColors.medium,
+    TicketPriority.low => StatusColors.low,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -483,13 +569,21 @@ class AdminTicketTile extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('#${ticket.ticketReference}', style: Theme.of(context).textTheme.bodySmall),
+                      child: Text(
+                        '#${ticket.ticketReference}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
                     TicketStatusChip(status: ticket.status),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(ticket.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  ticket.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -499,10 +593,20 @@ class AdminTicketTile extends StatelessWidget {
                           ? Theme.of(context).colorScheme.surfaceContainerHigh
                           : AppTheme.navy.withValues(alpha: 0.1),
                       child: assignee == null
-                          ? Icon(Icons.person_off_outlined, size: 13, color: Theme.of(context).colorScheme.outline)
+                          ? Icon(
+                              Icons.person_off_outlined,
+                              size: 13,
+                              color: Theme.of(context).colorScheme.outline,
+                            )
                           : Text(
-                              assignee!.name.isNotEmpty ? assignee!.name[0].toUpperCase() : '?',
-                              style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
+                              assignee!.name.isNotEmpty
+                                  ? assignee!.name[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: AppTheme.navy,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
                             ),
                     ),
                     const SizedBox(width: 8),
@@ -514,10 +618,15 @@ class AdminTicketTile extends StatelessWidget {
                     ),
                     Text(
                       ticket.priority.label,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: _priorityColor),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelMedium?.copyWith(color: _priorityColor),
                     ),
                     const SizedBox(width: 8),
-                    Text(_relativeTimeShort(ticket.createdAt), style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      _relativeTimeShort(ticket.createdAt),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ],

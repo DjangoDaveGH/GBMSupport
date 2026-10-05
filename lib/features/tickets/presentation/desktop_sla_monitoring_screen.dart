@@ -96,6 +96,7 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(child: _StatCard(label: 'Within SLA', value: compliance == null ? '—' : '${compliance.round()}%', color: StatusColors.resolved)),
                         const SizedBox(width: 16),
@@ -181,7 +182,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),

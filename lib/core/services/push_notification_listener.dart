@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +71,7 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
       }
     }));
 
-    _subscriptions.add(service.onForegroundMessage.listen((message) {
+    _subscriptions.add(service.onForegroundMessage.listen((message) async {
       final text = message.notification?.body ?? message.data['message'] as String?;
       if (text == null) return;
       final unread = int.tryParse(message.data['unreadCount']?.toString() ?? '');
@@ -78,12 +80,17 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
       // and visible nowhere except an in-app SnackBar, easy to miss and
       // impossible to hear. Real tray/banner pop-up + sound instead, same
       // as what a background push already gets.
-      LocalNotificationService.show(
-        title: message.notification?.title ?? 'Hyperion Support',
-        body: text,
-        ticketId: message.data['ticketId']?.toString(),
-        badgeCount: unread,
-      );
+      try {
+        await LocalNotificationService.show(
+          title: message.notification?.title ?? 'Hyperion Support',
+          body: text,
+          ticketId: message.data['ticketId']?.toString(),
+          badgeCount: unread,
+        );
+      } catch (error, stackTrace) {
+        debugPrint('Could not display foreground notification: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       if (unread != null) AppBadgeService.set(unread);
     }));
 
@@ -137,9 +144,11 @@ class _PushNotificationListenerState extends ConsumerState<PushNotificationListe
     // worker / aps.badge — see functions/index.js and firebase-messaging-sw.js).
     final userId = ref.watch(currentAppUserProvider).valueOrNull?.id;
     if (userId != null) {
-      AppBadgeService.set(ref.read(unreadNotificationCountProvider(userId)));
+      AppBadgeService.set(
+        ref.read(unreadNotificationCountProvider(userId)).valueOrNull ?? 0,
+      );
       ref.listen(unreadNotificationCountProvider(userId), (previous, next) {
-        AppBadgeService.set(next);
+        AppBadgeService.set(next.valueOrNull ?? 0);
       });
     }
 
