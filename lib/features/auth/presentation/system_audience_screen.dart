@@ -17,7 +17,7 @@ class SystemAudienceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: IconButton(
@@ -44,7 +44,7 @@ class SystemAudienceScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     const Text(
-                      'MINISTRY FOR FINANCE\nREPUBLIC OF GHANA',
+                      'MINISTRY OF FINANCE\nREPUBLIC OF GHANA',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppTheme.navy,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -38,14 +39,14 @@ String _describe(TicketActivity a, String ticketRef) {
 }
 
 String _actionLabel(TicketActivityAction action) => switch (action) {
-      TicketActivityAction.created => 'Created Ticket',
-      TicketActivityAction.assigned => 'Assigned Ticket',
-      TicketActivityAction.statusChanged => 'Updated Status',
-      TicketActivityAction.escalated => 'Escalated Ticket',
-      TicketActivityAction.commented => 'Sent Chat Message',
-      TicketActivityAction.reopened => 'Reopened Ticket',
-      TicketActivityAction.closed => 'Closed Ticket',
-    };
+  TicketActivityAction.created => 'Created Ticket',
+  TicketActivityAction.assigned => 'Assigned Ticket',
+  TicketActivityAction.statusChanged => 'Updated Status',
+  TicketActivityAction.escalated => 'Escalated Ticket',
+  TicketActivityAction.commented => 'Sent Chat Message',
+  TicketActivityAction.reopened => 'Reopened Ticket',
+  TicketActivityAction.closed => 'Closed Ticket',
+};
 
 /// Phase 5 mockup screen 40. See AuditLogRepository's doc comment for the
 /// honest scope of what this covers: ticket lifecycle events (via a real
@@ -59,10 +60,12 @@ class DesktopAuditLogsScreen extends ConsumerStatefulWidget {
   const DesktopAuditLogsScreen({super.key});
 
   @override
-  ConsumerState<DesktopAuditLogsScreen> createState() => _DesktopAuditLogsScreenState();
+  ConsumerState<DesktopAuditLogsScreen> createState() =>
+      _DesktopAuditLogsScreenState();
 }
 
-class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen> {
+class _DesktopAuditLogsScreenState
+    extends ConsumerState<DesktopAuditLogsScreen> {
   final _searchController = TextEditingController();
   String _search = '';
   String? _userFilter;
@@ -77,15 +80,27 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
     super.dispose();
   }
 
-  void _exportCsv(List<TicketActivity> entries, Map<String, AppUser> usersById, Map<String, Ticket> ticketsById) {
+  void _exportCsv(
+    List<TicketActivity> entries,
+    Map<String, AppUser> usersById,
+    Map<String, Ticket> ticketsById,
+  ) {
     final buffer = StringBuffer('Date,User,Action,Details\n');
     for (final a in entries) {
-      final user = a.actorId == systemActorId ? 'System' : (usersById[a.actorId]?.name ?? a.actorId);
+      final user = a.actorId == systemActorId
+          ? 'System'
+          : (usersById[a.actorId]?.name ?? a.actorId);
       final ticketRef = ticketsById[a.ticketId]?.ticketReference ?? a.ticketId;
-      buffer.writeln('"${DateFormat.yMd().add_jms().format(a.timestamp)}","$user","${_actionLabel(a.action)}","${_describe(a, ticketRef).replaceAll('"', '""')}"');
+      buffer.writeln(
+        '"${DateFormat.yMd().add_jms().format(a.timestamp)}","$user","${_actionLabel(a.action)}","${_describe(a, ticketRef).replaceAll('"', '""')}"',
+      );
     }
     Clipboard.setData(ClipboardData(text: buffer.toString()));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Copied ${entries.length} rows as CSV to clipboard.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied ${entries.length} rows as CSV to clipboard.'),
+      ),
+    );
   }
 
   @override
@@ -113,7 +128,9 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
             ),
           ),
         Expanded(
-          child: (isAdmin && _showAdminActions) ? _buildAdminActionsTab(context) : _buildTicketActivityTab(context, appUser),
+          child: (isAdmin && _showAdminActions)
+              ? _buildAdminActionsTab(context)
+              : _buildTicketActivityTab(context, appUser),
         ),
       ],
     );
@@ -122,29 +139,59 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
   Widget _buildTicketActivityTab(BuildContext context, AppUser appUser) {
     final logAsync = ref.watch(auditLogProvider);
     final usersAsync = ref.watch(allUsersProvider);
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
+    final ticketFilter = TicketFilter(
+      system: selectedSystem,
+      systems:
+          selectedSystem == null && appUser.role == UserRole.supportCoordinator
+          ? allowedSystemsForRole(appUser.role, appUser.systems)
+          : const {},
+    );
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, ticketFilter)),
+    );
 
     return logAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load audit log: $e')),
       data: (entries) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
-        final ticketsById = <String, Ticket>{for (final t in ticketsAsync.valueOrNull ?? const <Ticket>[]) t.id: t};
+        final usersById = <String, AppUser>{
+          for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u,
+        };
+        final ticketsById = <String, Ticket>{
+          for (final t in ticketsAsync.valueOrNull ?? const <Ticket>[]) t.id: t,
+        };
 
         var filtered = entries.where((a) {
+          if (selectedSystem != null && !ticketsById.containsKey(a.ticketId))
+            return false;
+          if (selectedSystem == null &&
+              appUser.role == UserRole.supportCoordinator &&
+              !ticketsById.containsKey(a.ticketId))
+            return false;
           if (_userFilter != null && a.actorId != _userFilter) return false;
           if (_actionFilter != null && a.action != _actionFilter) return false;
           if (_search.isNotEmpty) {
             final ticketRef = ticketsById[a.ticketId]?.ticketReference ?? '';
             final q = _search.toLowerCase();
-            if (!ticketRef.toLowerCase().contains(q) && !(a.note ?? '').toLowerCase().contains(q)) return false;
+            if (!ticketRef.toLowerCase().contains(q) &&
+                !(a.note ?? '').toLowerCase().contains(q))
+              return false;
           }
           return true;
         }).toList();
 
-        final totalPages = (filtered.length / _pageSize).ceil().clamp(1, 999999);
+        final totalPages = (filtered.length / _pageSize).ceil().clamp(
+          1,
+          999999,
+        );
         final page = _page.clamp(0, totalPages - 1);
-        final pageItems = filtered.skip(page * _pageSize).take(_pageSize).toList();
+        final pageItems = filtered
+            .skip(page * _pageSize)
+            .take(_pageSize)
+            .toList();
 
         return Padding(
           padding: const EdgeInsets.all(24),
@@ -160,22 +207,39 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                         _search = v;
                         _page = 0;
                       }),
-                      decoration: const InputDecoration(hintText: 'Search logs…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+                      decoration: const InputDecoration(
+                        hintText: 'Search logs…',
+                        prefixIcon: Icon(Icons.search_rounded, size: 20),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Container(
                     constraints: const BoxConstraints(minWidth: 160),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.md), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<TicketActivityAction?>(
                         hint: const Text('Action'),
                         isDense: true,
                         value: _actionFilter,
                         items: [
-                          const DropdownMenuItem<TicketActivityAction?>(value: null, child: Text('All Actions')),
-                          ...TicketActivityAction.values.map((a) => DropdownMenuItem(value: a, child: Text(_actionLabel(a)))),
+                          const DropdownMenuItem<TicketActivityAction?>(
+                            value: null,
+                            child: Text('All Actions'),
+                          ),
+                          ...TicketActivityAction.values.map(
+                            (a) => DropdownMenuItem(
+                              value: a,
+                              child: Text(_actionLabel(a)),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() {
                           _actionFilter = v;
@@ -188,15 +252,29 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                   Container(
                     constraints: const BoxConstraints(minWidth: 160),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.md), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String?>(
                         hint: const Text('User'),
                         isDense: true,
                         value: _userFilter,
                         items: [
-                          const DropdownMenuItem<String?>(value: null, child: Text('All Users')),
-                          ...usersById.values.map((u) => DropdownMenuItem(value: u.id, child: Text(u.name))),
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('All Users'),
+                          ),
+                          ...usersById.values.map(
+                            (u) => DropdownMenuItem(
+                              value: u.id,
+                              child: Text(u.name),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() {
                           _userFilter = v;
@@ -207,7 +285,9 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                   ),
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
-                    onPressed: filtered.isEmpty ? null : () => _exportCsv(filtered, usersById, ticketsById),
+                    onPressed: filtered.isEmpty
+                        ? null
+                        : () => _exportCsv(filtered, usersById, ticketsById),
                     icon: const Icon(Icons.download_outlined, size: 18),
                     label: const Text('Export'),
                   ),
@@ -217,9 +297,18 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
                   child: filtered.isEmpty
-                      ? const EmptyState(icon: Icons.fact_check_outlined, message: 'No matching log entries.')
+                      ? const EmptyState(
+                          icon: Icons.fact_check_outlined,
+                          message: 'No matching log entries.',
+                        )
                       : Column(
                           children: [
                             Expanded(
@@ -235,14 +324,43 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                                     ],
                                     rows: pageItems.map((a) {
                                       final user = usersById[a.actorId];
-                                      final ticketRef = ticketsById[a.ticketId]?.ticketReference ?? a.ticketId;
+                                      final ticketRef =
+                                          ticketsById[a.ticketId]
+                                              ?.ticketReference ??
+                                          a.ticketId;
                                       return DataRow(
-                                        onSelectChanged: a.ticketId.isEmpty ? null : (_) => context.push('/tickets/${a.ticketId}'),
+                                        onSelectChanged: a.ticketId.isEmpty
+                                            ? null
+                                            : (_) => context.push(
+                                                '/tickets/${a.ticketId}',
+                                              ),
                                         cells: [
-                                          DataCell(Text(DateFormat.yMd().add_jms().format(a.timestamp))),
-                                          DataCell(Text(a.actorId == systemActorId ? 'System' : (user?.name ?? 'Unknown'))),
-                                          DataCell(Text(_actionLabel(a.action))),
-                                          DataCell(SizedBox(width: 320, child: Text(_describe(a, ticketRef), overflow: TextOverflow.ellipsis))),
+                                          DataCell(
+                                            Text(
+                                              DateFormat.yMd().add_jms().format(
+                                                a.timestamp,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              a.actorId == systemActorId
+                                                  ? 'System'
+                                                  : (user?.name ?? 'Unknown'),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(_actionLabel(a.action)),
+                                          ),
+                                          DataCell(
+                                            SizedBox(
+                                              width: 320,
+                                              child: Text(
+                                                _describe(a, ticketRef),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       );
                                     }).toList(),
@@ -251,14 +369,44 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                  ),
+                                ),
+                              ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  IconButton(onPressed: page > 0 ? () => setState(() => _page = page - 1) : null, icon: const Icon(Icons.chevron_left_rounded)),
-                                  Text('Page ${page + 1} of $totalPages', style: Theme.of(context).textTheme.bodySmall),
-                                  IconButton(onPressed: page < totalPages - 1 ? () => setState(() => _page = page + 1) : null, icon: const Icon(Icons.chevron_right_rounded)),
+                                  IconButton(
+                                    onPressed: page > 0
+                                        ? () => setState(() => _page = page - 1)
+                                        : null,
+                                    icon: const Icon(
+                                      Icons.chevron_left_rounded,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Page ${page + 1} of $totalPages',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  IconButton(
+                                    onPressed: page < totalPages - 1
+                                        ? () => setState(() => _page = page + 1)
+                                        : null,
+                                    icon: const Icon(
+                                      Icons.chevron_right_rounded,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -281,15 +429,26 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load admin actions: $e')),
       data: (entries) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
+        final usersById = <String, AppUser>{
+          for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u,
+        };
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: entries.isEmpty
-                ? const EmptyState(icon: Icons.admin_panel_settings_outlined, message: 'No admin actions recorded yet.')
+                ? const EmptyState(
+                    icon: Icons.admin_panel_settings_outlined,
+                    message: 'No admin actions recorded yet.',
+                  )
                 : SingleChildScrollView(
                     child: ScrollableTable(
                       child: DataTable(
@@ -305,13 +464,29 @@ class _DesktopAuditLogsScreenState extends ConsumerState<DesktopAuditLogsScreen>
                           final actor = usersById[a.actorId];
                           final target = usersById[a.targetId];
                           final targetName = target?.name ?? a.targetId;
-                          return DataRow(cells: [
-                            DataCell(Text(DateFormat.yMd().add_jms().format(a.timestamp))),
-                            DataCell(Text(actor?.name ?? 'Unknown')),
-                            DataCell(Text(adminActionLabel(a.action))),
-                            DataCell(Text(targetName)),
-                            DataCell(SizedBox(width: 320, child: Text(describeAdminAction(a, targetName), overflow: TextOverflow.ellipsis))),
-                          ]);
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Text(
+                                  DateFormat.yMd().add_jms().format(
+                                    a.timestamp,
+                                  ),
+                                ),
+                              ),
+                              DataCell(Text(actor?.name ?? 'Unknown')),
+                              DataCell(Text(adminActionLabel(a.action))),
+                              DataCell(Text(targetName)),
+                              DataCell(
+                                SizedBox(
+                                  width: 320,
+                                  child: Text(
+                                    describeAdminAction(a, targetName),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
                         }).toList(),
                       ),
                     ),

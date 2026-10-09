@@ -8,11 +8,36 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _reportTypes = [
-  ('summary', 'Tickets Summary Report', 'Overview of all tickets', Icons.summarize_rounded),
-  ('sla', 'SLA Compliance Report', 'SLA performance overview', Icons.verified_rounded),
-  ('officer_performance', 'Officer Performance Report', 'Performance by officer', Icons.badge_rounded),
-  ('category_breakdown', 'Category Breakdown', 'Tickets by category', Icons.pie_chart_rounded),
-  ('monthly_trend', 'Monthly Trend Report', 'Ticket trend analysis', Icons.trending_up_rounded),
+  (
+    'summary',
+    'Tickets Summary Report',
+    'Overview of all tickets',
+    Icons.summarize_rounded,
+  ),
+  (
+    'sla',
+    'SLA Compliance Report',
+    'SLA performance overview',
+    Icons.verified_rounded,
+  ),
+  (
+    'officer_performance',
+    'Officer Performance Report',
+    'Performance by officer',
+    Icons.badge_rounded,
+  ),
+  (
+    'category_breakdown',
+    'Category Breakdown',
+    'Tickets by category',
+    Icons.pie_chart_rounded,
+  ),
+  (
+    'monthly_trend',
+    'Monthly Trend Report',
+    'Ticket trend analysis',
+    Icons.trending_up_rounded,
+  ),
 ];
 
 /// Phase 4 mockup screen 24. Reports are computed live from real ticket
@@ -26,14 +51,19 @@ class ReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
-    final recentAsync = appUser == null ? null : ref.watch(recentReportViewsProvider(appUser.id));
+    final recentAsync = appUser == null
+        ? null
+        : ref.watch(recentReportViewsProvider(appUser.id));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reports')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Popular Reports', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Popular Reports',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.md),
           ..._reportTypes.map((r) {
             final (type, label, subtitle, icon) = r;
@@ -42,14 +72,24 @@ class ReportsScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
               ),
               child: Material(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  onTap: () => context.push('/reports/$type'),
+                  onTap: () {
+                    final query = GoRouterState.of(context).uri.queryParameters;
+                    context.push(
+                      Uri(
+                        path: '/reports/$type',
+                        queryParameters: query.isEmpty ? null : query,
+                      ).toString(),
+                    );
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Row(
@@ -61,15 +101,25 @@ class ReportsScreen extends ConsumerWidget {
                             color: AppTheme.accentBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
-                          child: Icon(icon, size: 19, color: AppTheme.accentBlue),
+                          child: Icon(
+                            icon,
+                            size: 19,
+                            color: AppTheme.accentBlue,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(label, style: Theme.of(context).textTheme.titleSmall),
-                              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                              Text(
+                                label,
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              Text(
+                                subtitle,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
                             ],
                           ),
                         ),
@@ -82,7 +132,10 @@ class ReportsScreen extends ConsumerWidget {
             );
           }),
           const SizedBox(height: AppSpacing.xl),
-          Text('Recent Reports', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Recent Reports',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.md),
           if (recentAsync == null)
             const SizedBox.shrink()
@@ -105,37 +158,64 @@ class ReportsScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          onTap: hasPdf ? () => launchUrl(Uri.parse(v.pdfUrl!), webOnlyWindowName: '_blank') : null,
+                          onTap: hasPdf
+                              ? () => launchUrl(
+                                  Uri.parse(v.pdfUrl!),
+                                  webOnlyWindowName: '_blank',
+                                )
+                              : null,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             child: Row(
                               children: [
                                 Icon(
-                                  hasPdf ? Icons.picture_as_pdf_outlined : Icons.description_outlined,
+                                  hasPdf
+                                      ? Icons.picture_as_pdf_outlined
+                                      : Icons.description_outlined,
                                   size: 18,
                                   color: AppTheme.gold,
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(v.reportLabel, style: Theme.of(context).textTheme.titleSmall),
                                       Text(
-                                        DateFormat.yMMMd().add_jm().format(v.viewedAt),
-                                        style: Theme.of(context).textTheme.bodySmall,
+                                        v.reportLabel,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleSmall,
+                                      ),
+                                      Text(
+                                        DateFormat.yMMMd().add_jm().format(
+                                          v.viewedAt,
+                                        ),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
                                       ),
                                     ],
                                   ),
                                 ),
-                                if (hasPdf) const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.black45),
+                                if (hasPdf)
+                                  const Icon(
+                                    Icons.open_in_new_rounded,
+                                    size: 16,
+                                    color: Colors.black45,
+                                  ),
                               ],
                             ),
                           ),

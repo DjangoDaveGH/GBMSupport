@@ -20,27 +20,24 @@ import 'package:uuid/uuid.dart';
 
 const _stepHeadlines = ['Select Issue Category', 'Describe Your Issue'];
 const _productIssueCategories = <String>[
-  'Login & Account Access',
-  'Registration & Onboarding',
-  'Tender Creation & Publishing',
+  'Open Bids',
   'Bid Submission',
-  'Evaluation & Award',
-  'Payments & Fees',
-  'Notifications & Emails',
-  'User Roles & Permissions',
-  'General Support',
+  'Association of Officers',
+  'Account Activation',
+  'Login',
+  'Publishing Notice',
+  'Payment',
 ];
 
 IconData _productCategoryIcon(String label) => switch (label) {
-  'Login & Account Access' => Icons.person_rounded,
-  'Registration & Onboarding' => Icons.account_balance_rounded,
-  'Tender Creation & Publishing' => Icons.gavel_rounded,
+  'Open Bids' => Icons.work_outline_rounded,
   'Bid Submission' => Icons.check_box_outlined,
-  'Evaluation & Award' => Icons.description_outlined,
-  'Payments & Fees' => Icons.receipt_long_outlined,
-  'Notifications & Emails' => Icons.settings_rounded,
-  'User Roles & Permissions' => Icons.people_alt_rounded,
-  _ => Icons.lock_rounded,
+  'Association of Officers' => Icons.people_alt_rounded,
+  'Account Activation' => Icons.person_add_alt_1_rounded,
+  'Login' => Icons.login_rounded,
+  'Publishing Notice' => Icons.campaign_outlined,
+  'Payment' => Icons.payments_outlined,
+  _ => Icons.help_outline_rounded,
 };
 
 /// The mockup's Step 2 is a single description box — no separate Title
@@ -320,52 +317,6 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           constraints: const BoxConstraints(maxWidth: 480),
           child: Column(
             children: [
-              if (widget.initialSystem == null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _system,
-                    decoration: const InputDecoration(
-                      labelText: 'Support system',
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'gbms',
-                        child: Text('Hyperion / GBMS'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'ghaneps',
-                        child: Text('GHANEPS'),
-                      ),
-                      DropdownMenuItem(value: 'gifmis', child: Text('GIFMIS')),
-                    ],
-                    onChanged: _step != 0
-                        ? null
-                        : (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _system = value;
-                              _category = null;
-                              _productCategory = null;
-                            });
-                          },
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      widget.initialSystem!.toUpperCase(),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppTheme.navy,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                ),
               _StepStepper(step: _step, total: _stepHeadlines.length),
               if (!isOnline)
                 Container(
@@ -736,6 +687,41 @@ class _CategoryStepState extends State<_CategoryStep> {
             ),
           ),
         ),
+        if ((isGbms && widget.selectedCategory != null) ||
+            (!isGbms && widget.selectedProductCategory != null))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5EFFF),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppTheme.accentBlue, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppTheme.accentBlue,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Selected: ${isGbms ? widget.selectedCategory!.label : widget.selectedProductCategory}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF10345F),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
@@ -750,52 +736,111 @@ class _CategoryStepState extends State<_CategoryStep> {
                     )
                   : null;
               final selected = isGbms
-                  ? c == widget.selectedCategory
+                  ? widget.selectedCategory?.label == label
                   : label == widget.selectedProductCategory;
-              return Material(
-                color: selected
-                    ? AppTheme.accentBlue.withValues(alpha: 0.07)
-                    : Colors.white,
-                child: InkWell(
-                  onTap: () => isGbms
-                      ? widget.onCategorySelected(c!)
-                      : widget.onProductCategorySelected(label),
-                  child: SizedBox(
-                    height: 64,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2867D8),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            isGbms
-                                ? categoryIcon(c!)
-                                : _productCategoryIcon(label),
-                            size: 21,
-                            color: Colors.white,
-                          ),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    onTap: () => isGbms
+                        ? widget.onCategorySelected(c!)
+                        : widget.onProductCategorySelected(label),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: 64,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? const Color(0xFFE5EFFF)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: selected
+                              ? AppTheme.accentBlue
+                              : Colors.transparent,
+                          width: selected ? 1.5 : 1,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: const Color(0xFF10345F),
-                                  fontWeight: FontWeight.w700,
+                        boxShadow: selected
+                            ? [
+                                BoxShadow(
+                                  color: AppTheme.accentBlue.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppTheme.navy
+                                  : const Color(0xFF2867D8),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              isGbms
+                                  ? categoryIcon(c!)
+                                  : _productCategoryIcon(label),
+                              size: 21,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF10345F),
-                          size: 30,
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF10345F),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                          if (selected) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentBlue,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: const Text(
+                                'SELECTED',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: AppTheme.accentBlue,
+                              size: 25,
+                            ),
+                          ] else
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF10345F),
+                              size: 30,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

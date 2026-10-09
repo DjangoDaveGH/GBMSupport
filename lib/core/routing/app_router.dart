@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/routing/app_shell.dart';
 import 'package:hyport/core/routing/desktop_shell.dart';
 import 'package:hyport/core/routing/not_found_screen.dart';
@@ -12,10 +13,9 @@ import 'package:hyport/features/admin/presentation/announcements_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_institutions_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_users_screen.dart';
 import 'package:hyport/features/admin/presentation/users_screen.dart';
-import 'package:hyport/features/auth/presentation/forgot_password_screen.dart';
+import 'package:hyport/features/auth/presentation/phone_password_recovery_screen.dart';
 import 'package:hyport/features/auth/presentation/login_screen.dart';
 import 'package:hyport/features/auth/presentation/request_access_screen.dart';
-import 'package:hyport/features/auth/presentation/reset_password_screen.dart';
 import 'package:hyport/features/auth/presentation/splash_screen.dart';
 import 'package:hyport/features/auth/presentation/welcome_screen.dart';
 import 'package:hyport/features/auth/presentation/guest_support_screen.dart';
@@ -139,8 +139,17 @@ TicketFilter? _filterWithSystem(TicketFilter? filter, String? system) {
   );
 }
 
-TicketFilter _coordinatorProductFilter(TicketFilter? filter) => TicketFilter(
-  systems: const {'ghaneps', 'gifmis'},
+TicketFilter _coordinatorProductFilter(
+  TicketFilter? filter, {
+  required UserRole role,
+  required Iterable<String> assignedSystems,
+}) => TicketFilter(
+  system: filter?.system != null && supportSystemIds.contains(filter!.system)
+      ? filter!.system
+      : null,
+  systems: filter?.system != null && supportSystemIds.contains(filter!.system)
+      ? const {}
+      : allowedSystemsForRole(role, assignedSystems),
   statuses: filter?.statuses ?? const {},
   category: filter?.category,
   priorities: filter?.priorities ?? const {},
@@ -206,7 +215,9 @@ Widget _brandedRouteSurface(Widget child) {
         data: theme.copyWith(
           scaffoldBackgroundColor: Colors.transparent,
           appBarTheme: theme.appBarTheme.copyWith(
-            backgroundColor: Colors.transparent,
+            // Keep navigation chrome legible and solid while the shared
+            // AppBackground remains visible through screen bodies.
+            backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
           ),
         ),
@@ -231,8 +242,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final preAuthPaths = [
         '/welcome',
         '/login',
-        '/forgot-password',
-        '/reset-password',
+        '/phone-password-recovery',
         '/request-access',
       ];
       final onGuestPath = location.startsWith('/guest/');
@@ -270,6 +280,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       if (appUser == null || !appUser.isActive) {
         return onPreAuthPath ? null : '/login';
+      }
+
+      final requestedSystem = state.uri.queryParameters['system'];
+      if (requestedSystem != null &&
+          supportSystemIds.contains(requestedSystem) &&
+          !allowedSystemsForRole(
+            appUser.role,
+            appUser.systems,
+          ).contains(requestedSystem)) {
+        // A signed-in user may not reach another product by changing the
+        // workspace query parameter or opening a saved deep link.
+        return '/home';
       }
 
       if (onSplash) {
@@ -380,19 +402,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fadePage(state, const LoginScreen()),
-      ),
-      GoRoute(
-        path: '/forgot-password',
-        pageBuilder: (context, state) =>
-            _slideUpPage(state, const ForgotPasswordScreen()),
-      ),
-      GoRoute(
-        path: '/reset-password',
-        pageBuilder: (context, state) => _slideUpPage(
+        pageBuilder: (context, state) => _fadePage(
           state,
-          ResetPasswordScreen(oobCode: state.uri.queryParameters['oobCode']),
+          LoginScreen(initialSystem: state.uri.queryParameters['system']),
         ),
+      ),
+      GoRoute(
+        path: '/phone-password-recovery',
+        pageBuilder: (context, state) =>
+            _slideUpPage(state, const PhonePasswordRecoveryScreen()),
       ),
       GoRoute(
         path: '/request-access',
@@ -433,8 +451,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               final isCoordinator =
                   ref.read(currentAppUserProvider).valueOrNull?.role ==
                   UserRole.supportCoordinator;
-              final initialFilter = isCoordinator
-                  ? _coordinatorProductFilter(requestedFilter)
+              final viewer = ref.read(currentAppUserProvider).valueOrNull;
+              final initialFilter = isCoordinator && viewer != null
+                  ? _coordinatorProductFilter(
+                      requestedFilter,
+                      role: viewer.role,
+                      assignedSystems: viewer.systems,
+                    )
                   : requestedFilter;
               return _fadePage(
                 state,
@@ -807,12 +830,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _slideUpPage(
           state,
           ResponsiveScreen(
-            mobile: const AddUserScreen(),
+            mobile: AddUserScreen(
+              initialSystem: state.uri.queryParameters['system'],
+            ),
             desktop: Padding(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: const AddUserScreen(embedded: true),
+                child: AddUserScreen(
+                  embedded: true,
+                  initialSystem: state.uri.queryParameters['system'],
+                ),
               ),
             ),
             desktopTitle: 'Add User',

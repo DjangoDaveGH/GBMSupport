@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -23,10 +24,12 @@ class DesktopSlaMonitoringScreen extends ConsumerStatefulWidget {
   const DesktopSlaMonitoringScreen({super.key});
 
   @override
-  ConsumerState<DesktopSlaMonitoringScreen> createState() => _DesktopSlaMonitoringScreenState();
+  ConsumerState<DesktopSlaMonitoringScreen> createState() =>
+      _DesktopSlaMonitoringScreenState();
 }
 
-class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitoringScreen> {
+class _DesktopSlaMonitoringScreenState
+    extends ConsumerState<DesktopSlaMonitoringScreen> {
   TicketCategory? _category;
 
   bool _isAtRisk(Ticket t, SlaPolicy policy) {
@@ -38,7 +41,9 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
 
   bool _breachedToday(Ticket t, SlaPolicy policy) {
     if (!SlaCalculator.isOverdue(t, policy)) return false;
-    final due = t.createdAt.add(Duration(hours: policy.targetHoursFor(t.priority)));
+    final due = t.createdAt.add(
+      Duration(hours: policy.targetHoursFor(t.priority)),
+    );
     final now = DateTime.now();
     return due.year == now.year && due.month == now.month && due.day == now.day;
   }
@@ -48,24 +53,50 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
+    final ticketFilter = TicketFilter(
+      system: selectedSystem,
+      systems:
+          selectedSystem == null && appUser.role == UserRole.supportCoordinator
+          ? allowedSystemsForRole(appUser.role, appUser.systems)
+          : const {},
+    );
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, ticketFilter)),
+    );
     final usersAsync = ref.watch(allUsersProvider);
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load SLA data: $e')),
       data: (tickets) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
+        final usersById = <String, AppUser>{
+          for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u,
+        };
         final compliance = SlaCalculator.complianceRate(tickets, slaPolicy);
         final atRisk = tickets.where((t) => _isAtRisk(t, slaPolicy)).length;
-        final breachedToday = tickets.where((t) => _breachedToday(t, slaPolicy)).length;
+        final breachedToday = tickets
+            .where((t) => _breachedToday(t, slaPolicy))
+            .length;
 
-        final breachedTickets = tickets
-            .where((t) => (t.resolvedAt != null || t.closedAt != null) && !SlaCalculator.metSla(t, slaPolicy))
-            .where((t) => _category == null || t.category == _category)
-            .toList()
-          ..sort((a, b) => (b.resolvedAt ?? b.closedAt!).compareTo(a.resolvedAt ?? a.closedAt!));
+        final breachedTickets =
+            tickets
+                .where(
+                  (t) =>
+                      (t.resolvedAt != null || t.closedAt != null) &&
+                      !SlaCalculator.metSla(t, slaPolicy),
+                )
+                .where((t) => _category == null || t.category == _category)
+                .toList()
+              ..sort(
+                (a, b) => (b.resolvedAt ?? b.closedAt!).compareTo(
+                  a.resolvedAt ?? a.closedAt!,
+                ),
+              );
 
         return Padding(
           padding: const EdgeInsets.all(24),
@@ -79,13 +110,23 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: Column(
                     children: [
-                      _CategoryTile(label: 'All Categories', selected: _category == null, onTap: () => setState(() => _category = null)),
+                      _CategoryTile(
+                        label: 'All Categories',
+                        selected: _category == null,
+                        onTap: () => setState(() => _category = null),
+                      ),
                       for (final c in TicketCategory.values)
-                        _CategoryTile(label: c.label, selected: _category == c, onTap: () => setState(() => _category = c)),
+                        _CategoryTile(
+                          label: c.label,
+                          selected: _category == c,
+                          onTap: () => setState(() => _category = c),
+                        ),
                     ],
                   ),
                 ),
@@ -98,23 +139,48 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _StatCard(label: 'Within SLA', value: compliance == null ? '—' : '${compliance.round()}%', color: StatusColors.resolved)),
+                        Expanded(
+                          child: _StatCard(
+                            label: 'Within SLA',
+                            value: compliance == null
+                                ? '—'
+                                : '${compliance.round()}%',
+                            color: StatusColors.resolved,
+                          ),
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: _StatCard(
                             label: 'Breached',
-                            value: compliance == null ? '—' : '${(100 - compliance).round()}%',
+                            value: compliance == null
+                                ? '—'
+                                : '${(100 - compliance).round()}%',
                             color: StatusColors.critical,
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Expanded(child: _StatCard(label: 'At Risk', value: '$atRisk', color: AppTheme.gold)),
+                        Expanded(
+                          child: _StatCard(
+                            label: 'At Risk',
+                            value: '$atRisk',
+                            color: AppTheme.gold,
+                          ),
+                        ),
                         const SizedBox(width: 16),
-                        Expanded(child: _StatCard(label: 'SLA Breached Today', value: '$breachedToday', color: StatusColors.critical)),
+                        Expanded(
+                          child: _StatCard(
+                            label: 'SLA Breached Today',
+                            value: '$breachedToday',
+                            color: StatusColors.critical,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    Text('Breached Tickets', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Breached Tickets',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 12),
                     Expanded(
                       child: Container(
@@ -122,10 +188,15 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
-                          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
                         ),
                         child: breachedTickets.isEmpty
-                            ? const EmptyState(icon: Icons.gpp_good_outlined, message: 'No SLA breaches on record.')
+                            ? const EmptyState(
+                                icon: Icons.gpp_good_outlined,
+                                message: 'No SLA breaches on record.',
+                              )
                             : SingleChildScrollView(
                                 child: ScrollableTable(
                                   child: DataTable(
@@ -138,21 +209,61 @@ class _DesktopSlaMonitoringScreenState extends ConsumerState<DesktopSlaMonitorin
                                       DataColumn(label: Text('Breached By')),
                                     ],
                                     rows: breachedTickets.map((t) {
-                                      final assignee = t.assignedTo == null ? null : usersById[t.assignedTo];
-                                      final due = t.createdAt.add(Duration(hours: slaPolicy.targetHoursFor(t.priority)));
-                                      final resolvedAt = t.resolvedAt ?? t.closedAt!;
+                                      final assignee = t.assignedTo == null
+                                          ? null
+                                          : usersById[t.assignedTo];
+                                      final due = t.createdAt.add(
+                                        Duration(
+                                          hours: slaPolicy.targetHoursFor(
+                                            t.priority,
+                                          ),
+                                        ),
+                                      );
+                                      final resolvedAt =
+                                          t.resolvedAt ?? t.closedAt!;
                                       final overBy = resolvedAt.difference(due);
                                       return DataRow(
-                                        onSelectChanged: (_) => context.push('/tickets/${t.id}'),
+                                        onSelectChanged: (_) =>
+                                            context.push('/tickets/${t.id}'),
                                         cells: [
-                                          DataCell(Text(t.ticketReference, style: const TextStyle(fontWeight: FontWeight.w600))),
-                                          DataCell(SizedBox(width: 220, child: Text(t.title, overflow: TextOverflow.ellipsis))),
-                                          DataCell(Text(assignee?.name ?? 'Unassigned')),
-                                          DataCell(Text(DateFormat.MMMd().add_jm().format(due))),
-                                          DataCell(Text(
-                                            '${overBy.inHours}h',
-                                            style: const TextStyle(color: StatusColors.critical, fontWeight: FontWeight.w700),
-                                          )),
+                                          DataCell(
+                                            Text(
+                                              t.ticketReference,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            SizedBox(
+                                              width: 220,
+                                              child: Text(
+                                                t.title,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              assignee?.name ?? 'Unassigned',
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              DateFormat.MMMd().add_jm().format(
+                                                due,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              '${overBy.inHours}h',
+                                              style: const TextStyle(
+                                                color: StatusColors.critical,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       );
                                     }).toList(),
@@ -177,7 +288,11 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -191,9 +306,19 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color)),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(color: color),
+          ),
           const SizedBox(height: 6),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+          ),
         ],
       ),
     );
@@ -205,12 +330,18 @@ class _CategoryTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _CategoryTile({required this.label, required this.selected, required this.onTap});
+  const _CategoryTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppTheme.navy.withValues(alpha: 0.08) : Colors.transparent,
+      color: selected
+          ? AppTheme.navy.withValues(alpha: 0.08)
+          : Colors.transparent,
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -219,7 +350,11 @@ class _CategoryTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Text(
             label,
-            style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: selected ? AppTheme.navy : AppTheme.ink, fontSize: 13),
+            style: TextStyle(
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? AppTheme.navy : AppTheme.ink,
+              fontSize: 13,
+            ),
           ),
         ),
       ),

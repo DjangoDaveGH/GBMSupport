@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/features/admin/presentation/institution_dialogs.dart';
@@ -21,6 +22,7 @@ class InstitutionsScreen extends ConsumerStatefulWidget {
 class _InstitutionsScreenState extends ConsumerState<InstitutionsScreen> {
   final _searchController = TextEditingController();
   String _search = '';
+  String _selectedSystem = 'all';
 
   @override
   void dispose() {
@@ -47,28 +49,76 @@ class _InstitutionsScreenState extends ConsumerState<InstitutionsScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _search = v.toLowerCase()),
-              decoration: const InputDecoration(hintText: 'Search institutions…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+              decoration: const InputDecoration(
+                hintText: 'Search institutions…',
+                prefixIcon: Icon(Icons.search_rounded, size: 20),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Row(
+              children: [
+                for (final system in ['all', ...supportSystemIds]) ...[
+                  if (system != 'all') const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: Text(
+                      system == 'all'
+                          ? 'All systems'
+                          : supportSystemLabel(system),
+                    ),
+                    selected: _selectedSystem == system,
+                    onSelected: (_) => setState(() => _selectedSystem = system),
+                  ),
+                ],
+              ],
             ),
           ),
           Expanded(
             child: institutionsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load institutions: $e')),
+              error: (e, _) =>
+                  Center(child: Text('Could not load institutions: $e')),
               data: (institutions) {
-                final userCounts = <String, int>{};
+                final userCounts = <String, Map<String, int>>{};
                 for (final u in usersAsync.valueOrNull ?? const []) {
-                  userCounts[u.institutionId] = (userCounts[u.institutionId] ?? 0) + 1;
+                  if (!u.isActive) continue;
+                  final systemCounts = userCounts.putIfAbsent(
+                    u.institutionId,
+                    () => {for (final system in supportSystemIds) system: 0},
+                  );
+                  for (final system in u.systems) {
+                    if (systemCounts.containsKey(system)) {
+                      systemCounts[system] = systemCounts[system]! + 1;
+                    }
+                  }
                 }
-                final filtered = institutions.where((i) => _search.isEmpty || i.name.toLowerCase().contains(_search)).toList();
+                final filtered = institutions.where((institution) {
+                  final matchesSearch =
+                      _search.isEmpty ||
+                      institution.name.toLowerCase().contains(_search);
+                  final activeCount =
+                      userCounts[institution.id]?[_selectedSystem] ?? 0;
+                  return matchesSearch &&
+                      (_selectedSystem == 'all' || activeCount > 0);
+                }).toList();
                 if (filtered.isEmpty) {
-                  return const EmptyState(icon: Icons.account_balance_outlined, message: 'No institutions found.');
+                  return EmptyState(
+                    icon: Icons.account_balance_outlined,
+                    message: _selectedSystem == 'all'
+                        ? 'No institutions found.'
+                        : 'No institutions with active ${supportSystemLabel(_selectedSystem)} users found.',
+                  );
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                   itemCount: filtered.length,
                   itemBuilder: (context, i) => _InstitutionTile(
                     institution: filtered[i],
-                    userCount: userCounts[filtered[i].id] ?? 0,
+                    activeUsersBySystem:
+                        userCounts[filtered[i].id] ??
+                        {for (final system in supportSystemIds) system: 0},
                   ),
                 );
               },
@@ -82,9 +132,12 @@ class _InstitutionsScreenState extends ConsumerState<InstitutionsScreen> {
 
 class _InstitutionTile extends StatelessWidget {
   final Institution institution;
-  final int userCount;
+  final Map<String, int> activeUsersBySystem;
 
-  const _InstitutionTile({required this.institution, required this.userCount});
+  const _InstitutionTile({
+    required this.institution,
+    required this.activeUsersBySystem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -105,21 +158,64 @@ class _InstitutionTile extends StatelessWidget {
               color: AppTheme.accentBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(Icons.account_balance_rounded, size: 19, color: AppTheme.accentBlue),
+            child: const Icon(
+              Icons.account_balance_rounded,
+              size: 19,
+              color: AppTheme.accentBlue,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(institution.name, style: Theme.of(context).textTheme.titleSmall),
-                Text(institution.type.wireValue, style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  institution.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Text(
+                  institution.type.wireValue,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Active users by system',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final system in supportSystemIds)
+                      _InstitutionSystemCount(
+                        system: system,
+                        count: activeUsersBySystem[system] ?? 0,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
-          Text('$userCount Users', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.accentBlue)),
         ],
       ),
+    );
+  }
+}
+
+class _InstitutionSystemCount extends StatelessWidget {
+  final String system;
+  final int count;
+
+  const _InstitutionSystemCount({required this.system, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      visualDensity: VisualDensity.compact,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 3),
+      backgroundColor: AppTheme.accentBlue.withValues(alpha: 0.08),
+      side: BorderSide.none,
+      label: Text('${supportSystemLabel(system)} $count'),
     );
   }
 }

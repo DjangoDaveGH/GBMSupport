@@ -8,8 +8,7 @@ import 'package:hyport/core/theme/app_theme.dart';
 /// Matches the reference Settings screen's section layout, minus Biometric
 /// Login (removed — this app has no working security control behind it).
 /// "Change Password" does a real in-app password change (current + new
-/// password, via AuthService.changePassword). Every signed-in user can also
-/// request a reset link for their own account.
+/// password, via AuthService.changePassword).
 class SettingsScreen extends ConsumerWidget {
   /// When true, renders just the list content with no Scaffold/AppBar of
   /// its own — for embedding inside DesktopShell. See NotificationsScreen's
@@ -31,12 +30,6 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.password_rounded,
               label: 'Change Password',
               onTap: appUser == null ? null : () => _showChangePasswordDialog(context, ref),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.mark_email_read_outlined,
-              label: 'Email Me a Reset Link',
-              onTap: appUser == null ? null : () => _sendPasswordResetLink(context, ref),
             ),
           ]),
           const SizedBox(height: AppSpacing.lg),
@@ -98,24 +91,6 @@ class SettingsScreen extends ConsumerWidget {
     return showDialog(context: context, builder: (_) => const _ChangePasswordDialog());
   }
 
-  Future<void> _sendPasswordResetLink(BuildContext context, WidgetRef ref) async {
-    final email = FirebaseAuth.instance.currentUser?.email;
-    if (email == null || email.isEmpty) return;
-    try {
-      await ref.read(authServiceProvider).sendPasswordResetEmail(email);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Password reset link sent to $email.')),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Could not send the password reset link.')),
-        );
-      }
-    }
-  }
 }
 
 class _ChangePasswordDialog extends ConsumerStatefulWidget {

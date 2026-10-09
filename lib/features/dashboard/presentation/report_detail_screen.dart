@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/app_error_state.dart';
@@ -29,7 +31,11 @@ class ReportDetailScreen extends ConsumerStatefulWidget {
   final String reportType;
   final String reportLabel;
 
-  const ReportDetailScreen({super.key, required this.reportType, required this.reportLabel});
+  const ReportDetailScreen({
+    super.key,
+    required this.reportType,
+    required this.reportLabel,
+  });
 
   @override
   ConsumerState<ReportDetailScreen> createState() => _ReportDetailScreenState();
@@ -44,12 +50,37 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   bool _matchesSearch(Ticket t) {
     if (_search.isEmpty) return true;
     final q = _search.toLowerCase();
-    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+    return t.title.toLowerCase().contains(q) ||
+        t.ticketReference.toLowerCase().contains(q);
   }
 
   Future<void> _openFilters() async {
-    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
+    final result = await context.push<TicketFilter>(
+      '/tickets/filters',
+      extra: _effectiveFilter,
+    );
     if (result != null && mounted) setState(() => _filter = result);
+  }
+
+  TicketFilter get _effectiveFilter {
+    final uri = GoRouterState.of(context).uri;
+    final selectedSystem = uri.queryParameters['system'];
+    final appUser = ref.read(currentAppUserProvider).valueOrNull;
+    return TicketFilter(
+      system: selectedSystem,
+      systems:
+          selectedSystem == null && appUser?.role == UserRole.supportCoordinator
+          ? allowedSystemsForRole(appUser!.role, appUser.systems)
+          : const {},
+      statuses: _filter.statuses,
+      priorities: _filter.priorities,
+      category: _filter.category,
+      institutionId: _filter.institutionId,
+      institutionType: _filter.institutionType,
+      createdAfter: _filter.createdAfter,
+      createdBefore: _filter.createdBefore,
+      overdueOnly: _filter.overdueOnly,
+    );
   }
 
   @override
@@ -63,7 +94,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     super.initState();
     final uid = ref.read(currentAppUserProvider).valueOrNull?.id;
     if (uid != null) {
-      ref.read(reportViewRepositoryProvider).logView(
+      ref
+          .read(reportViewRepositoryProvider)
+          .logView(
             viewedBy: uid,
             reportType: widget.reportType,
             reportLabel: widget.reportLabel,
@@ -74,23 +107,33 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   Future<void> _exportPdf(String uid, List<ReportSectionData> sections) async {
     setState(() => _exporting = true);
     try {
-      final url = await ref.read(reportPdfExporterProvider).exportAndUpload(
+      final url = await ref
+          .read(reportPdfExporterProvider)
+          .exportAndUpload(
             uid: uid,
             reportType: widget.reportType,
             reportLabel: widget.reportLabel,
             sections: sections,
           );
-      await ref.read(reportViewRepositoryProvider).logView(
+      await ref
+          .read(reportViewRepositoryProvider)
+          .logView(
             viewedBy: uid,
             reportType: widget.reportType,
             reportLabel: widget.reportLabel,
             pdfUrl: url,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF exported — see Recent Reports to open it.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PDF exported — see Recent Reports to open it.'),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not export PDF: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not export PDF: $e')));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -108,9 +151,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const Scaffold(body: BrandedLoaderCenter());
 
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, _filter)));
+    final effectiveFilter = _effectiveFilter;
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, effectiveFilter)),
+    );
     final usersAsync = ref.watch(allUsersProvider);
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
     return Scaffold(
       appBar: AppBar(
@@ -118,18 +165,33 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         actions: [
           IconButton(
             onPressed: _openFilters,
-            icon: Icon(_filter.isEmpty ? Icons.filter_alt_outlined : Icons.filter_alt_rounded),
+            icon: Icon(
+              effectiveFilter.isEmpty
+                  ? Icons.filter_alt_outlined
+                  : Icons.filter_alt_rounded,
+            ),
           ),
           ticketsAsync.maybeWhen(
             data: (tickets) {
               final filtered = tickets.where(_matchesSearch).toList();
-              final sections = reportSectionDataFor(widget.reportType, filtered, usersAsync.valueOrNull ?? const [], slaPolicy);
+              final sections = reportSectionDataFor(
+                widget.reportType,
+                filtered,
+                usersAsync.valueOrNull ?? const [],
+                slaPolicy,
+              );
               return IconButton(
                 tooltip: 'Export PDF',
                 icon: _exporting
-                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.picture_as_pdf_outlined),
-                onPressed: _exporting ? null : () => _exportPdf(appUser.id, sections),
+                onPressed: _exporting
+                    ? null
+                    : () => _exportPdf(appUser.id, sections),
               );
             },
             orElse: () => const SizedBox.shrink(),
@@ -161,17 +223,34 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           Expanded(
             child: ticketsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => const AppErrorState(message: 'We could not load this report.'),
+              error: (e, _) => const AppErrorState(
+                message: 'We could not load this report.',
+              ),
               data: (tickets) {
                 final filtered = tickets.where(_matchesSearch).toList();
-                final sections = reportSectionDataFor(widget.reportType, filtered, usersAsync.valueOrNull ?? const [], slaPolicy);
+                final sections = reportSectionDataFor(
+                  widget.reportType,
+                  filtered,
+                  usersAsync.valueOrNull ?? const [],
+                  slaPolicy,
+                );
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: sections
-                      .map((s) => _ReportSection(
-                            title: s.title,
-                            rows: s.rows.map((r) => _ReportRow(label: r.$1, value: r.$2, valueColor: _rowColor(s.title, r.$1))).toList(),
-                          ))
+                      .map(
+                        (s) => _ReportSection(
+                          title: s.title,
+                          rows: s.rows
+                              .map(
+                                (r) => _ReportRow(
+                                  label: r.$1,
+                                  value: r.$2,
+                                  valueColor: _rowColor(s.title, r.$1),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      )
                       .toList(),
                 );
               },
@@ -202,7 +281,9 @@ class _ReportSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(children: rows),
@@ -224,17 +305,26 @@ class _ReportRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: valueColor),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: valueColor),
           ),
         ],
       ),
     );
   }
 }
-

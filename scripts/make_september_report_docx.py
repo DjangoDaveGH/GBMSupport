@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -6,6 +7,44 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 
 with open('scripts/september_2026_activity.json', encoding='utf-8') as f:
     r = json.load(f)
+
+period_start = datetime.fromisoformat(r['period']['start'].replace('Z', '+00:00'))
+period_end = datetime.fromisoformat(r['period']['end'].replace('Z', '+00:00')) - timedelta(days=1)
+period_label = f"{period_start.day}-{period_end.day} {period_start.strftime('%B %Y')} (full month)"
+prepared_date = r['generatedAt'][:10]
+ticket_details = sorted(r['records']['ticketsCreated'], key=lambda t: t.get('createdAt', ''))
+institution_type_by_id = {
+    u.get('institutionId'): u.get('institutionType')
+    for u in r['records']['usersCreated']
+    if u.get('institutionId') and u.get('institutionType')
+}
+for institution_id in ['jaman-north-district', 'south-tongu-district', 'afadzato-south-district', 'north-tongu-district', 'gomoa-east-district', 'upper-east-assit-rba']:
+    institution_type_by_id[institution_id] = 'MMDA'
+ticket_type_counts = {}
+ticket_institution_counts = {}
+normalized_user_role_counts = {}
+for user in r['records']['usersCreated']:
+    role = 'end_user' if user.get('role') == 'mda_user' else (user.get('role') or '(not recorded)')
+    normalized_user_role_counts[role] = normalized_user_role_counts.get(role, 0) + 1
+for ticket in ticket_details:
+    institution_id = ticket.get('institutionId') or '(not recorded)'
+    institution_type = institution_type_by_id.get(ticket.get('institutionId'), 'Type not recorded')
+    ticket_type_counts[institution_type] = ticket_type_counts.get(institution_type, 0) + 1
+    key = (institution_type, institution_id)
+    ticket_institution_counts[key] = ticket_institution_counts.get(key, 0) + 1
+
+def hours_between(start, end):
+    if not start or not end:
+        return ''
+    start_dt = datetime.fromisoformat(start.replace('Z', '+00:00'))
+    end_dt = datetime.fromisoformat(end.replace('Z', '+00:00'))
+    return f'{(end_dt - start_dt).total_seconds() / 3600:.1f}'
+
+response_hours = [float(hours_between(t.get('createdAt'), t.get('firstRespondedAt'))) for t in ticket_details if t.get('firstRespondedAt')]
+resolution_hours = [float(hours_between(t.get('createdAt'), t.get('resolvedAt'))) for t in ticket_details if t.get('resolvedAt')]
+
+def average(values):
+    return f'{sum(values) / len(values):.1f}' if values else '0.0'
 
 doc = Document()
 section = doc.sections[0]
@@ -38,7 +77,7 @@ def table(title, rows):
     for k, v in rows.items():
         cells = t.add_row().cells
         cells[0].text = str(k)
-        cells[1].text = f'{v:,}'
+        cells[1].text = f'{v:,}' if isinstance(v, (int, float)) else str(v)
 
 table('Key metrics', {
     'New users': r['summary']['usersCreated'],
@@ -50,10 +89,52 @@ table('Key metrics', {
 table('Tickets by status at extraction', r['breakdowns']['ticketsByStatusAtReportTime'])
 table('Tickets by priority', r['breakdowns']['ticketsByPriority'])
 table('Tickets by category', r['breakdowns']['ticketsByCategory'])
+table('Tickets by institution type', ticket_type_counts)
+table('Response and resolution timing', {
+    'Tickets with a recorded first response': f"{len(response_hours)} of {len(ticket_details)}",
+    'Average time to first response (hours)': average(response_hours),
+    'Tickets with a recorded resolution': f"{len(resolution_hours)} of {len(ticket_details)}",
+    'Average time from creation to resolution (hours)': average(resolution_hours),
+})
 table('Ticket activity actions', r['breakdowns']['ticketActivitiesByAction'])
 table('Notification types', r['breakdowns']['notificationsByType'])
 table('System audit actions', r['breakdowns']['auditLogsByAction'])
-table('New users by role', r['breakdowns']['usersByRoleCreated'])
+table('New users by role', normalized_user_role_counts)
+
+doc.add_heading('Ticket-level detail', 1)
+doc.add_paragraph('Every ticket created during September is listed below with its reference, title, current status at extraction, ownership, and recorded response/resolution timing.')
+t = doc.add_table(rows=1, cols=11)
+t.style = 'Light Shading Accent 1'
+t.alignment = WD_TABLE_ALIGNMENT.CENTER
+headers = ['Ticket', 'Created (UTC)', 'Title', 'Category', 'Priority', 'Status', 'Assigned to', 'First response (UTC)', 'Resolved (UTC)', 'Response hours', 'Resolution hours']
+for cell, header in zip(t.rows[0].cells, headers):
+    cell.text = header
+for ticket in ticket_details:
+    row = t.add_row().cells
+    row[0].text = ticket.get('ticketReference') or ticket.get('id', '')
+    row[1].text = ticket.get('createdAt', '').replace('T', ' ').replace('Z', ' UTC')
+    row[2].text = ' '.join((ticket.get('title') or '').split())
+    row[3].text = ticket.get('category', '')
+    row[4].text = ticket.get('priority', '')
+    row[5].text = ticket.get('status', '')
+    row[6].text = ticket.get('assignedToName') or 'Unassigned'
+    row[7].text = (ticket.get('firstRespondedAt') or '').replace('T', ' ').replace('Z', ' UTC')
+    row[8].text = (ticket.get('resolvedAt') or '').replace('T', ' ').replace('Z', ' UTC')
+    row[9].text = hours_between(ticket.get('createdAt'), ticket.get('firstRespondedAt'))
+    row[10].text = hours_between(ticket.get('createdAt'), ticket.get('resolvedAt'))
+
+doc.add_heading('MDA/MMDA coverage', 1)
+doc.add_paragraph(f"The September ticket dataset contains {len({t.get('institutionId') for t in ticket_details if t.get('institutionId')})} distinct institution identifiers. Classification is based on institution type recorded in production user records; tickets without a matching type are shown separately.")
+doc.add_heading('Tickets by institution', 2)
+t = doc.add_table(rows=1, cols=3)
+t.style = 'Light Shading Accent 1'
+for cell, header in zip(t.rows[0].cells, ['Institution type', 'Institution', 'Tickets']):
+    cell.text = header
+for (institution_type, institution_id), count in sorted(ticket_institution_counts.items(), key=lambda item: (-item[1], item[0][1])):
+    row = t.add_row().cells
+    row[0].text = institution_type
+    row[1].text = institution_id
+    row[2].text = str(count)
 
 doc.add_heading('Operational observations', 1)
 for text in [
@@ -71,5 +152,10 @@ doc.add_paragraph('Presence heartbeats overwrite the current user profile field 
 doc.add_heading('Complete activity appendices', 1)
 doc.add_paragraph('The accompanying CSV files contain every extracted record: september_2026_ticket_activity.csv, september_2026_audit_logs.csv, september_2026_notifications.csv, and september_2026_users_created.csv. The complete structured export is september_2026_activity.json.')
 doc.add_paragraph('Prepared for management submission.')
+for paragraph in doc.paragraphs:
+    if paragraph.text.startswith('Reporting period:'):
+        paragraph.text = f'Reporting period: {period_label}\nPrepared: {prepared_date}\nSource: Firebase Firestore production activity records, project mofapp-60963'
+    elif paragraph.text.startswith('This report includes timestamped records'):
+        paragraph.text = f'This report includes timestamped records from the users, tickets, ticket activity subcollections, notifications, and audit_logs Firestore collections whose timestamps fall within {period_label} and were available at extraction on {prepared_date}. Ticket status, priority, and category are reported as current values at extraction time, not as a historical daily snapshot.'
 doc.save('scripts/september_2026_activity_report.docx')
 print('Wrote scripts/september_2026_activity_report.docx')

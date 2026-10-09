@@ -5,6 +5,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/responsive.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/core/widgets/hex_pattern.dart';
 import 'package:hyport/core/widgets/pwa_install_button.dart';
 
 /// Bottom-nav shell. The reference design's split bar with a raised gold
@@ -48,9 +49,7 @@ class AppShell extends ConsumerWidget {
 
     final location = GoRouterState.of(context).matchedLocation;
     final routeSystem = GoRouterState.of(context).uri.queryParameters['system'];
-    final selectedSystem = appUser?.role == UserRole.supportCoordinator
-        ? null
-        : routeSystem;
+    final selectedSystem = routeSystem;
     var currentIndex = tabs.indexOf(location);
     if (currentIndex == -1) currentIndex = 0;
 
@@ -61,6 +60,9 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
+          const Positioned.fill(
+            child: HexPatternBackground(opacity: 0.22),
+          ),
           child,
           const Positioned(
             right: 16,

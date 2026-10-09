@@ -100,9 +100,11 @@ class _DesktopTicketDetailScreenState
           TicketStatus.reopened,
         }.contains(ticket.status);
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -118,6 +120,23 @@ class _DesktopTicketDetailScreenState
                 ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
               ),
               const Spacer(),
+              if (canAssign) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/tickets/${ticket.id}/assign'),
+                  icon: const Icon(Icons.person_add_alt_rounded, size: 18),
+                  label: Text(ticket.assignedTo == null ? 'Assign' : 'Reassign'),
+                ),
+              ],
+              if (canEscalate) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _showEscalateDialog(context, ticket, viewer),
+                  icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                  label: const Text('Escalate'),
+                ),
+              ],
+              const SizedBox(width: 8),
               // Plain FilledButton/FilledButton.icon silently fails to paint
               // here (repro'd: TextButton renders fine in the same spot,
               // FilledButton never does, with or without an icon/closure) —
@@ -169,7 +188,21 @@ class _DesktopTicketDetailScreenState
             ),
           ),
         ],
-      ),
+          ),
+        ),
+        Positioned(
+          right: 28,
+          bottom: 28,
+          child: FloatingActionButton(
+            heroTag: 'desktop-ticket-chat-${ticket.id}',
+            tooltip: 'Chat about this ticket',
+            backgroundColor: AppTheme.navy,
+            foregroundColor: Colors.white,
+            onPressed: () => context.push('/tickets/${ticket.id}/chat'),
+            child: const Icon(Icons.chat_bubble_outline_rounded),
+          ),
+        ),
+      ],
     );
   }
 

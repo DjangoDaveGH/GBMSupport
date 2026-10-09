@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -41,24 +42,41 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
     final usersAsync = ref.watch(allUsersProvider);
     final institutionsAsync = ref.watch(institutionListProvider);
     final viewer = ref.watch(currentAppUserProvider).valueOrNull;
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
 
     return usersAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load users: $e')),
       data: (users) {
-        final institutionsById = <String, Institution>{for (final i in institutionsAsync.valueOrNull ?? const <Institution>[]) i.id: i};
+        final institutionsById = <String, Institution>{
+          for (final i
+              in institutionsAsync.valueOrNull ?? const <Institution>[])
+            i.id: i,
+        };
 
         var filtered = users.where((u) {
+          if (selectedSystem != null && !u.systems.contains(selectedSystem)) {
+            return false;
+          }
           if (_role != null && u.role != _role) return false;
           if (_search.isEmpty) return true;
           final q = _search.toLowerCase();
-          return u.name.toLowerCase().contains(q) || u.email.toLowerCase().contains(q);
+          return u.name.toLowerCase().contains(q) ||
+              u.email.toLowerCase().contains(q);
         }).toList();
         filtered.sort((a, b) => a.name.compareTo(b.name));
 
-        final totalPages = (filtered.length / _pageSize).ceil().clamp(1, 999999);
+        final totalPages = (filtered.length / _pageSize).ceil().clamp(
+          1,
+          999999,
+        );
         final page = _page.clamp(0, totalPages - 1);
-        final pageItems = filtered.skip(page * _pageSize).take(_pageSize).toList();
+        final pageItems = filtered
+            .skip(page * _pageSize)
+            .take(_pageSize)
+            .toList();
 
         return Padding(
           padding: const EdgeInsets.all(24),
@@ -74,7 +92,10 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                         _search = v;
                         _page = 0;
                       }),
-                      decoration: const InputDecoration(hintText: 'Search users…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+                      decoration: const InputDecoration(
+                        hintText: 'Search users…',
+                        prefixIcon: Icon(Icons.search_rounded, size: 20),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -84,7 +105,9 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<UserRole?>(
@@ -92,8 +115,16 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                         isDense: true,
                         value: _role,
                         items: [
-                          const DropdownMenuItem<UserRole?>(value: null, child: Text('All Roles')),
-                          ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(r.label))),
+                          const DropdownMenuItem<UserRole?>(
+                            value: null,
+                            child: Text('All Roles'),
+                          ),
+                          ...UserRole.values.map(
+                            (r) => DropdownMenuItem(
+                              value: r,
+                              child: Text(r.label),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() {
                           _role = v;
@@ -111,7 +142,17 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                   // button needs, without changing its appearance.
                   IntrinsicWidth(
                     child: FilledButton.icon(
-                      onPressed: () => context.push('/admin/users/new'),
+                      onPressed: () => context.push(
+                        Uri(
+                          path: '/admin/users/new',
+                          queryParameters:
+                              GoRouterState.of(
+                                context,
+                              ).uri.queryParameters.isEmpty
+                              ? null
+                              : GoRouterState.of(context).uri.queryParameters,
+                        ).toString(),
+                      ),
                       icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Add User'),
                     ),
@@ -125,10 +166,15 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: filtered.isEmpty
-                      ? const EmptyState(icon: Icons.people_outline_rounded, message: 'No users match.')
+                      ? const EmptyState(
+                          icon: Icons.people_outline_rounded,
+                          message: 'No users match.',
+                        )
                       : Column(
                           children: [
                             Expanded(
@@ -144,32 +190,64 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                                       DataColumn(label: Text('Name')),
                                       DataColumn(label: Text('Email')),
                                       DataColumn(label: Text('Role')),
+                                      DataColumn(label: Text('Systems')),
                                       DataColumn(label: Text('Institution')),
                                       DataColumn(label: Text('Status')),
                                       DataColumn(label: Text('Last Active')),
                                       DataColumn(label: Text('Actions')),
                                     ],
-                                    rows: pageItems.map((u) => _row(context, u, institutionsById, viewer)).toList(),
+                                    rows: pageItems
+                                        .map(
+                                          (u) => _row(
+                                            context,
+                                            u,
+                                            institutionsById,
+                                            viewer,
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 ),
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
-                                border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                  ),
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   IconButton(
-                                    onPressed: page > 0 ? () => setState(() => _page = page - 1) : null,
-                                    icon: const Icon(Icons.chevron_left_rounded),
+                                    onPressed: page > 0
+                                        ? () => setState(() => _page = page - 1)
+                                        : null,
+                                    icon: const Icon(
+                                      Icons.chevron_left_rounded,
+                                    ),
                                   ),
-                                  Text('Page ${page + 1} of $totalPages', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(
+                                    'Page ${page + 1} of $totalPages',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
                                   IconButton(
-                                    onPressed: page < totalPages - 1 ? () => setState(() => _page = page + 1) : null,
-                                    icon: const Icon(Icons.chevron_right_rounded),
+                                    onPressed: page < totalPages - 1
+                                        ? () => setState(() => _page = page + 1)
+                                        : null,
+                                    icon: const Icon(
+                                      Icons.chevron_right_rounded,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -185,7 +263,12 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
     );
   }
 
-  DataRow _row(BuildContext context, AppUser u, Map<String, Institution> institutionsById, AppUser? viewer) {
+  DataRow _row(
+    BuildContext context,
+    AppUser u,
+    Map<String, Institution> institutionsById,
+    AppUser? viewer,
+  ) {
     final isSelf = viewer != null && viewer.id == u.id;
     return DataRow(
       // Whole row opens the editor — the pencil in the last column is easy
@@ -201,7 +284,11 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
                 backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
                 child: Text(
                   u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -209,24 +296,38 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
             ],
           ),
         ),
-        DataCell(ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 240),
-          child: Text(u.email, overflow: TextOverflow.ellipsis),
-        )),
+        DataCell(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 240),
+            child: Text(u.email, overflow: TextOverflow.ellipsis),
+          ),
+        ),
         DataCell(Text(u.role.shortLabel)),
-        DataCell(Text(institutionsById[u.institutionId]?.name ?? u.institutionType.wireValue)),
+        DataCell(Text(supportSystemsLabel(u.systems))),
+        DataCell(
+          Text(
+            institutionsById[u.institutionId]?.name ??
+                u.institutionType.wireValue,
+          ),
+        ),
         DataCell(
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: (u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline).withValues(alpha: 0.12),
+              color:
+                  (u.isActive
+                          ? StatusColors.resolved
+                          : Theme.of(context).colorScheme.outline)
+                      .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               u.accountStatusLabel,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: u.isActive ? StatusColors.resolved : Theme.of(context).colorScheme.outline),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: u.isActive
+                    ? StatusColors.resolved
+                    : Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
         ),
@@ -235,12 +336,37 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(icon: const Icon(Icons.edit_outlined, size: 18), tooltip: 'Edit user', onPressed: () => showEditUserDialog(context, u)),
               IconButton(
-                icon: Icon(u.isActive ? Icons.block_outlined : Icons.check_circle_outline_rounded, size: 18),
-                tooltip: isSelf ? "You can't deactivate your own account" : (u.isActive ? 'Deactivate user' : 'Reactivate user'),
-                color: u.isActive ? Theme.of(context).colorScheme.error : StatusColors.resolved,
-                onPressed: isSelf ? null : () => confirmSetUserActive(context, u, active: !u.isActive),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                tooltip: 'Edit user',
+                onPressed: () => showEditUserDialog(context, u),
+              ),
+              IconButton(
+                icon: const Icon(Icons.password_rounded, size: 18),
+                tooltip: isSelf
+                    ? 'Use account settings to change your own password'
+                    : 'Change password',
+                onPressed: isSelf
+                    ? null
+                    : () => promptSetUserPassword(context, u),
+              ),
+              IconButton(
+                icon: Icon(
+                  u.isActive
+                      ? Icons.block_outlined
+                      : Icons.check_circle_outline_rounded,
+                  size: 18,
+                ),
+                tooltip: isSelf
+                    ? "You can't deactivate your own account"
+                    : (u.isActive ? 'Deactivate user' : 'Reactivate user'),
+                color: u.isActive
+                    ? Theme.of(context).colorScheme.error
+                    : StatusColors.resolved,
+                onPressed: isSelf
+                    ? null
+                    : () =>
+                          confirmSetUserActive(context, u, active: !u.isActive),
               ),
             ],
           ),

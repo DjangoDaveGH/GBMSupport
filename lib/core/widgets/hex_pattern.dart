@@ -24,7 +24,11 @@ class HexPatternBackground extends StatelessWidget {
               // pre-faded overlay — scale opacity up from the caller's
               // (small, calibrated-for-a-plain-stroke-painter) value so
               // the texture still reads once alpha-blended.
-              opacity: (opacity * 3).clamp(0.0, 1.0),
+              // The supplied artwork has a near-black base with blue-grey
+              // line work. A stronger composite is required on the light
+              // application canvas for the pattern to remain visible behind
+              // transparent Scaffold bodies and desktop content margins.
+              opacity: (opacity * 4).clamp(0.0, 1.0),
               child: Image.asset('assets/images/bg_hex_pattern.png', fit: BoxFit.cover),
             ),
           ),
@@ -47,7 +51,9 @@ class AppBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFFF3F6FB),
-      child: HexPatternBackground(opacity: 0.05, child: child),
+      // Make the brand texture clearly visible on light screens while still
+      // keeping it behind cards, tables, and form surfaces.
+      child: HexPatternBackground(opacity: 0.22, child: child),
     );
   }
 }

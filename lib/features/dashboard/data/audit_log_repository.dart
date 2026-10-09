@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/audit_log.dart';
+import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
+import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 
 /// A real, honestly-scoped "audit log" (Phase 5 mockup screen 40) built
@@ -21,9 +24,14 @@ class AuditLogRepository {
 
   AuditLogRepository(this._db);
 
-  Stream<List<TicketActivity>> watchRecent({int limit = 100}) {
-    return _db
-        .collectionGroup('activity')
+  Stream<List<TicketActivity>> watchRecent(AppUser viewer, {int limit = 100}) {
+    Query<Map<String, dynamic>> query = _db.collectionGroup('activity');
+    if (viewer.role != UserRole.pfmManagement) {
+      final systems = allowedSystemsForRole(viewer.role, viewer.systems);
+      if (systems.isEmpty) return Stream.value(const <TicketActivity>[]);
+      query = query.where('system', whereIn: systems.toList());
+    }
+    return query
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()

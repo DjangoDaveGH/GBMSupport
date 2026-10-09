@@ -5,6 +5,7 @@ import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/responsive.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/core/widgets/hex_pattern.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/notifications/data/notification_providers.dart';
 import 'package:hyport/core/widgets/pwa_install_button.dart';
@@ -130,11 +131,18 @@ class DesktopShell extends ConsumerWidget {
                   // 1920px monitor (1920 - 224px sidebar = 1696, under this
                   // cap) so nothing changes there; only wider displays get
                   // centered instead of stretched.
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1800),
-                      child: child,
-                    ),
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: HexPatternBackground(opacity: 0.22),
+                      ),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1800),
+                          child: child,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
