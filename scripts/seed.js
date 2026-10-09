@@ -50,6 +50,7 @@ const users = [
     name: 'Ama Boateng',
     phone: '+233200000001',
     role: 'mda_user',
+    systems: ['gbms', 'ghaneps', 'gifmis'],
     institutionId: 'ministry-of-health',
     institutionType: 'MDA',
   },

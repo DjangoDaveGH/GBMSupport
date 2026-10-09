@@ -18,17 +18,6 @@ class AuthService {
 
   Future<void> signOut() => _auth.signOut();
 
-  Future<void> sendPasswordResetEmail(String email) {
-    return _auth.sendPasswordResetEmail(email: email);
-  }
-
-  /// Completes a password reset started by [sendPasswordResetEmail]. The
-  /// `oobCode` comes from the query parameter on the link Firebase emails —
-  /// see ResetPasswordScreen / the `/reset-password` route.
-  Future<void> confirmPasswordReset({required String oobCode, required String newPassword}) {
-    return _auth.confirmPasswordReset(code: oobCode, newPassword: newPassword);
-  }
-
   /// Self-service in-app password change (Settings screen). Firebase
   /// requires a recent sign-in for `updatePassword`, so this reauthenticates
   /// with the current password first — that also doubles as verifying the

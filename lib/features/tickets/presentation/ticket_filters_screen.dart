@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
@@ -135,9 +136,12 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
     // Institution / date / SLA filters are triage tools — only the
     // support-side queue ("Ticket Queue") needs them; on a requester's
     // "My Tickets" list they'd add only noise.
-    final isSupportSide =
-        ref.watch(currentAppUserProvider).valueOrNull?.role.isSupportSide ??
-        false;
+    final appUser = ref.watch(currentAppUserProvider).valueOrNull;
+    final isSupportSide = appUser?.role.isSupportSide ?? false;
+    final allowedSystems = appUser == null
+        ? const <String>{}
+        : allowedSystemsForRole(appUser.role, appUser.systems);
+    if (_system != null && !allowedSystems.contains(_system)) _system = null;
     final institutions = [...?ref.watch(institutionListProvider).valueOrNull]
       ..sort((a, b) => a.name.compareTo(b.name));
 
@@ -159,23 +163,34 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   children: [
                     _sectionLabel(context, 'Status'),
-                    if (isSupportSide) ...[
+                    if (isSupportSide &&
+                        (allowedSystems.length > 1 ||
+                            appUser?.role == UserRole.pfmManagement)) ...[
                       _sectionLabel(context, 'Support system'),
                       Wrap(
                         spacing: 8,
                         children: [
-                          for (final option in const [
-                            ('All systems', null),
-                            ('GBMS', 'gbms'),
-                            ('GHANEPS', 'ghaneps'),
-                            ('GIFMIS', 'gifmis'),
-                          ])
+                          if (allowedSystems.length > 1 ||
+                              appUser?.role == UserRole.pfmManagement)
                             ChoiceChip(
-                              label: Text(option.$1),
-                              selected: _system == option.$2,
+                              label: Text(
+                                appUser?.role == UserRole.pfmManagement
+                                    ? 'All systems'
+                                    : 'All assigned systems',
+                              ),
+                              selected: _system == null,
                               onSelected: (_) =>
-                                  setState(() => _system = option.$2),
+                                  setState(() => _system = null),
                             ),
+                          for (final system in supportSystemIds)
+                            if (allowedSystems.contains(system))
+                              ChoiceChip(
+                                label: Text(supportSystemLabel(system)),
+                                selected: _system == system,
+                                onSelected: (_) => setState(
+                                  () => _system = system,
+                                ),
+                              ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),

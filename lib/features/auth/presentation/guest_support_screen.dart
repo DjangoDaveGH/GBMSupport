@@ -6,27 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 const _issueCategories = <String>[
-  'Login & Account Access',
-  'Registration & Onboarding',
-  'Tender Creation & Publishing',
+  'Open Bids',
   'Bid Submission',
-  'Evaluation & Award',
-  'Payments & Fees',
-  'Notifications & Emails',
-  'User Roles & Permissions',
-  'General Support',
+  'Association of Officers',
+  'Account Activation',
+  'Login',
+  'Publishing Notice',
+  'Payment',
 ];
 
 IconData _categoryIcon(String category) => switch (category) {
-  'Login & Account Access' => Icons.person_rounded,
-  'Registration & Onboarding' => Icons.account_balance_rounded,
-  'Tender Creation & Publishing' => Icons.gavel_rounded,
+  'Open Bids' => Icons.work_outline_rounded,
   'Bid Submission' => Icons.task_alt_rounded,
-  'Evaluation & Award' => Icons.assignment_turned_in_rounded,
-  'Payments & Fees' => Icons.payments_rounded,
-  'Notifications & Emails' => Icons.notifications_active_rounded,
-  'User Roles & Permissions' => Icons.admin_panel_settings_rounded,
-  _ => Icons.lock_outline_rounded,
+  'Association of Officers' => Icons.people_alt_rounded,
+  'Account Activation' => Icons.person_add_alt_1_rounded,
+  'Login' => Icons.login_rounded,
+  'Publishing Notice' => Icons.campaign_outlined,
+  'Payment' => Icons.payments_rounded,
+  _ => Icons.help_outline_rounded,
 };
 
 class GuestSupportScreen extends StatefulWidget {
@@ -167,7 +164,7 @@ class _GuestSupportScreenState extends State<GuestSupportScreen> {
                         ),
                         const SizedBox(height: 10),
                         const Text(
-                          'MINISTRY FOR FINANCE\nREPUBLIC OF GHANA',
+                          'MINISTRY OF FINANCE\nREPUBLIC OF GHANA',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF10345F),
@@ -825,7 +822,7 @@ class _GuestSupportScreenState extends State<GuestSupportScreen> {
     for (final entry in const <(String, String)>[
       (
         'How do I reset my password?',
-        'Use the password-reset option on the relevant system sign-in page. If it fails, submit a support ticket under Login & Account Access.',
+        'Use the password-reset option on the relevant system sign-in page. If it fails, submit a support ticket under Login.',
       ),
       (
         'What should I include in a support ticket?',

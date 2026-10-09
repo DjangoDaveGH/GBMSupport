@@ -57,9 +57,8 @@ admin.initializeApp();
 const GMAIL_USER = defineSecret("GMAIL_USER");
 const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
 const GUEST_CATEGORIES = [
-  "Login & Account Access", "Registration & Onboarding", "Tender Creation & Publishing",
-  "Bid Submission", "Evaluation & Award", "Payments & Fees", "Notifications & Emails",
-  "User Roles & Permissions", "General Support",
+  "Open Bids", "Bid Submission", "Association of Officers", "Account Activation",
+  "Login", "Publishing Notice", "Payment",
 ];
 
 function mailTransport() {
@@ -71,6 +70,12 @@ function mailTransport() {
 
 function cleanText(value, max) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function normalizeRecoveryPhone(value) {
+  const raw = cleanText(value, 40).replace(/[\s().-]/g, "");
+  if (raw.startsWith("00")) return `+${raw.slice(2)}`;
+  return raw;
 }
 
 function digest(value) {
@@ -141,7 +146,9 @@ exports.submitGuestTicket = onCall({secrets: [GMAIL_USER, GMAIL_APP_PASSWORD]}, 
   }
   const now = new Date();
   const year = now.getFullYear();
-  const counter = db.collection("counters").doc(`tickets_${year}`);
+  // Guest GHANEPS/GIFMIS tickets share a PPA sequence with signed-in
+  // product tickets. GBMS continues using its independent PFMSD sequence.
+  const counter = db.collection("counters").doc(`tickets_ppa_${year}`);
   const ticketRef = db.collection("tickets").doc();
   let ticketReference;
   const uploadedObjects = [];
@@ -169,7 +176,7 @@ exports.submitGuestTicket = onCall({secrets: [GMAIL_USER, GMAIL_APP_PASSWORD]}, 
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(counter);
       const sequence = (snap.data()?.count || 0) + 1;
-      ticketReference = `PFMSD-${year}-${String(sequence).padStart(6, "0")}`;
+      ticketReference = `PPA-${year}-${String(sequence).padStart(5, "0")}`;
       tx.set(counter, {count: sequence}, {merge: true});
       tx.set(ticketRef, {
         ticketReference, createdBy: "guest", institutionId: "guest",
@@ -182,7 +189,7 @@ exports.submitGuestTicket = onCall({secrets: [GMAIL_USER, GMAIL_APP_PASSWORD]}, 
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       const activity = ticketRef.collection("activity").doc();
-      tx.set(activity, {ticketId: ticketRef.id, actorId: "guest", action: "created", toValue: "open", timestamp: admin.firestore.FieldValue.serverTimestamp()});
+      tx.set(activity, {ticketId: ticketRef.id, system, actorId: "guest", action: "created", toValue: "open", timestamp: admin.firestore.FieldValue.serverTimestamp()});
     });
   } catch (error) {
     await Promise.all(uploadedObjects.map((file) => file.delete().catch(() => {})));
@@ -254,7 +261,8 @@ exports.verifyGuestTicketStatusCode = onCall(async (request) => {
 exports.lookupGuestTicketStatus = onCall(async (request) => {
   const reference = cleanText(request.data?.ticketReference, 40).toUpperCase();
   const generic = {found: false};
-  if (!/^PFMSD-\d{4}-\d{6}$/.test(reference)) return generic;
+  // Keep previously issued PFMSD product ticket numbers valid for lookup.
+  if (!/^(?:PPA-\d{4}-\d{5,}|PFMSD-\d{4}-\d{6})$/.test(reference)) return generic;
 
   const db = admin.firestore();
   const ip = request.rawRequest?.ip || "unknown";
@@ -315,6 +323,33 @@ const VALID_ROLES = [
   "pfm_management",
   "vendor_support",
 ];
+const VALID_SYSTEMS = ["gbms", "ghaneps", "gifmis"];
+const TENANT_SCOPED_SUPPORT_ROLES = [
+  "support_coordinator",
+  "functional_lead",
+  "technical_lead",
+  "vendor_support",
+];
+
+function normalizedSystems(systems, role) {
+  if (systems === undefined || systems === null) {
+    return role === "support_coordinator" ? ["ghaneps", "gifmis"] : ["gbms"];
+  }
+  if (!Array.isArray(systems) || systems.length === 0 ||
+      systems.some((system) => !VALID_SYSTEMS.includes(system))) {
+    throw new HttpsError("invalid-argument", "Select at least one valid support system.");
+  }
+  const normalized = [...new Set(systems)];
+  if (TENANT_SCOPED_SUPPORT_ROLES.includes(role) &&
+      normalized.includes("gbms") &&
+      normalized.some((system) => system === "ghaneps" || system === "gifmis")) {
+    throw new HttpsError(
+        "invalid-argument",
+        "GBMS support staff cannot also access GHANEPS or GIFMIS. Create separate tenant-scoped accounts.",
+    );
+  }
+  return normalized;
+}
 
 /**
  * Admin-provisions a user account: Firebase Auth user (created if the email
@@ -346,6 +381,7 @@ exports.adminCreateUser = onCall(async (request) => {
   if (!VALID_ROLES.includes(role)) {
     throw new HttpsError("invalid-argument", `Unknown role: ${role}`);
   }
+  const systems = normalizedSystems(request.data?.systems, role);
   if (institutionType !== "MDA" && institutionType !== "MMDA") {
     throw new HttpsError("invalid-argument", `Unknown institutionType: ${institutionType}`);
   }
@@ -374,7 +410,7 @@ exports.adminCreateUser = onCall(async (request) => {
     });
   }
 
-  await auth.setCustomUserClaims(userRecord.uid, {role, institutionId});
+  await auth.setCustomUserClaims(userRecord.uid, {role, institutionId, systems});
 
   await db.collection("users").doc(userRecord.uid).set(
       {
@@ -382,6 +418,7 @@ exports.adminCreateUser = onCall(async (request) => {
         email,
         phone: phone || "",
         role,
+        systems,
         institutionId,
         institutionType,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -428,7 +465,7 @@ exports.adminUpdateUser = onCall(async (request) => {
   if (!uid) {
     throw new HttpsError("invalid-argument", "Missing uid.");
   }
-  const fields = {name, email, phone, role, institutionId, institutionType, isActive};
+  const fields = {name, email, phone, role, institutionId, institutionType, isActive, systems: request.data?.systems};
   if (Object.values(fields).every((v) => v === undefined)) {
     throw new HttpsError("invalid-argument", "Nothing to update.");
   }
@@ -447,17 +484,26 @@ exports.adminUpdateUser = onCall(async (request) => {
 
   const userRecord = await auth.getUser(uid);
   const existingClaims = userRecord.customClaims || {};
+  const systems = request.data?.systems === undefined
+      ? undefined
+      : normalizedSystems(request.data.systems, role ?? existingClaims.role);
   const firestoreUpdates = {};
   const authUpdates = {};
+  const claimUpdates = {};
 
   if (role !== undefined && role !== existingClaims.role) {
     firestoreUpdates.role = role;
+    claimUpdates.role = role;
   }
   if (institutionId !== undefined && institutionId !== existingClaims.institutionId) {
     firestoreUpdates.institutionId = institutionId;
+    claimUpdates.institutionId = institutionId;
   }
-  if (Object.keys(firestoreUpdates).length > 0) {
-    await auth.setCustomUserClaims(uid, {...existingClaims, ...firestoreUpdates});
+  if (systems !== undefined) {
+    claimUpdates.systems = systems;
+  }
+  if (Object.keys(claimUpdates).length > 0) {
+    await auth.setCustomUserClaims(uid, {...existingClaims, ...claimUpdates});
   }
 
   if (name !== undefined) {
@@ -478,6 +524,7 @@ exports.adminUpdateUser = onCall(async (request) => {
 
   if (phone !== undefined) firestoreUpdates.phone = phone;
   if (institutionType !== undefined) firestoreUpdates.institutionType = institutionType;
+  if (systems !== undefined) firestoreUpdates.systems = systems;
 
   if (Object.keys(firestoreUpdates).length === 0) {
     return {uid};
@@ -536,6 +583,108 @@ exports.adminResetTwoFactor = onCall(async (request) => {
   });
 
   return {uid};
+});
+
+/**
+ * Sets a user's password at an administrator's request. The password is
+ * validated and passed directly to Firebase Auth; it is never written to
+ * Firestore, audit metadata, or email. Admins must communicate it securely.
+ */
+exports.adminSetUserPassword = onCall(async (request) => {
+  if (!request.auth || request.auth.token.role !== "pfm_management") {
+    throw new HttpsError(
+        "permission-denied",
+        "Only the Head, Applications Systems Unit can change another user's password.",
+    );
+  }
+
+  const uid = cleanText(request.data?.uid, 128);
+  const password = typeof request.data?.password === "string" ? request.data.password : "";
+  if (!uid || !password) throw new HttpsError("invalid-argument", "User ID and new password are required.");
+  if (uid === request.auth.uid) {
+    throw new HttpsError("failed-precondition", "Use account settings to change your own password.");
+  }
+  if (password.length < 6 || password.length > 128) {
+    throw new HttpsError("invalid-argument", "The new password must be between 6 and 128 characters.");
+  }
+
+  const auth = admin.auth();
+  const db = admin.firestore();
+  const user = await auth.getUser(uid);
+  await auth.updateUser(uid, {password});
+  await auth.revokeRefreshTokens(uid);
+
+  await db.collection("audit_logs").add({
+    actorId: request.auth.uid,
+    action: "admin_password_changed",
+    targetType: "user",
+    targetId: uid,
+    metadata: {email: user.email || ""},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {uid, changed: true};
+});
+
+/**
+ * Password recovery without email delivery. Firebase Phone Auth proves that
+ * the caller controls the registered phone number; this callable then finds
+ * the matching email/password account and changes its password server-side.
+ * The phone-auth session is deliberately not trusted by itself: the phone
+ * must match both the Auth phone claim and the user profile's email+phone
+ * pair. A temporary phone-only Auth account is removed after recovery.
+ */
+exports.recoverPasswordByPhone = onCall(async (request) => {
+  if (!request.auth || request.auth.token.firebase?.sign_in_provider !== "phone") {
+    throw new HttpsError("unauthenticated", "Complete phone verification first.");
+  }
+
+  const email = cleanText(request.data?.email, 254).toLowerCase();
+  const phone = normalizeRecoveryPhone(request.data?.phone);
+  const newPassword = typeof request.data?.newPassword === "string" ? request.data.newPassword : "";
+  const verifiedPhone = normalizeRecoveryPhone(request.auth.token.phone_number);
+
+  if (!email || !phone || !newPassword || phone !== verifiedPhone) {
+    throw new HttpsError("permission-denied", "The recovery details could not be verified.");
+  }
+  if (newPassword.length < 6 || newPassword.length > 128) {
+    throw new HttpsError("invalid-argument", "The new password must be between 6 and 128 characters.");
+  }
+
+  const db = admin.firestore();
+  const matches = await db.collection("users")
+      .where("email", "==", email)
+      .limit(5)
+      .get();
+  const matchingProfile = matches.docs.find((doc) =>
+    normalizeRecoveryPhone(doc.data().phone) === phone,
+  );
+  if (!matchingProfile) {
+    throw new HttpsError("permission-denied", "The recovery details could not be verified.");
+  }
+
+  const target = await admin.auth().getUserByEmail(email);
+  if (target.uid !== matchingProfile.id) {
+    throw new HttpsError("permission-denied", "The recovery details could not be verified.");
+  }
+
+  await admin.auth().updateUser(target.uid, {password: newPassword});
+  await admin.auth().revokeRefreshTokens(target.uid);
+  await db.collection("audit_logs").add({
+    actorId: request.auth.uid,
+    action: "password_recovered_by_phone",
+    targetType: "user",
+    targetId: target.uid,
+    metadata: {email, phone},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Web phone sign-in can create a temporary phone-only account. Do not
+  // leave those accounts accumulating in Firebase Auth.
+  if (request.auth.uid !== target.uid) {
+    await admin.auth().deleteUser(request.auth.uid);
+  }
+  return {uid: target.uid, changed: true};
 });
 
 /**
@@ -671,10 +820,11 @@ async function notifyUser({userId, type, message, ticketId, title = "Hyperion Su
 
 /**
  * Fans a notification out to every active user holding [role] (equality-only
- * query — no composite index needed). [exclude] skips one uid, normally the
- * actor who triggered the event.
+ * query — no composite index needed). When [system] is supplied, only staff
+ * assigned to that support workspace receive it. [exclude] skips one uid,
+ * normally the actor who triggered the event.
  */
-async function notifyUsersWithRole(role, {type, message, ticketId, exclude}) {
+async function notifyUsersWithRole(role, {type, message, ticketId, exclude, system}) {
   const snap = await admin.firestore()
       .collection("users")
       .where("role", "==", role)
@@ -684,10 +834,16 @@ async function notifyUsersWithRole(role, {type, message, ticketId, exclude}) {
   let sent = 0;
   for (const doc of snap.docs) {
     if (doc.id === exclude) continue;
+    if (system && !userCanHandleSystem(doc.data(), system)) continue;
     await notifyUser({userId: doc.id, type, message, ticketId});
     sent++;
   }
   return sent;
+}
+
+function userCanHandleSystem(userData, system) {
+  const systems = Array.isArray(userData.systems) ? userData.systems : ["gbms"];
+  return systems.includes(system);
 }
 
 const BROADCAST_TYPES = ["system_downtime", "deadline_reminder", "maintenance"];
@@ -808,17 +964,24 @@ async function autoAssignTicket(ticketId, ticket) {
   const rule = (rules.categories || {})[ticket.category];
   if (!rule) return false;
   const openStatuses = rules.openStatuses || DEFAULT_OPEN_STATUSES;
+  const systemPool = rules.systemPools?.[ticket.system || "gbms"];
+  const effectiveRule = Array.isArray(systemPool) ? {userIds: systemPool} : rule;
 
   // Resolve the candidate pool.
   let candidateIds;
-  if (rule.pool === "ALL") {
+  if (effectiveRule.pool === "ALL") {
     const snap = await db.collection("users").where("role", "in", SUPPORT_ROLES).get();
-    candidateIds = snap.docs.filter((d) => d.data().isActive !== false).map((d) => d.id);
+    candidateIds = snap.docs
+        .filter((d) => d.data().isActive !== false && userCanHandleSystem(d.data(), ticket.system || "gbms"))
+        .map((d) => d.id);
   } else {
-    candidateIds = rule.userIds || [];
+    candidateIds = effectiveRule.userIds || [];
     if (candidateIds.length > 0) {
       const docs = await db.getAll(...candidateIds.map((id) => db.collection("users").doc(id)));
-      candidateIds = docs.filter((d) => d.exists && d.data().isActive !== false).map((d) => d.id);
+      candidateIds = docs
+          .filter((d) => d.exists && d.data().isActive !== false &&
+            userCanHandleSystem(d.data(), ticket.system || "gbms"))
+          .map((d) => d.id);
     }
   }
   if (candidateIds.length === 0) return false;
@@ -864,6 +1027,7 @@ async function autoAssignTicket(ticketId, ticket) {
     const actRef = tRef.collection("activity").doc();
     tx.set(actRef, {
       ticketId,
+      system: tSnap.data().system || "gbms",
       actorId: "system",
       action: "assigned",
       toValue: winner,
@@ -892,7 +1056,7 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
   if (ticket.createdBy === "guest") {
     const msg = `New ${String(ticket.system || "support").toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
     const coordinators = await notifyUsersWithRole("support_coordinator", {
-      type: "pending_action", message: msg, ticketId,
+      type: "pending_action", message: msg, ticketId, system: ticket.system,
     });
     if (coordinators === 0) await notifyUsersWithRole("pfm_management", {
       type: "pending_action", message: msg, ticketId,
@@ -912,6 +1076,7 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
     const msg = `New ${ticket.system.toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
     const coordinators = await notifyUsersWithRole("support_coordinator", {
       type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
+      system: ticket.system,
     });
     if (coordinators === 0) await notifyUsersWithRole("pfm_management", {
       type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
@@ -1110,6 +1275,7 @@ exports.onTicketActivityCreated = onDocumentCreated(
           message,
           ticketId,
           exclude: activity.actorId,
+          system: ticket.system,
         });
         if (notified === 0) {
           await notifyUsersWithRole("pfm_management", {

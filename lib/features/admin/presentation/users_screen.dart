@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -56,11 +57,28 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(allUsersProvider);
     final viewer = ref.watch(currentAppUserProvider).valueOrNull;
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(
+        title: Text(
+          selectedSystem == null
+              ? 'Users'
+              : '${supportSystemLabel(selectedSystem)} Users',
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/admin/users/new'),
+        onPressed: () => context.push(
+          Uri(
+            path: '/admin/users/new',
+            queryParameters:
+                GoRouterState.of(context).uri.queryParameters.isEmpty
+                ? null
+                : GoRouterState.of(context).uri.queryParameters,
+          ).toString(),
+        ),
         icon: const Icon(Icons.person_add_alt_rounded),
         label: const Text('Add User'),
       ),
@@ -68,11 +86,27 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
         loading: () => const BrandedLoaderCenter(),
         error: (e, _) => Center(child: Text('Could not load users: $e')),
         data: (users) {
-          final supportCount = users.where((u) => _supportOfficerRoles.contains(u.role)).length;
-          final mdaCount = users.where((u) => _mdaRoles.contains(u.role)).length;
-          final filtered = users
+          final workspaceUsers = users
+              .where(
+                (u) =>
+                    selectedSystem == null ||
+                    u.systems.contains(selectedSystem),
+              )
+              .toList();
+          final supportCount = workspaceUsers
+              .where((u) => _supportOfficerRoles.contains(u.role))
+              .length;
+          final mdaCount = workspaceUsers
+              .where((u) => _mdaRoles.contains(u.role))
+              .length;
+          final filtered = workspaceUsers
               .where(_matchesTab)
-              .where((u) => _search.isEmpty || u.name.toLowerCase().contains(_search) || u.email.toLowerCase().contains(_search))
+              .where(
+                (u) =>
+                    _search.isEmpty ||
+                    u.name.toLowerCase().contains(_search) ||
+                    u.email.toLowerCase().contains(_search),
+              )
               .toList();
 
           return Column(
@@ -82,7 +116,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (v) => setState(() => _search = v.toLowerCase()),
-                  decoration: const InputDecoration(hintText: 'Search users…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+                  decoration: const InputDecoration(
+                    hintText: 'Search users…',
+                    prefixIcon: Icon(Icons.search_rounded, size: 20),
+                  ),
                 ),
               ),
               Padding(
@@ -93,7 +130,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                     children: [
                       _tabChip('All (${users.length})', _UserTab.all),
                       const SizedBox(width: 8),
-                      _tabChip('Support Officers ($supportCount)', _UserTab.supportOfficers),
+                      _tabChip(
+                        'Support Officers ($supportCount)',
+                        _UserTab.supportOfficers,
+                      ),
                       const SizedBox(width: 8),
                       _tabChip('MDAs ($mdaCount)', _UserTab.mdas),
                     ],
@@ -102,11 +142,17 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const EmptyState(icon: Icons.people_outline_rounded, message: 'No users match.')
+                    ? const EmptyState(
+                        icon: Icons.people_outline_rounded,
+                        message: 'No users match.',
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                         itemCount: filtered.length,
-                        itemBuilder: (context, i) => _UserTile(user: filtered[i], isSelf: viewer?.id == filtered[i].id),
+                        itemBuilder: (context, i) => _UserTile(
+                          user: filtered[i],
+                          isSelf: viewer?.id == filtered[i].id,
+                        ),
                       ),
               ),
             ],
@@ -123,7 +169,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       selected: selected,
       showCheckmark: false,
       selectedColor: AppTheme.navy,
-      labelStyle: TextStyle(color: selected ? Colors.white : AppTheme.ink, fontWeight: FontWeight.w600),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : AppTheme.ink,
+        fontWeight: FontWeight.w600,
+      ),
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       onSelected: (_) => setState(() => _tab = tab),
     );
@@ -148,7 +197,9 @@ class _UserTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Row(
           children: [
@@ -159,7 +210,10 @@ class _UserTile extends StatelessWidget {
                   backgroundColor: AppTheme.navy.withValues(alpha: 0.1),
                   child: Text(
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -169,7 +223,9 @@ class _UserTile extends StatelessWidget {
                     width: 11,
                     height: 11,
                     decoration: BoxDecoration(
-                      color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
+                      color: online
+                          ? StatusColors.resolved
+                          : Theme.of(context).colorScheme.outline,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -182,8 +238,14 @@ class _UserTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, style: Theme.of(context).textTheme.titleSmall),
-                  Text(user.role.shortLabel, style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    user.name,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    '${user.role.shortLabel} · ${supportSystemsLabel(user.systems)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
@@ -203,7 +265,9 @@ class _UserTile extends StatelessWidget {
                 Text(
                   user.lastSeenLabel,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
+                    color: online
+                        ? StatusColors.resolved
+                        : Theme.of(context).colorScheme.outline,
                   ),
                 ),
               ],
@@ -212,11 +276,22 @@ class _UserTile extends StatelessWidget {
               icon: const Icon(Icons.more_vert_rounded, size: 20),
               itemBuilder: (context) => [
                 const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                PopupMenuItem(value: 'toggle', enabled: !isSelf, child: Text(user.isActive ? 'Deactivate' : 'Reactivate')),
+                PopupMenuItem(
+                  value: 'password',
+                  enabled: !isSelf,
+                  child: const Text('Change password'),
+                ),
+                PopupMenuItem(
+                  value: 'toggle',
+                  enabled: !isSelf,
+                  child: Text(user.isActive ? 'Deactivate' : 'Reactivate'),
+                ),
               ],
               onSelected: (value) {
                 if (value == 'edit') {
                   showEditUserDialog(context, user);
+                } else if (value == 'password') {
+                  promptSetUserPassword(context, user);
                 } else if (value == 'toggle') {
                   confirmSetUserActive(context, user, active: !user.isActive);
                 }

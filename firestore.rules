@@ -32,6 +32,80 @@ service cloud.firestore {
       return request.auth.token.institutionId;
     }
 
+    function isInstitutionAdmin() {
+      return isSignedIn() && role() == 'pfm_management';
+    }
+
+    function isTenantScopedSupportRole() {
+      return role() in [
+        'support_coordinator', 'functional_lead',
+        'technical_lead', 'vendor_support'
+      ];
+    }
+
+    function hasAllowedSystem(system) {
+      return isSignedIn()
+        && (
+          (request.auth.token.systems != null
+            && system in request.auth.token.systems
+            // Support staff are tenant-scoped: GBMS is separate from the
+            // GHANEPS/GIFMIS workspace. Keep this check in rules as well as
+            // provisioning so a forged or stale mixed claim cannot cross the
+            // boundary.
+            && (isTenantScopedSupportRole()
+                ? (system == 'gbms'
+                    ? !request.auth.token.systems.hasAny(['ghaneps', 'gifmis'])
+                    : !('gbms' in request.auth.token.systems))
+                : true))
+          // Existing accounts may predate the systems claim. Preserve their
+          // original tenant scope until an administrator refreshes claims.
+          || (request.auth.token.systems == null
+            && (
+              (role() == 'support_coordinator' && system in ['ghaneps', 'gifmis'])
+              || (role() in ['functional_lead', 'technical_lead', 'vendor_support']
+                && system == 'gbms')
+            ))
+        );
+    }
+
+    // Tickets created before multi-system support do not have a `system`
+    // field. They are GBMS tickets, matching Ticket.fromMap's compatibility
+    // default in the client.
+    function ticketSystem(ticket) {
+      return ticket.keys().hasAny(['system']) ? ticket.system : 'gbms';
+    }
+
+    function userHasAllowedSystem(user) {
+      // Legacy user profiles without a systems array are GBMS profiles. They
+      // remain visible to GBMS staff, but never to GHANEPS/GIFMIS-only staff.
+      return user.keys().hasAny(['systems'])
+        ? request.auth.token.systems != null
+          && user.systems.hasAny(request.auth.token.systems)
+          && (!isTenantScopedSupportRole()
+            || (('gbms' in request.auth.token.systems)
+                ? !user.systems.hasAny(['ghaneps', 'gifmis'])
+                : !('gbms' in user.systems)))
+        : request.auth.token.systems != null
+          && 'gbms' in request.auth.token.systems;
+    }
+
+    function requesterCanCreateSystem(system) {
+      return isSignedIn()
+        && system in ['gbms', 'ghaneps', 'gifmis']
+        && (request.auth.token.systems != null
+          ? system in request.auth.token.systems
+          // Accounts created before system claims were introduced are GBMS
+          // requester accounts and must not be able to create PPA tickets.
+          : system == 'gbms');
+    }
+
+    function userCanHandleSystem(userId, system) {
+      let u = get(/databases/$(database)/documents/users/$(userId)).data;
+      return u.keys().hasAny(['systems'])
+        ? system in u.systems
+        : system == 'gbms';
+    }
+
     // Coordinator, Functional/Technical Lead, Management — cross-institution
     // visibility per Section 3. Vendor/specialist is deliberately excluded:
     // they only ever see tickets explicitly escalated to them.
@@ -64,7 +138,7 @@ service cloud.firestore {
     // ticket regardless of assignment — was isSupportSide() before
     // Functional/Technical Lead were narrowed out of ticket access.
     function canViewAllTickets() {
-      return isSignedIn() && role() in ['support_coordinator', 'pfm_management'];
+      return isInstitutionAdmin();
     }
 
     // Mirrors the tickets/{id}/activity read rule below exactly — anyone who
@@ -80,11 +154,11 @@ service cloud.firestore {
         // also open the ticket's conversation. Keep this explicit here: the
         // chat stream is a subcollection and Firestore does not inherit the
         // parent ticket's read rule automatically.
-        || (isSupportSide() && role() == 'support_coordinator')
-        || (isSupportSide() && role() == 'pfm_management')
-        || (isFunctionalLead() && t.assignedTo == request.auth.uid)
-        || (isTechnicalLead() && t.assignedTo == request.auth.uid)
-        || (isVendor() && t.assignedTo == request.auth.uid && t.escalationLevel == 2)
+        || (role() == 'support_coordinator' && hasAllowedSystem(ticketSystem(t)))
+        || ((isFunctionalLead() || isTechnicalLead())
+            && t.assignedTo == request.auth.uid
+            && hasAllowedSystem(ticketSystem(t)))
+        || (isVendor() && t.assignedTo == request.auth.uid && t.escalationLevel == 2 && hasAllowedSystem(ticketSystem(t)))
         || (isFocalPerson() && t.institutionId == institutionId())
         || (isRequesterSide() && t.createdBy == request.auth.uid);
     }
@@ -106,7 +180,12 @@ service cloud.firestore {
     // those. The exceptions are inherently self-service: a user registering
     // their own device's FCM token for push notifications (Section 7).
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isSupportSide());
+      allow read: if isSignedIn()
+        && (
+          request.auth.uid == userId
+          || isInstitutionAdmin()
+          || ((isSupportSide() || isVendor()) && userHasAllowedSystem(resource.data))
+        );
       allow update: if isSignedIn()
         && request.auth.uid == userId
         && onlyFieldsChanged(['fcmTokens', 'lastActiveAt', 'profilePhotoUrl']);
@@ -175,9 +254,11 @@ service cloud.firestore {
       // assigned to them, at any escalation level — category auto-assignment
       // places level-0 tickets directly with an ASU member.
       allow read: if canViewAllTickets()
-        || (isFunctionalLead() && resource.data.assignedTo == request.auth.uid)
-        || (isTechnicalLead() && resource.data.assignedTo == request.auth.uid)
-        || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2)
+        || (role() == 'support_coordinator' && hasAllowedSystem(ticketSystem(resource.data)))
+        || ((isFunctionalLead() || isTechnicalLead())
+            && resource.data.assignedTo == request.auth.uid
+            && hasAllowedSystem(ticketSystem(resource.data)))
+        || (isVendor() && resource.data.assignedTo == request.auth.uid && resource.data.escalationLevel == 2 && hasAllowedSystem(ticketSystem(resource.data)))
         || (isFocalPerson() && resource.data.institutionId == institutionId())
         || (isRequesterSide() && resource.data.createdBy == request.auth.uid);
 
@@ -186,11 +267,19 @@ service cloud.firestore {
       allow create: if isRequesterSide()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.institutionId == institutionId()
+        && requesterCanCreateSystem(ticketSystem(request.resource.data))
         && request.resource.data.status == 'open'
         && request.resource.data.escalationLevel == 0
         && request.resource.data.assignedTo == null;
 
-      allow update: if
+      allow update: if (isInstitutionAdmin() || hasAllowedSystem(ticketSystem(resource.data)))
+        && (request.resource.data.assignedTo == null
+          || request.resource.data.assignedTo == resource.data.assignedTo
+          || userCanHandleSystem(
+            request.resource.data.assignedTo,
+            ticketSystem(resource.data)
+          ))
+        &&
         // Support Coordinator may assign, escalate, and close, but only
         // through the specific ticket-field combinations below.
         (role() == 'support_coordinator' && (
@@ -225,7 +314,7 @@ service cloud.firestore {
                     && request.resource.data.status == 'closed')
                 || (resource.data.status in ['resolved', 'closed']
                     && onlyFieldsChanged(['status', 'updatedAt', 'resolvedAt', 'resolutionNotes', 'closedAt', 'closedBy'])
-                    && request.resource.data.status == 'reopened')))
+            && request.resource.data.status == 'reopened')))
         // Vendor/Specialist's only granted action is resolving a ticket
         // escalated to them (Section 3: no assign/escalate/close) — the app
         // UI never offers those to Vendor, but the rule shouldn't rely on
@@ -253,7 +342,7 @@ service cloud.firestore {
             && ((request.resource.data.status in ['in_progress', 'resolved', 'escalated'] && resource.data.status != 'resolved')
                 || (request.resource.data.status == 'closed' && resource.data.status == 'resolved'))
             && request.resource.data.escalationLevel >= resource.data.escalationLevel
-            && request.resource.data.escalationLevel <= 2);
+             && request.resource.data.escalationLevel <= 2);
         // Requesters (MDA/MMDA users and focal persons) have no ticket-update
         // path at all — reopening and closing are staff-only actions (see
         // ticket_detail_screen.dart's requester actions, which offer Chat
@@ -350,7 +439,10 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasOnly(
         ['fullName', 'email', 'phone', 'institutionType', 'institutionName', 'status', 'submittedAt']
       ) && request.resource.data.status == 'pending';
-      allow read: if isSupportSide();
+      // Access requests are a tenant-neutral provisioning queue, so keep it
+      // restricted to the tenant-wide administrator rather than exposing it
+      // to product-scoped coordinators or APPS members.
+      allow read: if isInstitutionAdmin();
       allow update, delete: if false;
     }
 
@@ -358,7 +450,9 @@ service cloud.firestore {
     // Written only by Cloud Functions (Admin SDK); readable by management
     // for oversight.
     match /audit_logs/{logId} {
-      allow read: if isSupportSide();
+      // Admin actions are tenant-wide user-management records. Product staff
+      // must not receive another system's user-management history.
+      allow read: if isInstitutionAdmin();
       allow write: if false;
     }
 
@@ -369,14 +463,16 @@ service cloud.firestore {
     // subcollection — Firestore requires a separate wildcard-path rule for
     // collection-group queries to be permitted at all. Must mirror the
     // per-ticket rule's scoping exactly (Coordinator/Management see
-    // everything; Functional/Technical Lead only their assigned tickets),
-    // not just isSupportSide() — otherwise this collection-group rule
-    // would hand Leads the full cross-institution visibility the per-ticket
-    // rule deliberately narrowed them out of.
+    // everything; Functional/Technical Leads only their assigned systems),
+    // not just isSupportSide() — this keeps the collection-group rule
+    // aligned with the per-ticket system boundary.
     match /{path=**}/activity/{activityId} {
       allow read: if canViewAllTickets()
+        || (role() == 'support_coordinator'
+            && hasAllowedSystem(ticketSystem(get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data)))
         || ((isFunctionalLead() || isTechnicalLead())
-            && get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data.assignedTo == request.auth.uid);
+            && get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data.assignedTo == request.auth.uid
+            && hasAllowedSystem(ticketSystem(get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data)));
     }
   }
 }

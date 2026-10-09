@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 
 class AppUser {
   final String id;
@@ -13,6 +14,7 @@ class AppUser {
   final bool isActive;
   final DateTime? lastActiveAt;
   final String? profilePhotoUrl;
+  final Set<String> systems;
 
   const AppUser({
     required this.id,
@@ -26,15 +28,18 @@ class AppUser {
     required this.isActive,
     this.lastActiveAt,
     this.profilePhotoUrl,
+    this.systems = const {'gbms'},
   });
 
   factory AppUser.fromMap(String id, Map<String, dynamic> map) {
+    final role = UserRole.fromWire(map['role'] as String? ?? '');
+    final rawSystems = map['systems'];
     return AppUser(
       id: id,
       name: map['name'] as String? ?? '',
       email: map['email'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
-      role: UserRole.fromWire(map['role'] as String? ?? ''),
+      role: role,
       institutionId: map['institutionId'] as String? ?? '',
       institutionType: InstitutionType.fromWire(
         map['institutionType'] as String? ?? 'MDA',
@@ -43,6 +48,9 @@ class AppUser {
       isActive: map['isActive'] as bool? ?? true,
       lastActiveAt: (map['lastActiveAt'] as Timestamp?)?.toDate(),
       profilePhotoUrl: map['profilePhotoUrl'] as String?,
+      systems: rawSystems is Iterable
+          ? rawSystems.whereType<String>().toSet()
+          : defaultSystemsForRole(role),
     );
   }
 
@@ -59,6 +67,7 @@ class AppUser {
         ? Timestamp.fromDate(lastActiveAt!)
         : null,
     'profilePhotoUrl': profilePhotoUrl,
+    'systems': systems.toList()..sort(),
   };
 
   /// Presence: true while lastActiveAt is within the last 5 minutes.
@@ -96,6 +105,7 @@ class AppUser {
     String? phone,
     bool? isActive,
     String? profilePhotoUrl,
+    Set<String>? systems,
   }) {
     return AppUser(
       id: id,
@@ -108,6 +118,7 @@ class AppUser {
       createdAt: createdAt,
       isActive: isActive ?? this.isActive,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      systems: systems ?? this.systems,
     );
   }
 }

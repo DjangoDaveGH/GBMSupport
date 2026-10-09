@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/scrollable_table.dart';
@@ -14,12 +15,15 @@ class DesktopInstitutionsScreen extends ConsumerStatefulWidget {
   const DesktopInstitutionsScreen({super.key});
 
   @override
-  ConsumerState<DesktopInstitutionsScreen> createState() => _DesktopInstitutionsScreenState();
+  ConsumerState<DesktopInstitutionsScreen> createState() =>
+      _DesktopInstitutionsScreenState();
 }
 
-class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsScreen> {
+class _DesktopInstitutionsScreenState
+    extends ConsumerState<DesktopInstitutionsScreen> {
   final _searchController = TextEditingController();
   String _search = '';
+  String _selectedSystem = 'all';
 
   @override
   void dispose() {
@@ -43,7 +47,10 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
                 child: TextField(
                   controller: _searchController,
                   onChanged: (v) => setState(() => _search = v),
-                  decoration: const InputDecoration(hintText: 'Search institutions…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+                  decoration: const InputDecoration(
+                    hintText: 'Search institutions…',
+                    prefixIcon: Icon(Icons.search_rounded, size: 20),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -55,34 +62,78 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
               // without changing its appearance.
               IntrinsicWidth(
                 child: FilledButton.icon(
-                  onPressed: () => showAddInstitutionDialog(context, ref, width: 360),
+                  onPressed: () =>
+                      showAddInstitutionDialog(context, ref, width: 360),
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('Add Institution'),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final system in ['all', ...supportSystemIds])
+                ChoiceChip(
+                  label: Text(
+                    system == 'all'
+                        ? 'All systems'
+                        : supportSystemLabel(system),
+                  ),
+                  selected: _selectedSystem == system,
+                  onSelected: (_) => setState(() => _selectedSystem = system),
+                ),
+            ],
+          ),
           const SizedBox(height: 20),
           Expanded(
             child: institutionsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load institutions: $e')),
+              error: (e, _) =>
+                  Center(child: Text('Could not load institutions: $e')),
               data: (institutions) {
-                final userCounts = <String, int>{};
+                final userCounts = <String, Map<String, int>>{};
                 for (final u in usersAsync.valueOrNull ?? const []) {
-                  userCounts[u.institutionId] = (userCounts[u.institutionId] ?? 0) + 1;
+                  if (!u.isActive) continue;
+                  final systemCounts = userCounts.putIfAbsent(
+                    u.institutionId,
+                    () => {for (final system in supportSystemIds) system: 0},
+                  );
+                  for (final system in u.systems) {
+                    if (systemCounts.containsKey(system)) {
+                      systemCounts[system] = systemCounts[system]! + 1;
+                    }
+                  }
                 }
-                final filtered = institutions.where((i) => _search.isEmpty || i.name.toLowerCase().contains(_search.toLowerCase())).toList();
+                final filtered = institutions.where((institution) {
+                  final matchesSearch =
+                      _search.isEmpty ||
+                      institution.name.toLowerCase().contains(
+                        _search.toLowerCase(),
+                      );
+                  final activeCount =
+                      userCounts[institution.id]?[_selectedSystem] ?? 0;
+                  return matchesSearch &&
+                      (_selectedSystem == 'all' || activeCount > 0);
+                }).toList();
 
                 return Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: filtered.isEmpty
-                      ? const EmptyState(icon: Icons.account_balance_outlined, message: 'No institutions found.')
+                      ? EmptyState(
+                          icon: Icons.account_balance_outlined,
+                          message: _selectedSystem == 'all'
+                              ? 'No institutions found.'
+                              : 'No institutions with active ${supportSystemLabel(_selectedSystem)} users found.',
+                        )
                       : SingleChildScrollView(
                           child: ScrollableTable(
                             child: DataTable(
@@ -90,18 +141,38 @@ class _DesktopInstitutionsScreenState extends ConsumerState<DesktopInstitutionsS
                               columns: const [
                                 DataColumn(label: Text('Name')),
                                 DataColumn(label: Text('Type')),
-                                DataColumn(label: Text('Users')),
+                                DataColumn(label: Text('Active GBMS')),
+                                DataColumn(label: Text('Active GHANEPS')),
+                                DataColumn(label: Text('Active GIFMIS')),
                               ],
                               rows: filtered
-                                  .map((i) => DataRow(cells: [
-                                        DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-                                          const Icon(Icons.account_balance_rounded, size: 16, color: AppTheme.accentBlue),
-                                          const SizedBox(width: 8),
-                                          Text(i.name),
-                                        ])),
+                                  .map(
+                                    (i) => DataRow(
+                                      cells: [
+                                        DataCell(
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.account_balance_rounded,
+                                                size: 16,
+                                                color: AppTheme.accentBlue,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(i.name),
+                                            ],
+                                          ),
+                                        ),
                                         DataCell(Text(i.type.wireValue)),
-                                        DataCell(Text('${userCounts[i.id] ?? 0}')),
-                                      ]))
+                                        for (final system in supportSystemIds)
+                                          DataCell(
+                                            Text(
+                                              '${userCounts[i.id]?[system] ?? 0}',
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  )
                                   .toList(),
                             ),
                           ),

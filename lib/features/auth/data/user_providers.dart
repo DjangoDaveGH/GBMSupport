@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/features/auth/data/user_repository.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
@@ -8,11 +9,15 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 });
 
 final assignableUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
-  return ref.watch(userRepositoryProvider).watchAssignableUsers();
+  final viewer = ref.watch(currentAppUserProvider).valueOrNull;
+  if (viewer == null) return Stream.value(const <AppUser>[]);
+  return ref.watch(userRepositoryProvider).watchAssignableUsers(viewer);
 });
 
 final allUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
-  return ref.watch(userRepositoryProvider).watchAllUsers();
+  final viewer = ref.watch(currentAppUserProvider).valueOrNull;
+  if (viewer == null) return Stream.value(const <AppUser>[]);
+  return ref.watch(userRepositoryProvider).watchAllUsers(viewer);
 });
 
 final userByIdProvider = StreamProvider.autoDispose.family<AppUser?, String>((ref, userId) {

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/audit_log.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/app_error_state.dart';
@@ -73,7 +74,9 @@ class DesktopDashboardScreen extends ConsumerWidget {
     if (appUser == null) return const BrandedLoaderCenter();
     final isCoordinator = appUser.role == UserRole.supportCoordinator;
     final ticketFilter = isCoordinator
-        ? const TicketFilter(systems: {'ghaneps', 'gifmis'})
+        ? TicketFilter(
+            systems: allowedSystemsForRole(appUser.role, appUser.systems),
+          )
         : TicketFilter(system: initialSystem);
 
     final ticketsAsync = ref.watch(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/responsive.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/hex_pattern.dart';
@@ -13,7 +15,9 @@ import 'package:hyport/core/widgets/hex_pattern.dart';
 /// background, no gradient panel — branding lives on the Splash/Welcome
 /// screens before this one.
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialSystem;
+
+  const LoginScreen({super.key, this.initialSystem});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -27,6 +31,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscure = true;
   bool _rememberMe = true;
   String? _error;
+
+  String get _brandTitle {
+    switch (widget.initialSystem) {
+      case 'gifmis':
+        return 'GIFMIS\nSUPPORT CENTRE';
+      case 'ghaneps':
+        return 'GHANEPS\nSUPPORT CENTRE';
+      default:
+        return 'GBMS\nSUPPORT CENTRE';
+    }
+  }
 
   @override
   void dispose() {
@@ -42,10 +57,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authServiceProvider).signIn(
+      final credential = await ref.read(authServiceProvider).signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
+
+      final requestedSystem = widget.initialSystem;
+      if (requestedSystem != null &&
+          supportSystemIds.contains(requestedSystem)) {
+        // Check the freshly refreshed Auth claims before allowing the router
+        // to open the selected product workspace. This keeps the boundary
+        // independent of the editable Firestore profile and prevents a
+        // GBMS account from entering GHANEPS/GIFMIS (or the reverse).
+        final claims = (await credential.user!.getIdTokenResult(true)).claims ?? {};
+        final role = UserRole.fromWire(claims['role'] as String? ?? '');
+        final rawSystems = claims['systems'];
+        final systems = rawSystems is Iterable
+            ? rawSystems.whereType<String>()
+            : defaultSystemsForRole(role);
+        final allowedSystems = allowedSystemsForRole(role, systems);
+        if (!allowedSystems.contains(requestedSystem)) {
+          await ref.read(authServiceProvider).signOut();
+          if (mounted) {
+            setState(() {
+              _error =
+                  'This account is not authorized for ${supportSystemLabel(requestedSystem)}. '
+                  'Use the login for your assigned support system.';
+              _submitting = false;
+            });
+          }
+          return;
+        }
+      }
       // Navigation is handled by the router's redirect once auth state
       // changes. Deliberately leave _submitting true on success — the
       // profile fetch the redirect waits on takes a beat, and resetting it
@@ -128,7 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Image.asset('assets/images/mof_logo.png', width: 104, height: 104),
                           const SizedBox(height: 28),
                           Text(
-                            'GBMS\nSUPPORT CENTRE',
+                            _brandTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: AppTheme.fontFamily,
@@ -196,7 +239,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(hintText: 'youremail@mda.gov.gh'),
+                      decoration: const InputDecoration(),
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -229,7 +272,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => context.push('/forgot-password'),
+                          onPressed: () =>
+                              context.push('/phone-password-recovery'),
                           child: const Text('Forgot Password?'),
                         ),
                       ],

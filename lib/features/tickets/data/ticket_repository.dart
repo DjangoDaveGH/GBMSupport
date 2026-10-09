@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
@@ -25,6 +26,12 @@ class TicketRepository {
   CollectionReference<Map<String, dynamic>> _chatReceiptsFor(String ticketId) =>
       _tickets.doc(ticketId).collection('chatReceipts');
 
+  Future<String> _systemForTicket(String ticketId) async {
+    final snap = await _tickets.doc(ticketId).get();
+    final value = snap.data()?['system'];
+    return value is String && value.isNotEmpty ? value : 'gbms';
+  }
+
   /// Builds the base query scoped to what [viewer] is allowed to see. Per
   /// Section 3's role table, a plain MDA/MMDA User only sees tickets they
   /// personally logged; a Focal Person sees every ticket from their
@@ -46,9 +53,8 @@ class TicketRepository {
     }
     if (viewer.role == UserRole.functionalLead ||
         viewer.role == UserRole.technicalLead) {
-      // One Applications Systems Unit — both roles see any ticket assigned
-      // to them, at any escalation level (category auto-assignment places
-      // level-0 tickets directly with an APPS member).
+      // APPS members see their own assigned workload only. The system filter
+      // below remains an additional RBAC boundary.
       return _tickets.where('assignedTo', isEqualTo: viewer.id);
     }
     if (viewer.role.isSupportSide) {
@@ -81,10 +87,36 @@ class TicketRepository {
     int? limit = ticketPageSize,
   }) {
     Query<Map<String, dynamic>> query = scopedQuery(viewer);
-    if (systems.isNotEmpty) {
-      query = query.where('system', whereIn: systems.toList());
-    } else if (system != null && system != 'gbms') {
-      query = query.where('system', isEqualTo: system);
+    final isNonAdminSupport =
+        viewer.role.isSupportSide && viewer.role != UserRole.pfmManagement;
+    final allowedSystems = allowedSystemsForRole(viewer.role, viewer.systems);
+    final requestedSystems = systems.isNotEmpty
+        ? systems
+        : system == null
+        ? const <String>{}
+        : {system};
+    final effectiveSystems = isNonAdminSupport
+        ? (requestedSystems.isEmpty
+              ? allowedSystems
+              : requestedSystems.intersection(allowedSystems))
+        : requestedSystems;
+
+    // A forged system query must never broaden a support account's scope.
+    if (isNonAdminSupport && effectiveSystems.isEmpty) {
+      return Stream.value(const <Ticket>[]);
+    }
+    // GBMS has legacy tickets without a `system` field. Administrators
+    // selecting GBMS must retain the legacy-inclusive read, then apply the
+    // GBMS filter after Ticket.fromMap defaults those records. Support
+    // accounts still use a server-side GBMS constraint for RBAC safety.
+    final serverSystems =
+        !isNonAdminSupport && system == 'gbms' && systems.isEmpty
+        ? const <String>{}
+        : effectiveSystems;
+    if (serverSystems.length == 1) {
+      query = query.where('system', isEqualTo: serverSystems.first);
+    } else if (serverSystems.length > 1) {
+      query = query.where('system', whereIn: serverSystems.toList());
     }
     // Firestore permits only one whereIn clause per query. When products are
     // selected as a set, apply status chips after the system-scoped query.
@@ -101,9 +133,7 @@ class TicketRepository {
     // GBMS includes legacy records without a `system` field. Fetch all rows
     // before client-side defaulting those records to GBMS so mixed-product
     // pages cannot silently under-count or omit older GBMS tickets.
-    final effectiveLimit = system == 'gbms' || systems.isNotEmpty
-        ? null
-        : limit;
+    final effectiveLimit = effectiveSystems.isNotEmpty ? null : limit;
     if (effectiveLimit != null) query = query.limit(effectiveLimit);
 
     return query.snapshots().map((snap) {
@@ -113,9 +143,9 @@ class TicketRepository {
       return tickets
           .where(
             (t) =>
-                (system == null ||
-                    (system == 'gbms' ? t.system == 'gbms' : true)) &&
+                (system == null || t.system == system) &&
                 (systems.isEmpty || systems.contains(t.system)) &&
+                (!isNonAdminSupport || allowedSystems.contains(t.system)) &&
                 (systems.isEmpty ||
                     statuses.isEmpty ||
                     statuses.contains(t.status)) &&
@@ -223,6 +253,7 @@ class TicketRepository {
           toValue: TicketStatus.open.wireValue,
           timestamp: now,
         ).toMap(),
+        'system': system,
         'timestamp': FieldValue.serverTimestamp(),
       });
     });
@@ -238,8 +269,9 @@ class TicketRepository {
     String? toValue,
     String? note,
     String? attachmentUrl,
-  }) {
+  }) async {
     final ref = _activityFor(ticketId).doc();
+    final system = await _systemForTicket(ticketId);
     // Server-stamped, not the client clock — see createTicket's note. The
     // `timestamp` passed to the constructor is a throwaway, overridden below.
     return ref.set({
@@ -254,6 +286,7 @@ class TicketRepository {
         attachmentUrl: attachmentUrl,
         timestamp: DateTime.now(),
       ).toMap(),
+      'system': system,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -263,6 +296,7 @@ class TicketRepository {
     required String assigneeId,
     required String actorId,
   }) async {
+    final system = await _systemForTicket(ticketId);
     // firstRespondedAt is deliberately NOT set here: assignment (manual or
     // the onTicketCreated auto-assign) isn't a "response". It's stamped by
     // the Cloud Functions on the assignee's first real action (status move
@@ -291,6 +325,7 @@ class TicketRepository {
         toValue: assigneeId,
         timestamp: DateTime.now(),
       ).toMap(),
+      'system': system,
       'timestamp': FieldValue.serverTimestamp(),
     });
     await batch.commit();
@@ -315,6 +350,7 @@ class TicketRepository {
       final from = TicketStatus.fromWire(
         snap.data()?['status'] as String? ?? '',
       );
+      final system = snap.data()?['system'] as String? ?? 'gbms';
 
       final updates = <String, dynamic>{
         'status': to.wireValue,
@@ -346,6 +382,7 @@ class TicketRepository {
           note: note,
           timestamp: DateTime.now(),
         ).toMap(),
+        'system': system,
         'timestamp': FieldValue.serverTimestamp(),
       });
     });
@@ -358,6 +395,7 @@ class TicketRepository {
     required String actorId,
     String? note,
   }) async {
+    final system = await _systemForTicket(ticketId);
     final batch = _db.batch();
     batch.update(_tickets.doc(ticketId), {
       'escalationLevel': toLevel,
@@ -381,6 +419,7 @@ class TicketRepository {
         note: note,
         timestamp: DateTime.now(),
       ).toMap(),
+      'system': system,
       'timestamp': FieldValue.serverTimestamp(),
     });
     await batch.commit();
@@ -438,6 +477,7 @@ class TicketRepository {
     required String ticketId,
     required String actorId,
   }) async {
+    final system = await _systemForTicket(ticketId);
     final batch = _db.batch();
     batch.update(_tickets.doc(ticketId), {
       'status': TicketStatus.closed.wireValue,
@@ -454,6 +494,7 @@ class TicketRepository {
         action: TicketActivityAction.closed,
         timestamp: DateTime.now(),
       ).toMap(),
+      'system': system,
       'timestamp': FieldValue.serverTimestamp(),
     });
     await batch.commit();

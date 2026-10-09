@@ -26,9 +26,15 @@ final currentAppUserProvider = StreamProvider.autoDispose<AppUser?>((ref) {
   return authState.when(
     data: (user) {
       if (user == null) return Stream.value(null);
-      return firestore.collection('users').doc(user.uid).snapshots().map((doc) {
-        if (!doc.exists) return null;
-        return AppUser.fromMap(doc.id, doc.data()!);
+      // System assignments are enforced by Firestore rules through Firebase
+      // Auth custom claims. Refresh the ID token before opening the profile
+      // and ticket streams so an admin claim change takes effect on a normal
+      // PWA/browser refresh, without requiring a manual sign-out.
+      return Stream.fromFuture(user.getIdToken(true)).asyncExpand((_) {
+        return firestore.collection('users').doc(user.uid).snapshots().map((doc) {
+          if (!doc.exists) return null;
+          return AppUser.fromMap(doc.id, doc.data()!);
+        });
       });
     },
     // While auth itself is still resolving, "is there an app user" is

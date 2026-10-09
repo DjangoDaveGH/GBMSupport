@@ -61,43 +61,101 @@ class WelcomeScreen extends StatelessWidget {
                         'Receive timely support and updates from our team.',
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  FilledButton(
-                    onPressed: () => context.go('/login'),
-                    child: const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        'HYPERION Support',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  FilledButton(
-                    onPressed: () => context.go('/support/ghaneps'),
-                    child: const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        'GHANEPS Support',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  FilledButton(
-                    onPressed: () => context.go('/support/gifmis'),
-                    child: const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        'GIFMIS Support',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
+                  const _PlatformSelector(),
                   const SizedBox(height: AppSpacing.lg),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlatformSelector extends StatelessWidget {
+  const _PlatformSelector();
+
+  static const _platforms = [
+    (
+      id: 'gbms',
+      label: 'GBMS Support',
+      icon: Icons.apps_rounded,
+    ),
+    (
+      id: 'ghaneps',
+      label: 'GHANEPS Support',
+      icon: Icons.account_balance_rounded,
+    ),
+    (
+      id: 'gifmis',
+      label: 'GIFMIS Support',
+      icon: Icons.bar_chart_rounded,
+    ),
+  ];
+
+  void _openPlatform(BuildContext context, String id) {
+    switch (id) {
+      case 'gbms':
+        context.go('/login?system=gbms');
+      case 'ghaneps':
+        context.go('/support/ghaneps');
+      case 'gifmis':
+        context.go('/support/gifmis');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: (id) => _openPlatform(context, id),
+      offset: const Offset(0, 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      elevation: 8,
+      itemBuilder: (context) => [
+        for (final platform in _platforms)
+          PopupMenuItem<String>(
+            value: platform.id,
+            child: Row(
+              children: [
+                Icon(platform.icon, color: AppTheme.navy, size: 20),
+                const SizedBox(width: 12),
+                Text(platform.label),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        width: double.infinity,
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        decoration: BoxDecoration(
+          color: AppTheme.navy,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.navy.withValues(alpha: 0.18),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Select your Support',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 32),
+          ],
         ),
       ),
     );

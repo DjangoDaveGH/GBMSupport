@@ -65,7 +65,7 @@ class _RequestAccessScreenState extends ConsumerState<RequestAccessScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         title: const SizedBox.shrink(),
       ),
       body: SafeArea(

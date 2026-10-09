@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 
 class UserRepository {
@@ -10,9 +13,10 @@ class UserRepository {
   CollectionReference<Map<String, dynamic>> get _users =>
       _db.collection('users');
 
-  /// Users eligible to have a ticket assigned/escalated to them (support-side
-  /// roles only). Used to populate assignment dropdowns for Coordinators.
-  Stream<List<AppUser>> watchAssignableUsers() {
+  /// Users eligible to have a ticket assigned/escalated to them. System
+  /// scoping is applied in the Firestore query, not only in the UI, so a
+  /// GHANEPS/GIFMIS operator cannot receive GBMS users in assignment data.
+  Stream<List<AppUser>> watchAssignableUsers(AppUser viewer) {
     final assignableRoles = [
       UserRole.supportCoordinator,
       UserRole.functionalLead,
@@ -20,24 +24,73 @@ class UserRepository {
       UserRole.vendorSupport,
     ].map((r) => r.wireValue).toList();
 
-    return _users
-        .where('role', whereIn: assignableRoles)
-        .where('isActive', isEqualTo: true)
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => AppUser.fromMap(d.id, d.data())).toList(),
-        );
+    return _watchVisibleUsers(viewer).map(
+      (users) => users
+          .where((u) => assignableRoles.contains(u.role.wireValue))
+          .where((u) => u.isActive)
+          .toList(),
+    );
   }
 
-  Stream<List<AppUser>> watchAllUsers() {
-    return _users
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => AppUser.fromMap(d.id, d.data())).toList(),
-        );
+  /// Returns only users visible in [viewer]'s system workspace. PFM
+  /// Management is the only tenant-wide role. Other support roles use one
+  /// exact array-contains query per assigned system; separate streams keep
+  /// Firestore rules able to prove each query is tenant-scoped.
+  Stream<List<AppUser>> watchAllUsers(AppUser viewer) {
+    return _watchVisibleUsers(viewer);
+  }
+
+  Stream<List<AppUser>> _watchVisibleUsers(AppUser viewer) {
+    if (viewer.role == UserRole.pfmManagement) {
+      return _users.snapshots().map(_decodeAndSort);
+    }
+
+    final systems = allowedSystemsForRole(viewer.role, viewer.systems);
+    if (systems.isEmpty) return Stream.value(const <AppUser>[]);
+
+    return Stream.multi((controller) {
+      final latest = <String, List<AppUser>>{};
+      final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+
+      void emit() {
+        final byId = <String, AppUser>{};
+        for (final users in latest.values) {
+          for (final user in users) {
+            byId[user.id] = user;
+          }
+        }
+        final users = byId.values.toList()
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        controller.add(users);
+      }
+
+      for (final system in systems) {
+        final subscription = _users
+            .where('systems', arrayContains: system)
+            .snapshots()
+            .listen((snap) {
+              latest[system] = snap.docs
+                  .map((d) => AppUser.fromMap(d.id, d.data()))
+                  .toList();
+              emit();
+            }, onError: controller.addError);
+        subscriptions.add(subscription);
+      }
+
+      controller.onCancel = () async {
+        for (final subscription in subscriptions) {
+          await subscription.cancel();
+        }
+      };
+    });
+  }
+
+  List<AppUser> _decodeAndSort(QuerySnapshot<Map<String, dynamic>> snap) {
+    final users = snap.docs
+        .map((d) => AppUser.fromMap(d.id, d.data()))
+        .toList();
+    users.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return users;
   }
 
   /// Single-user lookup by id — used for e.g. showing the assignee's name on

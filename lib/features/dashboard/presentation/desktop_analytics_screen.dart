@@ -1,8 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -44,10 +46,12 @@ class DesktopAnalyticsScreen extends ConsumerStatefulWidget {
   const DesktopAnalyticsScreen({super.key});
 
   @override
-  ConsumerState<DesktopAnalyticsScreen> createState() => _DesktopAnalyticsScreenState();
+  ConsumerState<DesktopAnalyticsScreen> createState() =>
+      _DesktopAnalyticsScreenState();
 }
 
-class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen> {
+class _DesktopAnalyticsScreenState
+    extends ConsumerState<DesktopAnalyticsScreen> {
   final _searchController = TextEditingController();
   String _search = '';
   TicketStatus? _statusFilter;
@@ -62,12 +66,12 @@ class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen>
   /// created-date range, overdue) — see [TicketFilter.matchesClientSide].
   /// Matches the mobile Analytics screen's filter set.
   TicketFilter get _advancedFilter => TicketFilter(
-        institutionId: _institutionId,
-        institutionType: _institutionType,
-        createdAfter: _dateRange?.start,
-        createdBefore: _dateRange?.end,
-        overdueOnly: _overdueOnly,
-      );
+    institutionId: _institutionId,
+    institutionType: _institutionType,
+    createdAfter: _dateRange?.start,
+    createdBefore: _dateRange?.end,
+    overdueOnly: _overdueOnly,
+  );
 
   @override
   void dispose() {
@@ -78,7 +82,8 @@ class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen>
   bool _matchesSearch(Ticket t) {
     if (_search.isEmpty) return true;
     final q = _search.toLowerCase();
-    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+    return t.title.toLowerCase().contains(q) ||
+        t.ticketReference.toLowerCase().contains(q);
   }
 
   @override
@@ -86,14 +91,24 @@ class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen>
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]..sort((a, b) => a.name.compareTo(b.name));
+    final institutions = [...?ref.watch(institutionListProvider).valueOrNull]
+      ..sort((a, b) => a.name.compareTo(b.name));
     final institutionNameById = {for (final i in institutions) i.id: i.name};
     final institutionTypes = {for (final i in institutions) i.id: i.type};
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
     // Only the query-backed fields go to the provider; institution / date /
     // overdue are applied in memory below.
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
     final filter = TicketFilter(
+      system: selectedSystem,
+      systems:
+          selectedSystem == null && appUser.role == UserRole.supportCoordinator
+          ? allowedSystemsForRole(appUser.role, appUser.systems)
+          : const {},
       statuses: _statusFilter == null ? const {} : {_statusFilter!},
       category: _categoryFilter,
       priorities: _priorityFilter == null ? const {} : {_priorityFilter!},
@@ -115,10 +130,13 @@ class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen>
             categoryFilter: _categoryFilter,
             onCategoryChanged: (v) => setState(() => _categoryFilter = v),
             institutionNameById: institutionNameById,
-            institutionId: institutionNameById.containsKey(_institutionId) ? _institutionId : null,
+            institutionId: institutionNameById.containsKey(_institutionId)
+                ? _institutionId
+                : null,
             onInstitutionChanged: (v) => setState(() => _institutionId = v),
             institutionType: _institutionType,
-            onInstitutionTypeChanged: (v) => setState(() => _institutionType = v),
+            onInstitutionTypeChanged: (v) =>
+                setState(() => _institutionType = v),
             dateRange: _dateRange,
             onDateRangeChanged: (v) => setState(() => _dateRange = v),
             overdueOnly: _overdueOnly,
@@ -128,11 +146,18 @@ class _DesktopAnalyticsScreenState extends ConsumerState<DesktopAnalyticsScreen>
           Expanded(
             child: ticketsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load analytics: $e')),
+              error: (e, _) =>
+                  Center(child: Text('Could not load analytics: $e')),
               data: (tickets) => _Body(
                 tickets: tickets
                     .where(_matchesSearch)
-                    .where((t) => _advancedFilter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+                    .where(
+                      (t) => _advancedFilter.matchesClientSide(
+                        t,
+                        policy: slaPolicy,
+                        institutionTypes: institutionTypes,
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -185,7 +210,11 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final institutionIds = institutionNameById.keys.toList()
-      ..sort((a, b) => (institutionNameById[a] ?? '').compareTo(institutionNameById[b] ?? ''));
+      ..sort(
+        (a, b) => (institutionNameById[a] ?? '').compareTo(
+          institutionNameById[b] ?? '',
+        ),
+      );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,7 +343,9 @@ class _FilterDropdown<T> extends StatelessWidget {
           value: value,
           items: [
             DropdownMenuItem<T?>(value: null, child: Text(allLabel)),
-            ...items.map((i) => DropdownMenuItem(value: i, child: Text(labelOf(i)))),
+            ...items.map(
+              (i) => DropdownMenuItem(value: i, child: Text(labelOf(i))),
+            ),
           ],
           onChanged: onChanged,
         ),
@@ -330,10 +361,18 @@ class _Body extends StatelessWidget {
 
   List<DateTime> get _last7Days {
     final today = DateTime.now();
-    return List.generate(7, (i) => DateTime(today.year, today.month, today.day).subtract(Duration(days: 6 - i)));
+    return List.generate(
+      7,
+      (i) => DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).subtract(Duration(days: 6 - i)),
+    );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   Widget build(BuildContext context) {
@@ -342,10 +381,23 @@ class _Body extends StatelessWidget {
 
     final avgResolutionHours = resolved.isEmpty
         ? 0.0
-        : resolved.map((t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60).reduce((a, b) => a + b) / resolved.length;
+        : resolved
+                  .map(
+                    (t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60,
+                  )
+                  .reduce((a, b) => a + b) /
+              resolved.length;
     final avgFirstResponseMinutes = responded.isEmpty
         ? 0.0
-        : responded.map((t) => t.firstRespondedAt!.difference(t.createdAt).inMinutes.toDouble()).reduce((a, b) => a + b) / responded.length;
+        : responded
+                  .map(
+                    (t) => t.firstRespondedAt!
+                        .difference(t.createdAt)
+                        .inMinutes
+                        .toDouble(),
+                  )
+                  .reduce((a, b) => a + b) /
+              responded.length;
 
     final byCategory = <TicketCategory, int>{};
     for (final t in tickets) {
@@ -353,14 +405,27 @@ class _Body extends StatelessWidget {
     }
 
     final days = _last7Days;
-    final receivedByDay = [for (final d in days) tickets.where((t) => _isSameDay(t.createdAt, d)).length];
-    final resolvedByDay = [for (final d in days) resolved.where((t) => _isSameDay(t.resolvedAt!, d)).length];
+    final receivedByDay = [
+      for (final d in days)
+        tickets.where((t) => _isSameDay(t.createdAt, d)).length,
+    ];
+    final resolvedByDay = [
+      for (final d in days)
+        resolved.where((t) => _isSameDay(t.resolvedAt!, d)).length,
+    ];
     final resolutionTrend = [
       for (final d in days)
         () {
-          final onDay = resolved.where((t) => _isSameDay(t.resolvedAt!, d)).toList();
+          final onDay = resolved
+              .where((t) => _isSameDay(t.resolvedAt!, d))
+              .toList();
           if (onDay.isEmpty) return 0.0;
-          return onDay.map((t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60).reduce((a, b) => a + b) / onDay.length;
+          return onDay
+                  .map(
+                    (t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60,
+                  )
+                  .reduce((a, b) => a + b) /
+              onDay.length;
         }(),
     ];
 
@@ -371,16 +436,33 @@ class _Body extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _MetricCard(label: 'Tickets Received', value: '${tickets.length}')),
+              Expanded(
+                child: _MetricCard(
+                  label: 'Tickets Received',
+                  value: '${tickets.length}',
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _MetricCard(label: 'Tickets Resolved', value: '${resolved.length}')),
+              Expanded(
+                child: _MetricCard(
+                  label: 'Tickets Resolved',
+                  value: '${resolved.length}',
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _MetricCard(label: 'Avg. Resolution Time', value: '${avgResolutionHours.toStringAsFixed(1)} hrs')),
+              Expanded(
+                child: _MetricCard(
+                  label: 'Avg. Resolution Time',
+                  value: '${avgResolutionHours.toStringAsFixed(1)} hrs',
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: _MetricCard(
                   label: 'First Response Time',
-                  value: avgFirstResponseMinutes >= 60 ? '${(avgFirstResponseMinutes / 60).toStringAsFixed(1)} hrs' : '${avgFirstResponseMinutes.round()}m',
+                  value: avgFirstResponseMinutes >= 60
+                      ? '${(avgFirstResponseMinutes / 60).toStringAsFixed(1)} hrs'
+                      : '${avgFirstResponseMinutes.round()}m',
                 ),
               ),
             ],
@@ -393,14 +475,27 @@ class _Body extends StatelessWidget {
                 Expanded(
                   child: _Panel(
                     title: 'Tickets by Category',
-                    child: SizedBox(height: 240, child: _CategoryDonut(byCategory: byCategory, total: tickets.length)),
+                    child: SizedBox(
+                      height: 240,
+                      child: _CategoryDonut(
+                        byCategory: byCategory,
+                        total: tickets.length,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _Panel(
                     title: 'Tickets by Day',
-                    child: SizedBox(height: 240, child: _ByDayBarChart(days: days, received: receivedByDay, resolved: resolvedByDay)),
+                    child: SizedBox(
+                      height: 240,
+                      child: _ByDayBarChart(
+                        days: days,
+                        received: receivedByDay,
+                        resolved: resolvedByDay,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -409,7 +504,10 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 24),
           _Panel(
             title: 'Resolution Time Trend (hrs)',
-            child: SizedBox(height: 220, child: _ResolutionTrendChart(days: days, values: resolutionTrend)),
+            child: SizedBox(
+              height: 220,
+              child: _ResolutionTrendChart(days: days, values: resolutionTrend),
+            ),
           ),
         ],
       ),
@@ -437,7 +535,12 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(value, style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 6),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+          ),
         ],
       ),
     );
@@ -480,8 +583,13 @@ class _CategoryDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (total == 0) return const EmptyState(icon: Icons.pie_chart_outline_rounded, message: 'No ticket data yet.');
-    final entries = byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    if (total == 0)
+      return const EmptyState(
+        icon: Icons.pie_chart_outline_rounded,
+        message: 'No ticket data yet.',
+      );
+    final entries = byCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return Row(
       children: [
         Expanded(
@@ -494,14 +602,22 @@ class _CategoryDonut extends StatelessWidget {
                   centerSpaceRadius: 44,
                   sections: [
                     for (var i = 0; i < entries.length; i++)
-                      PieChartSectionData(value: entries[i].value.toDouble(), color: _categoryPalette[i % _categoryPalette.length], showTitle: false, radius: 28),
+                      PieChartSectionData(
+                        value: entries[i].value.toDouble(),
+                        color: _categoryPalette[i % _categoryPalette.length],
+                        showTitle: false,
+                        radius: 28,
+                      ),
                   ],
                 ),
               ),
-              Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('$total', style: Theme.of(context).textTheme.titleLarge),
-                Text('Total', style: Theme.of(context).textTheme.bodySmall),
-              ]),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$total', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Total', style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
             ],
           ),
         ),
@@ -516,7 +632,14 @@ class _CategoryDonut extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
                     children: [
-                      Container(width: 8, height: 8, decoration: BoxDecoration(color: _categoryPalette[i % _categoryPalette.length], shape: BoxShape.circle)),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _categoryPalette[i % _categoryPalette.length],
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -541,11 +664,20 @@ class _ByDayBarChart extends StatelessWidget {
   final List<int> received;
   final List<int> resolved;
 
-  const _ByDayBarChart({required this.days, required this.received, required this.resolved});
+  const _ByDayBarChart({
+    required this.days,
+    required this.received,
+    required this.resolved,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final maxY = [...received, ...resolved].fold<int>(0, (m, v) => v > m ? v : m).toDouble() + 1;
+    final maxY =
+        [
+          ...received,
+          ...resolved,
+        ].fold<int>(0, (m, v) => v > m ? v : m).toDouble() +
+        1;
     return Column(
       children: [
         Expanded(
@@ -554,15 +686,41 @@ class _ByDayBarChart extends StatelessWidget {
               maxY: maxY,
               barGroups: [
                 for (var i = 0; i < days.length; i++)
-                  BarChartGroupData(x: i, barRods: [
-                    BarChartRodData(toY: received[i].toDouble(), color: AppTheme.accentBlue, width: 8, borderRadius: BorderRadius.circular(3)),
-                    BarChartRodData(toY: resolved[i].toDouble(), color: StatusColors.resolved, width: 8, borderRadius: BorderRadius.circular(3)),
-                  ]),
+                  BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: received[i].toDouble(),
+                        color: AppTheme.accentBlue,
+                        width: 8,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      BarChartRodData(
+                        toY: resolved[i].toDouble(),
+                        color: StatusColors.resolved,
+                        width: 8,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ],
+                  ),
               ],
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, getTitlesWidget: (v, m) => Text('${v.toInt()}', style: Theme.of(context).textTheme.bodySmall))),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24,
+                    getTitlesWidget: (v, m) => Text(
+                      '${v.toInt()}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -572,13 +730,25 @@ class _ByDayBarChart extends StatelessWidget {
                     interval: 1,
                     getTitlesWidget: (v, m) {
                       final idx = v.toInt();
-                      if (idx < 0 || idx >= days.length) return const SizedBox.shrink();
-                      return Padding(padding: const EdgeInsets.only(top: 4), child: Text(DateFormat.E().format(days[idx]).substring(0, 3), style: Theme.of(context).textTheme.bodySmall));
+                      if (idx < 0 || idx >= days.length)
+                        return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          DateFormat.E().format(days[idx]).substring(0, 3),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      );
                     },
                   ),
                 ),
               ),
-              gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: const Color(0xFFEDF2EF), strokeWidth: 1)),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (v) =>
+                    FlLine(color: const Color(0xFFEDF2EF), strokeWidth: 1),
+              ),
               borderData: FlBorderData(show: false),
             ),
           ),
@@ -612,11 +782,29 @@ class _ResolutionTrendChart extends StatelessWidget {
     return LineChart(
       LineChartData(
         minY: 0,
-        gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: const Color(0xFFEDF2EF), strokeWidth: 1)),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (v) =>
+              FlLine(color: const Color(0xFFEDF2EF), strokeWidth: 1),
+        ),
         titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (v, m) => Text('${v.toInt()}', style: Theme.of(context).textTheme.bodySmall))),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (v, m) => Text(
+                '${v.toInt()}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -624,8 +812,15 @@ class _ResolutionTrendChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (v, m) {
                 final idx = v.toInt();
-                if (idx < 0 || idx >= days.length) return const SizedBox.shrink();
-                return Padding(padding: const EdgeInsets.only(top: 6), child: Text(DateFormat.MMMd().format(days[idx]), style: Theme.of(context).textTheme.bodySmall));
+                if (idx < 0 || idx >= days.length)
+                  return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    DateFormat.MMMd().format(days[idx]),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                );
               },
             ),
           ),
@@ -633,12 +828,18 @@ class _ResolutionTrendChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: [for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i])],
+            spots: [
+              for (var i = 0; i < values.length; i++)
+                FlSpot(i.toDouble(), values[i]),
+            ],
             isCurved: true,
             color: AppTheme.accentBlue,
             barWidth: 2.5,
             dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(show: true, color: AppTheme.accentBlue.withValues(alpha: 0.08)),
+            belowBarData: BarAreaData(
+              show: true,
+              color: AppTheme.accentBlue.withValues(alpha: 0.08),
+            ),
           ),
         ],
       ),

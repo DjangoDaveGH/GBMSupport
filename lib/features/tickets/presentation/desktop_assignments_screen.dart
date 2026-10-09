@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
+import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -22,10 +24,12 @@ class DesktopAssignmentsScreen extends ConsumerStatefulWidget {
   const DesktopAssignmentsScreen({super.key});
 
   @override
-  ConsumerState<DesktopAssignmentsScreen> createState() => _DesktopAssignmentsScreenState();
+  ConsumerState<DesktopAssignmentsScreen> createState() =>
+      _DesktopAssignmentsScreenState();
 }
 
-class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScreen> {
+class _DesktopAssignmentsScreenState
+    extends ConsumerState<DesktopAssignmentsScreen> {
   final _searchController = TextEditingController();
   String _search = '';
   String? _officerFilter;
@@ -41,30 +45,69 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
 
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, const TicketFilter())));
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
+    final ticketFilter = TicketFilter(
+      system: selectedSystem,
+      systems:
+          selectedSystem == null && appUser.role == UserRole.supportCoordinator
+          ? allowedSystemsForRole(appUser.role, appUser.systems)
+          : const {},
+    );
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, ticketFilter)),
+    );
     final usersAsync = ref.watch(allUsersProvider);
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load assignments: $e')),
       data: (tickets) {
-        final usersById = <String, AppUser>{for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u};
-        final officers = usersAsync.valueOrNull?.where((u) => u.role.hasBackOfficeAccess || u.role.wireValue == 'vendor_support').toList() ??
+        final usersById = <String, AppUser>{
+          for (final u in usersAsync.valueOrNull ?? const <AppUser>[]) u.id: u,
+        };
+        final officers =
+            usersAsync.valueOrNull
+                ?.where(
+                  (u) =>
+                      u.role.hasBackOfficeAccess ||
+                      u.role.wireValue == 'vendor_support',
+                )
+                .toList() ??
             const <AppUser>[];
 
-        final unassigned = tickets.where((t) => t.assignedTo == null && t.status.isOpenState).length;
-        final myOpen = tickets.where((t) => t.assignedTo == appUser.id && t.status.isOpenState).length;
+        final unassigned = tickets
+            .where((t) => t.assignedTo == null && t.status.isOpenState)
+            .length;
+        final myOpen = tickets
+            .where((t) => t.assignedTo == appUser.id && t.status.isOpenState)
+            .length;
         final overdue = SlaCalculator.countOverdue(tickets, slaPolicy);
         final slaBreached = tickets
-            .where((t) => (t.resolvedAt != null || t.closedAt != null) && !SlaCalculator.metSla(t, slaPolicy))
+            .where(
+              (t) =>
+                  (t.resolvedAt != null || t.closedAt != null) &&
+                  !SlaCalculator.metSla(t, slaPolicy),
+            )
             .length;
 
         var filtered = tickets.where((t) => t.status.isOpenState).toList();
-        if (_officerFilter != null) filtered = filtered.where((t) => t.assignedTo == _officerFilter).toList();
+        if (_officerFilter != null)
+          filtered = filtered
+              .where((t) => t.assignedTo == _officerFilter)
+              .toList();
         if (_search.isNotEmpty) {
           final q = _search.toLowerCase();
-          filtered = filtered.where((t) => t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q)).toList();
+          filtered = filtered
+              .where(
+                (t) =>
+                    t.title.toLowerCase().contains(q) ||
+                    t.ticketReference.toLowerCase().contains(q),
+              )
+              .toList();
         }
         filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
@@ -73,12 +116,30 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _StatCardRow(children: [
-                _StatCard(label: 'Unassigned', value: unassigned, color: AppTheme.gold),
-                _StatCard(label: 'My Open', value: myOpen, color: AppTheme.accentBlue),
-                _StatCard(label: 'Overdue', value: overdue, color: StatusColors.critical),
-                _StatCard(label: 'SLA Breached', value: slaBreached, color: StatusColors.critical),
-              ]),
+              _StatCardRow(
+                children: [
+                  _StatCard(
+                    label: 'Unassigned',
+                    value: unassigned,
+                    color: AppTheme.gold,
+                  ),
+                  _StatCard(
+                    label: 'My Open',
+                    value: myOpen,
+                    color: AppTheme.accentBlue,
+                  ),
+                  _StatCard(
+                    label: 'Overdue',
+                    value: overdue,
+                    color: StatusColors.critical,
+                  ),
+                  _StatCard(
+                    label: 'SLA Breached',
+                    value: slaBreached,
+                    color: StatusColors.critical,
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -86,7 +147,10 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
                     child: TextField(
                       controller: _searchController,
                       onChanged: (v) => setState(() => _search = v),
-                      decoration: const InputDecoration(hintText: 'Search assignments…', prefixIcon: Icon(Icons.search_rounded, size: 20)),
+                      decoration: const InputDecoration(
+                        hintText: 'Search assignments…',
+                        prefixIcon: Icon(Icons.search_rounded, size: 20),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -96,7 +160,9 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String?>(
@@ -104,8 +170,16 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
                         isDense: true,
                         value: _officerFilter,
                         items: [
-                          const DropdownMenuItem<String?>(value: null, child: Text('All Officers')),
-                          ...officers.map((o) => DropdownMenuItem(value: o.id, child: Text(o.name))),
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('All Officers'),
+                          ),
+                          ...officers.map(
+                            (o) => DropdownMenuItem(
+                              value: o.id,
+                              child: Text(o.name),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() => _officerFilter = v),
                       ),
@@ -120,10 +194,15 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: filtered.isEmpty
-                      ? const EmptyState(icon: Icons.assignment_ind_outlined, message: 'No open assignments match.')
+                      ? const EmptyState(
+                          icon: Icons.assignment_ind_outlined,
+                          message: 'No open assignments match.',
+                        )
                       : SingleChildScrollView(
                           child: ScrollableTable(
                             child: DataTable(
@@ -137,21 +216,61 @@ class _DesktopAssignmentsScreenState extends ConsumerState<DesktopAssignmentsScr
                                 DataColumn(label: Text('SLA Due')),
                               ],
                               rows: filtered.map((t) {
-                                final assignee = t.assignedTo == null ? null : usersById[t.assignedTo];
-                                final due = t.createdAt.add(Duration(hours: slaPolicy.targetHoursFor(t.priority)));
-                                final overdueRow = SlaCalculator.isOverdue(t, slaPolicy);
+                                final assignee = t.assignedTo == null
+                                    ? null
+                                    : usersById[t.assignedTo];
+                                final due = t.createdAt.add(
+                                  Duration(
+                                    hours: slaPolicy.targetHoursFor(t.priority),
+                                  ),
+                                );
+                                final overdueRow = SlaCalculator.isOverdue(
+                                  t,
+                                  slaPolicy,
+                                );
                                 return DataRow(
-                                  onSelectChanged: (_) => context.push('/tickets/${t.id}'),
+                                  onSelectChanged: (_) =>
+                                      context.push('/tickets/${t.id}'),
                                   cells: [
-                                    DataCell(Text(t.ticketReference, style: const TextStyle(fontWeight: FontWeight.w600))),
-                                    DataCell(SizedBox(width: 240, child: Text(t.title, overflow: TextOverflow.ellipsis))),
-                                    DataCell(TicketPriorityChip(priority: t.priority)),
-                                    DataCell(Text(assignee?.name ?? 'Unassigned')),
-                                    DataCell(TicketStatusChip(status: t.status)),
-                                    DataCell(Text(
-                                      DateFormat.MMMd().add_jm().format(due),
-                                      style: TextStyle(color: overdueRow ? StatusColors.critical : null, fontWeight: overdueRow ? FontWeight.w700 : null),
-                                    )),
+                                    DataCell(
+                                      Text(
+                                        t.ticketReference,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      SizedBox(
+                                        width: 240,
+                                        child: Text(
+                                          t.title,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      TicketPriorityChip(priority: t.priority),
+                                    ),
+                                    DataCell(
+                                      Text(assignee?.name ?? 'Unassigned'),
+                                    ),
+                                    DataCell(
+                                      TicketStatusChip(status: t.status),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        DateFormat.MMMd().add_jm().format(due),
+                                        style: TextStyle(
+                                          color: overdueRow
+                                              ? StatusColors.critical
+                                              : null,
+                                          fontWeight: overdueRow
+                                              ? FontWeight.w700
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 );
                               }).toList(),
@@ -173,7 +292,11 @@ class _StatCard extends StatelessWidget {
   final int value;
   final Color color;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -187,13 +310,20 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$value', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color)),
+          Text(
+            '$value',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(color: color),
+          ),
           const SizedBox(height: 6),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
         ],
       ),
@@ -230,17 +360,21 @@ class _StatCardRow extends StatelessWidget {
         }
         return Column(
           children: [
-            Row(children: [
-              Expanded(child: children[0]),
-              const SizedBox(width: 12),
-              Expanded(child: children[1]),
-            ]),
+            Row(
+              children: [
+                Expanded(child: children[0]),
+                const SizedBox(width: 12),
+                Expanded(child: children[1]),
+              ],
+            ),
             const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: children[2]),
-              const SizedBox(width: 12),
-              Expanded(child: children[3]),
-            ]),
+            Row(
+              children: [
+                Expanded(child: children[2]),
+                const SizedBox(width: 12),
+                Expanded(child: children[3]),
+              ],
+            ),
           ],
         );
       },

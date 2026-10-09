@@ -36,11 +36,6 @@ class TicketDetailScreen extends ConsumerWidget {
             : const Text('Ticket Details'),
         actions: [
           if (ticketAsync.valueOrNull != null) ...[
-            IconButton(
-              icon: const Icon(Icons.chat_bubble_outline_rounded),
-              tooltip: 'Chat',
-              onPressed: () => context.push('/tickets/$ticketId/chat'),
-            ),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Center(
@@ -62,6 +57,20 @@ class TicketDetailScreen extends ConsumerWidget {
           return _TicketDetailBody(ticket: ticket, viewer: viewer);
         },
       ),
+      // Keep chat discoverable even when the lower action row is below the
+      // fold on smaller screens. The same route is also available in the
+      // action row, but this makes the primary conversation
+      // action consistently visible on the ticket detail page.
+      floatingActionButton: ticketAsync.valueOrNull == null
+          ? null
+          : FloatingActionButton(
+              heroTag: 'ticket-chat-$ticketId',
+              tooltip: 'Chat about this ticket',
+              backgroundColor: AppTheme.navy,
+              foregroundColor: Colors.white,
+              onPressed: () => context.push('/tickets/$ticketId/chat'),
+              child: const Icon(Icons.chat_bubble_outline_rounded),
+            ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/app_error_state.dart';
@@ -16,7 +17,8 @@ import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
-import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart' show categoryIcon;
+import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
+    show categoryIcon;
 
 const _categoryPalette = [
   AppTheme.navy,
@@ -58,11 +60,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   bool _matchesSearch(Ticket t) {
     if (_search.isEmpty) return true;
     final q = _search.toLowerCase();
-    return t.title.toLowerCase().contains(q) || t.ticketReference.toLowerCase().contains(q);
+    return t.title.toLowerCase().contains(q) ||
+        t.ticketReference.toLowerCase().contains(q);
   }
 
   Future<void> _openFilters() async {
-    final result = await context.push<TicketFilter>('/tickets/filters', extra: _filter);
+    final result = await context.push<TicketFilter>(
+      '/tickets/filters',
+      extra: _filter,
+    );
     if (result != null && mounted) setState(() => _filter = result);
   }
 
@@ -74,11 +80,28 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     // Only the query-backed fields go to the provider; institution / date /
     // overdue are applied in memory (TicketFilter.matchesClientSide) so they
     // don't spawn an identical refetch under a new family key.
-    final queryFilter = TicketFilter(statuses: _filter.statuses, category: _filter.category, priorities: _filter.priorities);
-    final ticketsAsync = ref.watch(ticketAnalyticsProvider((appUser, queryFilter)));
-    final slaPolicy = ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
+    final selectedSystem = GoRouterState.of(
+      context,
+    ).uri.queryParameters['system'];
+    final scopedSystems =
+        selectedSystem == null && appUser.role == UserRole.supportCoordinator
+        ? allowedSystemsForRole(appUser.role, appUser.systems)
+        : const <String>{};
+    final queryFilter = TicketFilter(
+      system: selectedSystem,
+      systems: scopedSystems,
+      statuses: _filter.statuses,
+      category: _filter.category,
+      priorities: _filter.priorities,
+    );
+    final ticketsAsync = ref.watch(
+      ticketAnalyticsProvider((appUser, queryFilter)),
+    );
+    final slaPolicy =
+        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
     final institutionTypes = {
-      for (final i in [...?ref.watch(institutionListProvider).valueOrNull]) i.id: i.type,
+      for (final i in [...?ref.watch(institutionListProvider).valueOrNull])
+        i.id: i.type,
     };
 
     return Scaffold(
@@ -87,7 +110,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         actions: [
           IconButton(
             onPressed: _openFilters,
-            icon: Icon(_filter.isEmpty ? Icons.filter_alt_outlined : Icons.filter_alt_rounded),
+            icon: Icon(
+              _filter.isEmpty
+                  ? Icons.filter_alt_outlined
+                  : Icons.filter_alt_rounded,
+            ),
           ),
         ],
       ),
@@ -116,11 +143,19 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           Expanded(
             child: ticketsAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => const AppErrorState(message: 'We could not load analytics data.'),
+              error: (e, _) => const AppErrorState(
+                message: 'We could not load analytics data.',
+              ),
               data: (tickets) => _AnalyticsBody(
                 tickets: tickets
                     .where(_matchesSearch)
-                    .where((t) => _filter.matchesClientSide(t, policy: slaPolicy, institutionTypes: institutionTypes))
+                    .where(
+                      (t) => _filter.matchesClientSide(
+                        t,
+                        policy: slaPolicy,
+                        institutionTypes: institutionTypes,
+                      ),
+                    )
                     .toList(),
                 slaPolicy: slaPolicy,
               ),
@@ -140,10 +175,18 @@ class _AnalyticsBody extends StatelessWidget {
 
   List<DateTime> get _last7Days {
     final today = DateTime.now();
-    return List.generate(7, (i) => DateTime(today.year, today.month, today.day).subtract(Duration(days: 6 - i)));
+    return List.generate(
+      7,
+      (i) => DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).subtract(Duration(days: 6 - i)),
+    );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// [countMode] = true for a count metric (e.g. "Tickets Resolved"): the
   /// series is tickets-per-day and the percent change compares the two
@@ -166,7 +209,11 @@ class _AnalyticsBody extends StatelessWidget {
       if (countMode) {
         series.add(onDay.length.toDouble());
       } else {
-        series.add(onDay.isEmpty ? 0 : onDay.map(valueOf).reduce((a, b) => a + b) / onDay.length);
+        series.add(
+          onDay.isEmpty
+              ? 0
+              : onDay.map(valueOf).reduce((a, b) => a + b) / onDay.length,
+        );
       }
     }
 
@@ -186,12 +233,24 @@ class _AnalyticsBody extends StatelessWidget {
       currentValue = currentTickets.length.toDouble();
       priorValue = priorTickets.length.toDouble();
     } else {
-      currentValue = currentTickets.isEmpty ? 0.0 : currentTickets.map(valueOf).reduce((a, b) => a + b) / currentTickets.length;
-      priorValue = priorTickets.isEmpty ? 0.0 : priorTickets.map(valueOf).reduce((a, b) => a + b) / priorTickets.length;
+      currentValue = currentTickets.isEmpty
+          ? 0.0
+          : currentTickets.map(valueOf).reduce((a, b) => a + b) /
+                currentTickets.length;
+      priorValue = priorTickets.isEmpty
+          ? 0.0
+          : priorTickets.map(valueOf).reduce((a, b) => a + b) /
+                priorTickets.length;
     }
-    final change = priorValue == 0 ? (currentValue == 0 ? 0.0 : 100.0) : ((currentValue - priorValue) / priorValue) * 100;
+    final change = priorValue == 0
+        ? (currentValue == 0 ? 0.0 : 100.0)
+        : ((currentValue - priorValue) / priorValue) * 100;
 
-    return (series: series, total: currentTickets.length.toDouble(), percentChange: change);
+    return (
+      series: series,
+      total: currentTickets.length.toDouble(),
+      percentChange: change,
+    );
   }
 
   Map<TicketCategory, int> get _byCategory {
@@ -203,7 +262,8 @@ class _AnalyticsBody extends StatelessWidget {
   }
 
   List<MapEntry<TicketCategory, int>> get _recurring {
-    final entries = _byCategory.entries.where((e) => e.value > 1).toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = _byCategory.entries.where((e) => e.value > 1).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return entries;
   }
 
@@ -211,7 +271,12 @@ class _AnalyticsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolved = tickets.where((t) => t.resolvedAt != null).toList();
 
-    final resolvedTrend = _dailyTrend(resolved, (t) => t.resolvedAt, (_) => 1, countMode: true);
+    final resolvedTrend = _dailyTrend(
+      resolved,
+      (t) => t.resolvedAt,
+      (_) => 1,
+      countMode: true,
+    );
     final resolutionTimeTrend = _dailyTrend(
       resolved,
       (t) => t.resolvedAt,
@@ -225,10 +290,25 @@ class _AnalyticsBody extends StatelessWidget {
     );
     final slaCompliance = SlaCalculator.complianceRate(tickets, slaPolicy);
 
-    final avgResolutionHours =
-        resolved.isEmpty ? 0.0 : resolved.map((t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60).reduce((a, b) => a + b) / resolved.length;
-    final avgFirstResponseMinutes =
-        responded.isEmpty ? 0.0 : responded.map((t) => t.firstRespondedAt!.difference(t.createdAt).inMinutes.toDouble()).reduce((a, b) => a + b) / responded.length;
+    final avgResolutionHours = resolved.isEmpty
+        ? 0.0
+        : resolved
+                  .map(
+                    (t) => t.resolvedAt!.difference(t.createdAt).inMinutes / 60,
+                  )
+                  .reduce((a, b) => a + b) /
+              resolved.length;
+    final avgFirstResponseMinutes = responded.isEmpty
+        ? 0.0
+        : responded
+                  .map(
+                    (t) => t.firstRespondedAt!
+                        .difference(t.createdAt)
+                        .inMinutes
+                        .toDouble(),
+                  )
+                  .reduce((a, b) => a + b) /
+              responded.length;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -241,9 +321,16 @@ class _AnalyticsBody extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 15, color: AppTheme.accentBlue),
+              const Icon(
+                Icons.calendar_today_rounded,
+                size: 15,
+                color: AppTheme.accentBlue,
+              ),
               const SizedBox(width: 8),
-              Text('Last 7 days', style: Theme.of(context).textTheme.labelMedium),
+              Text(
+                'Last 7 days',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
             ],
           ),
         ),
@@ -285,57 +372,90 @@ class _AnalyticsBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
-        Text('Tickets by Category', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Tickets by Category',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.md),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: _byCategory.isEmpty
-              ? const EmptyState(icon: Icons.pie_chart_outline_rounded, message: 'No ticket data yet.')
+              ? const EmptyState(
+                  icon: Icons.pie_chart_outline_rounded,
+                  message: 'No ticket data yet.',
+                )
               : _CategoryDonut(byCategory: _byCategory, total: tickets.length),
         ),
         const SizedBox(height: AppSpacing.xl),
-        Text('Recurring Issues', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Recurring Issues',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.md),
         if (_recurring.isEmpty)
-          const EmptyState(icon: Icons.insights_rounded, message: 'No recurring patterns detected yet.')
+          const EmptyState(
+            icon: Icons.insights_rounded,
+            message: 'No recurring patterns detected yet.',
+          )
         else
-          ..._recurring.map((e) => Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          ..._recurring.map(
+            (e) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppTheme.gold.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(categoryIcon(e.key), size: 17, color: AppTheme.gold),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.gold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(e.key.label, style: Theme.of(context).textTheme.titleSmall)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Text('${e.value} tickets', style: Theme.of(context).textTheme.labelMedium),
+                    child: Icon(
+                      categoryIcon(e.key),
+                      size: 17,
+                      color: AppTheme.gold,
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      e.key.label,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      '${e.value} tickets',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -375,16 +495,29 @@ class _MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppTheme.ink)),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: AppTheme.ink),
+          ),
           const SizedBox(height: 2),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(rising ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 12, color: changeColor),
+              Icon(
+                rising
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
+                size: 12,
+                color: changeColor,
+              ),
               Text(
                 '${percentChange.abs().toStringAsFixed(0)}%',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: changeColor),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: changeColor),
               ),
             ],
           ),
@@ -418,16 +551,26 @@ class _SlaComplianceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('SLA Compliance', style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  'SLA Compliance',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Resolved within target',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ],
             ),
           ),
-          PercentRing(percent: percent, color: StatusColors.resolved, size: 56, strokeWidth: 6),
+          PercentRing(
+            percent: percent,
+            color: StatusColors.resolved,
+            size: 56,
+            strokeWidth: 6,
+          ),
         ],
       ),
     );
@@ -442,7 +585,8 @@ class _CategoryDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = byCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     return Column(
       children: [
@@ -469,7 +613,10 @@ class _CategoryDonut extends StatelessWidget {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('$total', style: Theme.of(context).textTheme.headlineMedium),
+                  Text(
+                    '$total',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                   Text('Total', style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
@@ -488,7 +635,10 @@ class _CategoryDonut extends StatelessWidget {
                   Container(
                     width: 9,
                     height: 9,
-                    decoration: BoxDecoration(color: _categoryPalette[i % _categoryPalette.length], shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: _categoryPalette[i % _categoryPalette.length],
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
