@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -201,26 +202,37 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
             attachmentsFailed = true;
           }
         }
-        createdTicket = await ref
-            .read(ticketRepositoryProvider)
-            .createTicket(
-              createdBy: appUser.id,
-              institutionId: appUser.institutionId,
-              category: ticketCategory,
-              subCategory: '',
-              title: title,
-              description: description,
-              attachmentUrls: urls,
-              priority: priority,
-              impact: impact,
-              affectsMultipleUsers: _affectsMultipleUsers,
-              system: _system,
-              productCategoryId: _productCategory == null
-                  ? null
-                  : _categoryId(_productCategory!),
-              productCategoryLabel: _productCategory,
-              requesterType: _system == 'gbms' ? null : 'government',
-            );
+        final repository = ref.read(ticketRepositoryProvider);
+
+        Future<Ticket> submitTicket() => repository.createTicket(
+          createdBy: appUser.id,
+          institutionId: appUser.institutionId,
+          category: ticketCategory,
+          subCategory: '',
+          title: title,
+          description: description,
+          attachmentUrls: urls,
+          priority: priority,
+          impact: impact,
+          affectsMultipleUsers: _affectsMultipleUsers,
+          system: _system,
+          productCategoryId: _productCategory == null
+              ? null
+              : _categoryId(_productCategory!),
+          productCategoryLabel: _productCategory,
+          requesterType: _system == 'gbms' ? null : 'government',
+        );
+
+        try {
+          createdTicket = await submitTicket();
+        } on FirebaseException catch (error) {
+          // A deployed claim/profile change does not invalidate an already
+          // issued PWA token. Refresh once and retry only this requester-side
+          // create operation so a stale session does not strand a valid user.
+          if (error.code != 'permission-denied') rethrow;
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
+          createdTicket = await submitTicket();
+        }
       } else {
         final draft = DraftTicket(
           localId: const Uuid().v4(),

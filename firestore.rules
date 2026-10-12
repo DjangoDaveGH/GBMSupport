@@ -92,11 +92,20 @@ service cloud.firestore {
     function requesterCanCreateSystem(system) {
       return isSignedIn()
         && system in ['gbms', 'ghaneps', 'gifmis']
-        && (request.auth.token.systems != null
-          ? system in request.auth.token.systems
-          // Accounts created before system claims were introduced are GBMS
-          // requester accounts and must not be able to create PPA tickets.
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAny(['systems'])
+          ? system in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.systems
+          // Accounts created before system assignments were introduced are
+          // GBMS requester accounts. The profile is used here so an older
+          // PWA token cannot deny a valid end-user after an admin assignment.
           : system == 'gbms');
+    }
+
+    // Requester profile fields are admin-managed; the client can only change
+    // its own presence, push-token, and photo fields. Use the profile as the
+    // recovery source for stale institution claims on the end-user create
+    // path, while keeping support-side rules claim-based.
+    function requesterInstitutionId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId;
     }
 
     function userCanHandleSystem(userId, system) {
@@ -161,6 +170,26 @@ service cloud.firestore {
         || (isVendor() && t.assignedTo == request.auth.uid && t.escalationLevel == 2 && hasAllowedSystem(ticketSystem(t)))
         || (isFocalPerson() && t.institutionId == institutionId())
         || (isRequesterSide() && t.createdBy == request.auth.uid);
+    }
+
+    // TicketRepository creates the ticket and its initial `created` activity
+    // in one transaction. During rules evaluation the parent ticket does not
+    // exist in the committed database yet, so canViewTicketChat() cannot be
+    // used for that activity write. getAfter() lets us validate the ticket's
+    // final transactional state without opening a general orphan-activity
+    // write path for requester accounts.
+    function canCreateInitialTicketActivity(ticketId) {
+      let t = getAfter(/databases/$(database)/documents/tickets/$(ticketId)).data;
+      return isRequesterSide()
+        && request.resource.data.ticketId == ticketId
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.action == 'created'
+        && t.createdBy == request.auth.uid
+        && t.institutionId == requesterInstitutionId()
+        && t.status == 'open'
+        && t.escalationLevel == 0
+        && t.assignedTo == null
+        && requesterCanCreateSystem(ticketSystem(t));
     }
 
     function isRequesterSide() {
@@ -266,7 +295,7 @@ service cloud.firestore {
       // institution, as themselves, in the initial unassigned state.
       allow create: if isRequesterSide()
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.institutionId == institutionId()
+        && request.resource.data.institutionId == requesterInstitutionId()
         && requesterCanCreateSystem(ticketSystem(request.resource.data))
         && request.resource.data.status == 'open'
         && request.resource.data.escalationLevel == 0
@@ -365,9 +394,10 @@ service cloud.firestore {
         // rule above — they shouldn't be able to write to a ticket's trail
         // they can't even open. Vendor mirrors the same escalationLevel == 2
         // gate as the read rule above, for the same reason.
-        allow create: if canViewTicketChat(ticketId)
-          && request.resource.data.actorId == request.auth.uid
-          && request.resource.data.ticketId == ticketId;
+        allow create: if canCreateInitialTicketActivity(ticketId)
+          || (canViewTicketChat(ticketId)
+            && request.resource.data.actorId == request.auth.uid
+            && request.resource.data.ticketId == ticketId);
         allow update, delete: if false;
       }
 

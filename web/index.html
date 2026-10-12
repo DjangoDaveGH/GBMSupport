@@ -88,6 +88,30 @@
        engine even boots) and exposes a plain-JS surface Dart polls via
        dart:js_util, since beforeinstallprompt has no Dart-side API. -->
   <script>
+    // Called by the Flutter update prompt. Keeping the reload bridge in the
+    // web entry point avoids importing dart:html into the native build.
+    window.hyportReloadApp = function () {
+      // Installed PWAs can keep Flutter's service-worker cache even after a
+      // Hosting deployment. Remove the old worker/cache before reloading so
+      // updated icons and other assets are fetched as one consistent bundle.
+      var clear = Promise.resolve();
+      if ('serviceWorker' in navigator) {
+        clear = navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          return Promise.all(registrations.map(function (registration) {
+            return registration.unregister();
+          }));
+        });
+      }
+      clear = clear.then(function () {
+        if (!('caches' in window)) return;
+        return caches.keys().then(function (keys) {
+          return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+        });
+      });
+      clear.catch(function (error) { console.warn('Could not clear old app cache:', error); })
+        .then(function () { window.location.reload(); });
+    };
+
     window.hyportPwaInstall = { deferredPrompt: null, available: false, installed: false };
 
     // Already running as an installed PWA — never offer to install again.

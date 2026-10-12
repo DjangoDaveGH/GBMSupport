@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hyport/core/routing/app_router.dart';
 import 'package:hyport/core/services/global_keys.dart';
+import 'package:hyport/core/services/app_update_listener.dart';
 import 'package:hyport/core/services/last_route_service.dart';
 import 'package:hyport/core/services/local_notification_service.dart';
 import 'package:hyport/core/services/presence_heartbeat_listener.dart';
@@ -66,14 +67,16 @@ class HyportApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return OfflineSyncListener(
-      child: PresenceHeartbeatListener(
-        child: PushNotificationListener(
-          child: MaterialApp.router(
-            title: 'GBMS Support',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            routerConfig: router,
+      child: AppUpdateListener(
+        child: PresenceHeartbeatListener(
+          child: PushNotificationListener(
+            child: MaterialApp.router(
+              title: 'GBMS Support',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              scaffoldMessengerKey: scaffoldMessengerKey,
+              routerConfig: router,
+            ),
           ),
         ),
       ),
