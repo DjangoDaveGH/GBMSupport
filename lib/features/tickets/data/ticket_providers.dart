@@ -19,6 +19,10 @@ final draftTicketRepositoryProvider = Provider<DraftTicketRepository>((ref) {
 });
 
 class TicketFilter {
+  /// Requester filter used by the admin user-history view. This is separate
+  /// from assignment because one requester can have tickets handled by many
+  /// different staff members.
+  final String? createdBy;
   final String? system;
   final Set<String> systems;
   final Set<TicketStatus> statuses;
@@ -36,6 +40,7 @@ class TicketFilter {
   final bool overdueOnly;
 
   const TicketFilter({
+    this.createdBy,
     this.system,
     this.systems = const {},
     this.statuses = const {},
@@ -50,6 +55,7 @@ class TicketFilter {
 
   bool get isEmpty =>
       statuses.isEmpty &&
+      createdBy == null &&
       system == null &&
       systems.isEmpty &&
       category == null &&
@@ -110,6 +116,7 @@ class TicketFilter {
   bool operator ==(Object other) =>
       other is TicketFilter &&
       _setEquals(other.statuses, statuses) &&
+      other.createdBy == createdBy &&
       other.system == system &&
       _setEquals(other.systems, systems) &&
       other.category == category &&
@@ -123,6 +130,7 @@ class TicketFilter {
   @override
   int get hashCode => Object.hash(
     Object.hashAllUnordered(statuses),
+    createdBy,
     system,
     Object.hashAllUnordered(systems),
     category,
@@ -155,6 +163,7 @@ final ticketListProvider = StreamProvider.autoDispose
           .watch(ticketRepositoryProvider)
           .watchTickets(
             viewer,
+            createdBy: filter.createdBy,
             statuses: filter.statuses,
             system: filter.system,
             systems: filter.systems,
@@ -175,6 +184,7 @@ final ticketAnalyticsProvider = StreamProvider.autoDispose
           .watch(ticketRepositoryProvider)
           .watchTickets(
             viewer,
+            createdBy: filter.createdBy,
             statuses: filter.statuses,
             system: filter.system,
             systems: filter.systems,

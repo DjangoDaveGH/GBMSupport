@@ -13,6 +13,7 @@ import 'package:hyport/features/admin/presentation/announcements_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_institutions_screen.dart';
 import 'package:hyport/features/admin/presentation/desktop_users_screen.dart';
 import 'package:hyport/features/admin/presentation/users_screen.dart';
+import 'package:hyport/features/admin/presentation/user_ticket_history_screen.dart';
 import 'package:hyport/features/auth/presentation/phone_password_recovery_screen.dart';
 import 'package:hyport/features/auth/presentation/login_screen.dart';
 import 'package:hyport/features/auth/presentation/request_access_screen.dart';
@@ -866,6 +867,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
             desktopTitle: 'Add User',
           ),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/users/:userId/tickets',
+        pageBuilder: (context, state) => _slideUpPage(
+          state,
+          UserTicketHistoryScreen(userId: state.pathParameters['userId']!),
         ),
       ),
     ],

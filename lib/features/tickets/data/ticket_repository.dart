@@ -79,6 +79,7 @@ class TicketRepository {
   /// just the page size).
   Stream<List<Ticket>> watchTickets(
     AppUser viewer, {
+    String? createdBy,
     String? system,
     Set<String> systems = const {},
     Set<TicketStatus> statuses = const {},
@@ -117,6 +118,9 @@ class TicketRepository {
       query = query.where('system', isEqualTo: serverSystems.first);
     } else if (serverSystems.length > 1) {
       query = query.where('system', whereIn: serverSystems.toList());
+    }
+    if (createdBy != null) {
+      query = query.where('createdBy', isEqualTo: createdBy);
     }
     // Firestore permits only one whereIn clause per query. When products are
     // selected as a set, apply status chips after the system-scoped query.

@@ -337,6 +337,11 @@ class _DesktopUsersScreenState extends ConsumerState<DesktopUsersScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                icon: const Icon(Icons.history_rounded, size: 18),
+                tooltip: 'View ticket history',
+                onPressed: () => context.push('/admin/users/${u.id}/tickets'),
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 tooltip: 'Edit user',
                 onPressed: () => showEditUserDialog(context, u),

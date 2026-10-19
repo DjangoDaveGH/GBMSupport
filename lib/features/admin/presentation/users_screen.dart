@@ -275,6 +275,10 @@ class _UserTile extends StatelessWidget {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert_rounded, size: 20),
               itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'history',
+                  child: Text('View ticket history'),
+                ),
                 const PopupMenuItem(value: 'edit', child: Text('Edit')),
                 PopupMenuItem(
                   value: 'password',
@@ -288,7 +292,9 @@ class _UserTile extends StatelessWidget {
                 ),
               ],
               onSelected: (value) {
-                if (value == 'edit') {
+                if (value == 'history') {
+                  context.push('/admin/users/${user.id}/tickets');
+                } else if (value == 'edit') {
                   showEditUserDialog(context, user);
                 } else if (value == 'password') {
                   promptSetUserPassword(context, user);
