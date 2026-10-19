@@ -16,6 +16,7 @@ import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
 import 'package:hyport/features/dashboard/domain/audit_log_formatting.dart';
 import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
+import 'package:hyport/features/knowledge_base/domain/knowledge_article.dart';
 import 'package:hyport/features/notifications/data/notification_providers.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
@@ -41,6 +42,20 @@ String _relativeTime(DateTime dt) {
   if (diff.inHours < 24) return '${diff.inHours}h ago';
   if (diff.inDays < 7) return '${diff.inDays}d ago';
   return DateFormat.MMMd().format(dt);
+}
+
+bool _homeAuditActionMatchesWorkspace(
+  AuditLog action,
+  SupportWorkspace workspace,
+) {
+  if (workspace == SupportWorkspace.all) return true;
+  final raw = action.metadata['systems'];
+  final systems = raw is Iterable
+      ? raw.whereType<String>().toSet()
+      : <String>{};
+  final system = action.metadata['system'];
+  if (system is String) systems.add(system);
+  return systems.any(workspace.systems.contains);
 }
 
 class HomeScreen extends ConsumerWidget {
@@ -832,10 +847,22 @@ class _SupportHome extends ConsumerWidget {
     final allUsers = hasBackOfficeAccess
         ? ref.watch(allUsersProvider).valueOrNull ?? const <AppUser>[]
         : const <AppUser>[];
-    final activeUserCount = allUsers.where((u) => u.isActive).length;
-    final institutionCount =
-        ref.watch(institutionListProvider).valueOrNull?.length ?? 0;
-    final articleCount =
+    final workspaceUsers = _workspace == SupportWorkspace.all
+        ? allUsers
+        : allUsers
+              .where(
+                (u) =>
+                    u.role == UserRole.pfmManagement ||
+                    u.systems.any(_workspace.systems.contains),
+              )
+              .toList();
+    final workspaceInstitutionIds = workspaceUsers
+        .map((u) => u.institutionId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final institutions =
+        ref.watch(institutionListProvider).valueOrNull ?? const [];
+    final articles =
         ref
             .watch(
               articleListProvider((
@@ -843,18 +870,32 @@ class _SupportHome extends ConsumerWidget {
                 canEdit: hasBackOfficeAccess,
               )),
             )
-            .valueOrNull
-            ?.length ??
-        0;
+            .valueOrNull ??
+        const <KnowledgeArticle>[];
+    final articleCount = articles
+        .where(
+          (article) =>
+              _workspace == SupportWorkspace.all ||
+              _workspace.systems.contains(article.system),
+        )
+        .length;
     final recentAdminActions = hasBackOfficeAccess
-        ? ref
-                  .watch(adminActionsAuditLogProvider)
-                  .valueOrNull
-                  ?.take(5)
-                  .toList() ??
-              const <AuditLog>[]
+        ? (ref.watch(adminActionsAuditLogProvider).valueOrNull ??
+                  const <AuditLog>[])
+              .where(
+                (action) =>
+                    _homeAuditActionMatchesWorkspace(action, _workspace),
+              )
+              .take(5)
+              .toList()
         : const <AuditLog>[];
-    final usersById = <String, AppUser>{for (final u in allUsers) u.id: u};
+    final activeUserCount = workspaceUsers.where((u) => u.isActive).length;
+    final institutionCount = institutions
+        .where((i) => workspaceInstitutionIds.contains(i.id))
+        .length;
+    final usersById = <String, AppUser>{
+      for (final u in workspaceUsers) u.id: u,
+    };
 
     return ticketsAsync.when(
       loading: () => const BrandedLoaderCenter(),

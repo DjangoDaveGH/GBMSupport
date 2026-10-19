@@ -437,7 +437,7 @@ exports.adminCreateUser = onCall(async (request) => {
     action: "user_created",
     targetType: "user",
     targetId: userRecord.uid,
-    metadata: {email, role, institutionId},
+    metadata: {email, role, institutionId, systems},
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 

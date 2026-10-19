@@ -15,9 +15,11 @@ import 'package:hyport/core/widgets/status_chip.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/auth/domain/institution.dart';
 import 'package:hyport/features/dashboard/data/audit_log_providers.dart';
 import 'package:hyport/features/dashboard/domain/audit_log_formatting.dart';
 import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
+import 'package:hyport/features/knowledge_base/domain/knowledge_article.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
@@ -46,6 +48,17 @@ import 'package:intl/intl.dart';
       ? (thisWeek == 0 ? 0.0 : 100.0)
       : ((thisWeek - lastWeek) / lastWeek * 100);
   return (count: bucket.length, delta: delta);
+}
+
+bool _auditActionMatchesWorkspace(AuditLog action, SupportWorkspace workspace) {
+  if (workspace == SupportWorkspace.all) return true;
+  final raw = action.metadata['systems'];
+  final systems = raw is Iterable
+      ? raw.whereType<String>().toSet()
+      : <String>{};
+  final system = action.metadata['system'];
+  if (system is String) systems.add(system);
+  return systems.any(workspace.systems.contains);
 }
 
 const _priorityPalette = {
@@ -107,18 +120,52 @@ class DesktopDashboardScreen extends ConsumerWidget {
       ),
       data: (tickets) {
         final users = usersAsync.valueOrNull ?? const <AppUser>[];
-        final usersById = <String, AppUser>{for (final u in users) u.id: u};
+        final workspaceUsers = workspace == SupportWorkspace.all
+            ? users
+            : users
+                  .where(
+                    (user) =>
+                        user.role == UserRole.pfmManagement ||
+                        user.systems.any(workspace.systems.contains),
+                  )
+                  .toList();
+        final workspaceInstitutionIds = workspaceUsers
+            .map((user) => user.institutionId)
+            .where((id) => id.isNotEmpty)
+            .toSet();
+        final workspaceArticles =
+            (articlesAsync.valueOrNull ?? const <KnowledgeArticle>[])
+                .where(
+                  (article) =>
+                      workspace == SupportWorkspace.all ||
+                      workspace.systems.contains(article.system),
+                )
+                .length;
+        final recentActions =
+            (adminActionsAsync.valueOrNull ?? const <AuditLog>[])
+                .where(
+                  (action) => _auditActionMatchesWorkspace(action, workspace),
+                )
+                .take(5)
+                .toList();
+        final usersById = <String, AppUser>{
+          for (final u in workspaceUsers) u.id: u,
+        };
         return _DashboardBody(
           tickets: tickets,
           workspace: workspace,
           isCoordinator: isCoordinator,
           usersById: usersById,
-          activeUserCount: users.where((u) => u.isActive).length,
-          institutionCount: institutionsAsync.valueOrNull?.length ?? 0,
-          articleCount: articlesAsync.valueOrNull?.length ?? 0,
-          recentAdminActions:
-              adminActionsAsync.valueOrNull?.take(5).toList() ??
-              const <AuditLog>[],
+          activeUserCount: workspaceUsers.where((u) => u.isActive).length,
+          institutionCount:
+              (institutionsAsync.valueOrNull ?? const <Institution>[])
+                  .where(
+                    (institution) =>
+                        workspaceInstitutionIds.contains(institution.id),
+                  )
+                  .length,
+          articleCount: workspaceArticles,
+          recentAdminActions: recentActions,
           isPfmManagement: appUser.role == UserRole.pfmManagement,
         );
       },

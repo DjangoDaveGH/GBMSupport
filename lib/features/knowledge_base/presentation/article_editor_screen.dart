@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/features/knowledge_base/data/knowledge_base_providers.dart';
 import 'package:hyport/features/knowledge_base/domain/knowledge_article.dart';
@@ -18,7 +19,8 @@ class ArticleEditorScreen extends ConsumerStatefulWidget {
   const ArticleEditorScreen({super.key, this.embedded = false});
 
   @override
-  ConsumerState<ArticleEditorScreen> createState() => _ArticleEditorScreenState();
+  ConsumerState<ArticleEditorScreen> createState() =>
+      _ArticleEditorScreenState();
 }
 
 class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
@@ -27,6 +29,7 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
   final _bodyController = TextEditingController();
   final _tagsController = TextEditingController();
   TicketCategory _category = TicketCategory.generalEnquiry;
+  String _system = 'gbms';
   bool _submitting = false;
 
   @override
@@ -41,15 +44,24 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
     if (!_formKey.currentState!.validate()) return;
     final appUser = ref.read(currentAppUserProvider).valueOrNull;
     if (appUser == null) return;
+    final allowedSystems = appUser.role == UserRole.pfmManagement
+        ? supportSystemIds
+        : allowedSystemsForRole(appUser.role, appUser.systems).toList();
+    if (!allowedSystems.contains(_system)) _system = allowedSystems.first;
 
     setState(() => _submitting = true);
     try {
       final article = KnowledgeArticle(
         id: const Uuid().v4(),
+        system: _system,
         title: _titleController.text.trim(),
         body: _bodyController.text.trim(),
         category: _category,
-        tags: _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
+        tags: _tagsController.text
+            .split(',')
+            .map((t) => t.trim())
+            .where((t) => t.isNotEmpty)
+            .toList(),
         attachmentUrls: const [],
         publishedBy: appUser.id,
         publishedAt: DateTime.now(),
@@ -59,9 +71,9 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
       if (mounted) context.popOrGo('/knowledge-base');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save article: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not save article: $e')));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -70,70 +82,103 @@ class _ArticleEditorScreenState extends ConsumerState<ArticleEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appUser = ref.watch(currentAppUserProvider).valueOrNull;
+    final availableSystems =
+        appUser == null || appUser.role == UserRole.pfmManagement
+        ? supportSystemIds
+        : allowedSystemsForRole(appUser.role, appUser.systems).toList();
+    if (!availableSystems.contains(_system) && availableSystems.isNotEmpty) {
+      _system = availableSystems.first;
+    }
     final body = Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<TicketCategory>(
-              initialValue: _category,
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: TicketCategory.values
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
-                  .toList(),
-              onChanged: (v) => setState(() => _category = v!),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _bodyController,
-              decoration: const InputDecoration(labelText: 'Body', alignLabelWithHint: true),
-              maxLines: 10,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter article content' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _tagsController,
-              decoration: const InputDecoration(labelText: 'Tags (comma-separated)'),
-            ),
-            const SizedBox(height: 24),
-            if (_submitting)
-              const Center(child: CircularProgressIndicator())
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _submit(ArticleStatus.draft),
-                      child: const Text('Save as Draft'),
-                    ),
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextFormField(
+            controller: _titleController,
+            decoration: const InputDecoration(labelText: 'Title'),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<TicketCategory>(
+            initialValue: _category,
+            decoration: const InputDecoration(labelText: 'Category'),
+            items: TicketCategory.values
+                .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
+                .toList(),
+            onChanged: (v) => setState(() => _category = v!),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _system,
+            decoration: const InputDecoration(labelText: 'Support system'),
+            items: availableSystems
+                .map(
+                  (system) => DropdownMenuItem(
+                    value: system,
+                    child: Text(supportSystemLabel(system)),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _submit(ArticleStatus.review),
-                      child: const Text('Submit for Review'),
-                    ),
+                )
+                .toList(),
+            onChanged: (v) => setState(() => _system = v ?? 'gbms'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _bodyController,
+            decoration: const InputDecoration(
+              labelText: 'Body',
+              alignLabelWithHint: true,
+            ),
+            maxLines: 10,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Enter article content'
+                : null,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _tagsController,
+            decoration: const InputDecoration(
+              labelText: 'Tags (comma-separated)',
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (_submitting)
+            const Center(child: CircularProgressIndicator())
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _submit(ArticleStatus.draft),
+                    child: const Text('Save as Draft'),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => _submit(ArticleStatus.published),
-                      child: const Text('Publish'),
-                    ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _submit(ArticleStatus.review),
+                    child: const Text('Submit for Review'),
                   ),
-                ],
-              ),
-          ],
-        ),
-      );
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => _submit(ArticleStatus.published),
+                    child: const Text('Publish'),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
 
     if (widget.embedded) return body;
-    return Scaffold(appBar: AppBar(title: const Text('New Article')), body: body);
+    return Scaffold(
+      appBar: AppBar(title: const Text('New Article')),
+      body: body,
+    );
   }
 }
