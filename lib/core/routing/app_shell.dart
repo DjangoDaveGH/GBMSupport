@@ -60,9 +60,7 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          const Positioned.fill(
-            child: HexPatternBackground(opacity: 0.22),
-          ),
+          const Positioned.fill(child: HexPatternBackground(opacity: 0.22)),
           child,
           const Positioned(
             right: 16,
@@ -118,11 +116,13 @@ class _BottomBar extends StatelessWidget {
   // instead of icon-swapping.
   // Only ever looked up by a key from AppShell._tabs above — no entry here
   // for a path that isn't one of those 4.
+  // Flutter's bundled Material icons remain available even when an
+  // installed PWA has a stale or incomplete image cache.
   static const _icons = {
-    '/home': ('assets/images/icon_home.png', 'Home'),
-    '/tickets': ('assets/images/icon_tickets.png', 'Tickets'),
-    '/notifications': ('assets/images/icon_notifications.png', 'Notifications'),
-    '/profile': ('assets/images/icon_profile.png', 'Profile'),
+    '/home': (Icons.home_rounded, 'Home'),
+    '/tickets': (Icons.confirmation_number_outlined, 'Tickets'),
+    '/notifications': (Icons.notifications_none_rounded, 'Notifications'),
+    '/profile': (Icons.person_outline_rounded, 'Profile'),
   };
 
   static const _supportLabelOverrides = {
@@ -221,7 +221,7 @@ class _BottomBar extends StatelessWidget {
   Widget _tabButton(BuildContext context, String path) {
     final index = tabs.indexOf(path);
     final selected = index == currentIndex;
-    final (iconAsset, defaultLabel) = _icons[path]!;
+    final (icon, defaultLabel) = _icons[path]!;
     final label = isSupportSide
         ? (_supportLabelOverrides[path] ?? defaultLabel)
         : defaultLabel;
@@ -243,9 +243,10 @@ class _BottomBar extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Opacity(
-                    opacity: selected ? 1 : 0.45,
-                    child: Image.asset(iconAsset, width: 22, height: 22),
+                  Icon(
+                    icon,
+                    size: 22,
+                    color: color.withValues(alpha: selected ? 1 : 0.45),
                   ),
                   const SizedBox(height: 3),
                   Text(
