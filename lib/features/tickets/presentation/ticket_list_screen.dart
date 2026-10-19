@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
@@ -490,6 +491,8 @@ class TicketTile extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
+                    _ProductBadge(system: ticket.system),
+                    const SizedBox(width: 8),
                     TicketStatusChip(status: ticket.status),
                   ],
                 ),
@@ -574,6 +577,8 @@ class AdminTicketTile extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
+                    _ProductBadge(system: ticket.system),
+                    const SizedBox(width: 8),
                     TicketStatusChip(status: ticket.status),
                   ],
                 ),
@@ -632,6 +637,36 @@ class AdminTicketTile extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductBadge extends StatelessWidget {
+  final String system;
+
+  const _ProductBadge({required this.system});
+
+  @override
+  Widget build(BuildContext context) {
+    final isExternal = system == 'ghaneps' || system == 'gifmis';
+    final color = system == 'gbms'
+        ? AppTheme.accentBlue
+        : isExternal
+        ? AppTheme.gold
+        : Theme.of(context).colorScheme.outline;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        supportSystemLabel(system),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );

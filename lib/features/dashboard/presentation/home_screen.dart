@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/audit_log.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
 import 'package:hyport/core/widgets/percent_ring.dart';
@@ -21,6 +22,7 @@ import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
+import 'package:hyport/features/dashboard/presentation/support_workspace_switcher.dart';
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/app_error_state.dart';
@@ -799,13 +801,17 @@ class _SupportHome extends ConsumerWidget {
 
   bool get _isCoordinator => appUser.role == UserRole.supportCoordinator;
 
-  TicketFilter get _systemFilter => _isCoordinator
-      ? const TicketFilter(systems: {'ghaneps', 'gifmis'})
-      : TicketFilter(system: initialSystem);
+  SupportWorkspace get _workspace => _isCoordinator
+      ? SupportWorkspace.external
+      : workspaceFromRoute(initialSystem, role: appUser.role);
 
-  String get _ticketsRoute => _isCoordinator || initialSystem == null
+  TicketFilter get _systemFilter => _workspace == SupportWorkspace.all
+      ? const TicketFilter()
+      : TicketFilter(systems: _workspace.systems);
+
+  String get _ticketsRoute => _workspace == SupportWorkspace.all
       ? '/tickets'
-      : '/tickets?system=$initialSystem';
+      : '/tickets?system=${_workspace.routeSystem}';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -891,10 +897,9 @@ class _SupportHome extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-            ] else if (initialSystem == 'ghaneps' ||
-                initialSystem == 'gifmis') ...[
+            ] else ...[
               Text(
-                '${initialSystem!.toUpperCase()} Support Dashboard',
+                '${_workspace.label} Support Dashboard',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: AppTheme.navy,
                   fontWeight: FontWeight.w800,
@@ -902,6 +907,15 @@ class _SupportHome extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
             ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SupportWorkspaceSwitcher(
+                selected: _workspace,
+                role: appUser.role,
+              ),
+            ),
+            if (appUser.role == UserRole.pfmManagement)
+              const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 const Icon(
@@ -939,7 +953,6 @@ class _SupportHome extends ConsumerWidget {
                   onTap: () => context.push(
                     '/tickets',
                     extra: TicketFilter(
-                      system: _systemFilter.system,
                       systems: _systemFilter.systems,
                       statuses: const {TicketStatus.open},
                     ),
@@ -952,7 +965,6 @@ class _SupportHome extends ConsumerWidget {
                   onTap: () => context.push(
                     '/tickets',
                     extra: TicketFilter(
-                      system: _systemFilter.system,
                       systems: _systemFilter.systems,
                       statuses: const {
                         TicketStatus.resolved,
@@ -968,7 +980,6 @@ class _SupportHome extends ConsumerWidget {
                   onTap: () => context.push(
                     '/tickets',
                     extra: TicketFilter(
-                      system: _systemFilter.system,
                       systems: _systemFilter.systems,
                       statuses: const {TicketStatus.inProgress},
                     ),
@@ -981,7 +992,6 @@ class _SupportHome extends ConsumerWidget {
                   onTap: () => context.push(
                     '/tickets',
                     extra: TicketFilter(
-                      system: _systemFilter.system,
                       systems: _systemFilter.systems,
                       overdueOnly: true,
                     ),

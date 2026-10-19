@@ -125,8 +125,29 @@ TicketFilter? _filterFrom(Object? extra) =>
 
 TicketFilter? _filterWithSystem(TicketFilter? filter, String? system) {
   if (system == null) return filter;
+  if (system == 'all') return filter;
+  if (system == 'external') {
+    return TicketFilter(
+      systems: const {'ghaneps', 'gifmis'},
+      statuses: filter?.statuses ?? const {},
+      category: filter?.category,
+      priorities: filter?.priorities ?? const {},
+      institutionId: filter?.institutionId,
+      institutionType: filter?.institutionType,
+      createdAfter: filter?.createdAfter,
+      createdBefore: filter?.createdBefore,
+      overdueOnly: filter?.overdueOnly ?? false,
+    );
+  }
+  // `system=ghaneps` is also the durable URL representation of the combined
+  // GHANEPS + GIFMIS workspace. Preserve the multi-system filter in that case
+  // so a browser refresh does not silently drop GIFMIS tickets.
+  final isExternalWorkspace =
+      system == 'ghaneps' &&
+      (filter?.systems.contains('ghaneps') ?? false) &&
+      (filter?.systems.contains('gifmis') ?? false);
   return TicketFilter(
-    system: system,
+    system: isExternalWorkspace ? null : system,
     systems: filter?.systems ?? const {},
     statuses: filter?.statuses ?? const {},
     category: filter?.category,

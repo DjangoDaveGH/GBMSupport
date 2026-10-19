@@ -2,6 +2,45 @@ import 'package:hyport/core/models/enums.dart';
 
 const supportSystemIds = <String>['gbms', 'ghaneps', 'gifmis'];
 
+/// The operational dashboard workspaces. GBMS is deliberately kept separate
+/// from the GHANEPS/GIFMIS support tenant, while management can still inspect
+/// everything from one read-only overview.
+enum SupportWorkspace { all, gbms, external }
+
+extension SupportWorkspaceX on SupportWorkspace {
+  String get label => switch (this) {
+    SupportWorkspace.all => 'All Systems',
+    SupportWorkspace.gbms => 'GBMS',
+    SupportWorkspace.external => 'GHANEPS + GIFMIS',
+  };
+
+  Set<String> get systems => switch (this) {
+    SupportWorkspace.all => supportSystemIds.toSet(),
+    SupportWorkspace.gbms => const {'gbms'},
+    SupportWorkspace.external => const {'ghaneps', 'gifmis'},
+  };
+
+  /// Query parameter used to preserve the selected workspace across routes.
+  String? get routeSystem => switch (this) {
+    SupportWorkspace.all => 'all',
+    SupportWorkspace.gbms => 'gbms',
+    SupportWorkspace.external => 'external',
+  };
+}
+
+SupportWorkspace workspaceFromRoute(String? system, {required UserRole role}) {
+  if (role == UserRole.supportCoordinator) return SupportWorkspace.external;
+  return switch (system) {
+    'all' => SupportWorkspace.all,
+    'gbms' => SupportWorkspace.gbms,
+    'external' || 'ghaneps' || 'gifmis' => SupportWorkspace.external,
+    _ =>
+      role == UserRole.pfmManagement
+          ? SupportWorkspace.gbms
+          : SupportWorkspace.all,
+  };
+}
+
 String supportSystemLabel(String id) => switch (id) {
   'gbms' => 'GBMS',
   'ghaneps' => 'GHANEPS',
@@ -19,9 +58,7 @@ bool isTenantScopedSupportRole(UserRole role) => switch (role) {
   UserRole.functionalLead ||
   UserRole.technicalLead ||
   UserRole.vendorSupport => true,
-  UserRole.endUser ||
-  UserRole.focalPerson ||
-  UserRole.pfmManagement => false,
+  UserRole.endUser || UserRole.focalPerson || UserRole.pfmManagement => false,
 };
 
 /// Systems a support account may query. PFM Management is the tenant-wide

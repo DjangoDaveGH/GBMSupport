@@ -22,6 +22,7 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
+import 'package:hyport/features/dashboard/presentation/support_workspace_switcher.dart';
 import 'package:intl/intl.dart';
 
 /// Of tickets currently matching [bucket], what fraction were created in
@@ -73,11 +74,16 @@ class DesktopDashboardScreen extends ConsumerWidget {
     final appUser = ref.watch(currentAppUserProvider).valueOrNull;
     if (appUser == null) return const BrandedLoaderCenter();
     final isCoordinator = appUser.role == UserRole.supportCoordinator;
+    final workspace = isCoordinator
+        ? SupportWorkspace.external
+        : workspaceFromRoute(initialSystem, role: appUser.role);
     final ticketFilter = isCoordinator
         ? TicketFilter(
             systems: allowedSystemsForRole(appUser.role, appUser.systems),
           )
-        : TicketFilter(system: initialSystem);
+        : workspace == SupportWorkspace.all
+        ? const TicketFilter()
+        : TicketFilter(systems: workspace.systems);
 
     final ticketsAsync = ref.watch(
       ticketAnalyticsProvider((appUser, ticketFilter)),
@@ -104,7 +110,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
         final usersById = <String, AppUser>{for (final u in users) u.id: u};
         return _DashboardBody(
           tickets: tickets,
-          initialSystem: initialSystem,
+          workspace: workspace,
           isCoordinator: isCoordinator,
           usersById: usersById,
           activeUserCount: users.where((u) => u.isActive).length,
@@ -122,7 +128,7 @@ class DesktopDashboardScreen extends ConsumerWidget {
 
 class _DashboardBody extends StatelessWidget {
   final List<Ticket> tickets;
-  final String? initialSystem;
+  final SupportWorkspace workspace;
   final bool isCoordinator;
   final Map<String, AppUser> usersById;
   final int activeUserCount;
@@ -133,7 +139,7 @@ class _DashboardBody extends StatelessWidget {
 
   const _DashboardBody({
     required this.tickets,
-    required this.initialSystem,
+    required this.workspace,
     required this.isCoordinator,
     required this.usersById,
     required this.activeUserCount,
@@ -142,6 +148,14 @@ class _DashboardBody extends StatelessWidget {
     required this.recentAdminActions,
     required this.isPfmManagement,
   });
+
+  TicketFilter get _workspaceFilter => workspace == SupportWorkspace.all
+      ? const TicketFilter()
+      : TicketFilter(systems: workspace.systems);
+
+  String get _ticketsRoute => workspace == SupportWorkspace.all
+      ? '/tickets'
+      : '/tickets?system=${workspace.routeSystem}';
 
   List<DateTime> get _last7Days {
     final today = DateTime.now();
@@ -198,10 +212,9 @@ class _DashboardBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-          ] else if (initialSystem == 'ghaneps' ||
-              initialSystem == 'gifmis') ...[
+          ] else ...[
             Text(
-              '${initialSystem!.toUpperCase()} Support Dashboard',
+              '${workspace.label} Support Dashboard',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: AppTheme.navy,
                 fontWeight: FontWeight.w800,
@@ -209,6 +222,18 @@ class _DashboardBody extends StatelessWidget {
             ),
             const SizedBox(height: 18),
           ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SupportWorkspaceSwitcher(
+              selected: workspace,
+              role: isCoordinator
+                  ? UserRole.supportCoordinator
+                  : (isPfmManagement
+                        ? UserRole.pfmManagement
+                        : UserRole.supportCoordinator),
+            ),
+          ),
+          const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = constraints.maxWidth >= 1050 ? 4 : 2;
@@ -224,14 +249,8 @@ class _DashboardBody extends StatelessWidget {
                       label: 'Total Tickets',
                       value: totalTrend.count,
                       delta: totalTrend.delta,
-                      onTap: () => context.push(
-                        isCoordinator || initialSystem == null
-                            ? '/tickets'
-                            : '/tickets?system=$initialSystem',
-                        extra: isCoordinator
-                            ? const TicketFilter(systems: {'ghaneps', 'gifmis'})
-                            : TicketFilter(system: initialSystem),
-                      ),
+                      onTap: () =>
+                          context.push(_ticketsRoute, extra: _workspaceFilter),
                     ),
                   ),
                   SizedBox(
@@ -243,10 +262,7 @@ class _DashboardBody extends StatelessWidget {
                       onTap: () => context.push(
                         '/tickets',
                         extra: TicketFilter(
-                          system: isCoordinator ? null : initialSystem,
-                          systems: isCoordinator
-                              ? const {'ghaneps', 'gifmis'}
-                              : const {},
+                          systems: _workspaceFilter.systems,
                           statuses: const {TicketStatus.open},
                         ),
                       ),
@@ -261,10 +277,7 @@ class _DashboardBody extends StatelessWidget {
                       onTap: () => context.push(
                         '/tickets',
                         extra: TicketFilter(
-                          system: isCoordinator ? null : initialSystem,
-                          systems: isCoordinator
-                              ? const {'ghaneps', 'gifmis'}
-                              : const {},
+                          systems: _workspaceFilter.systems,
                           statuses: const {TicketStatus.inProgress},
                         ),
                       ),
@@ -279,10 +292,7 @@ class _DashboardBody extends StatelessWidget {
                       onTap: () => context.push(
                         '/tickets',
                         extra: TicketFilter(
-                          system: isCoordinator ? null : initialSystem,
-                          systems: isCoordinator
-                              ? const {'ghaneps', 'gifmis'}
-                              : const {},
+                          systems: _workspaceFilter.systems,
                           statuses: const {
                             TicketStatus.resolved,
                             TicketStatus.closed,
@@ -388,14 +398,8 @@ class _DashboardBody extends StatelessWidget {
           _Panel(
             title: 'Recent Tickets',
             trailing: TextButton(
-              onPressed: () => context.push(
-                isCoordinator || initialSystem == null
-                    ? '/tickets'
-                    : '/tickets?system=$initialSystem',
-                extra: isCoordinator
-                    ? const TicketFilter(systems: {'ghaneps', 'gifmis'})
-                    : TicketFilter(system: initialSystem),
-              ),
+              onPressed: () =>
+                  context.push(_ticketsRoute, extra: _workspaceFilter),
               child: const Text('View All'),
             ),
             child: _RecentTicketsTable(
