@@ -17,6 +17,7 @@ import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
+import 'package:hyport/features/tickets/presentation/requester_ticket_history_panel.dart';
 import 'package:intl/intl.dart';
 
 /// Phase 5 mockup screen 32 — same ticket/activity/SLA data as the mobile
@@ -105,89 +106,93 @@ class _DesktopTicketDetailScreenState
         Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
-                onPressed: () => context.popOrGo('/tickets'),
-                child: const Text('← Tickets'),
-              ),
-              Text(
-                ' / #${ticket.ticketReference}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-              ),
-              const Spacer(),
-              if (canAssign) ...[
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => context.push('/tickets/${ticket.id}/assign'),
-                  icon: const Icon(Icons.person_add_alt_rounded, size: 18),
-                  label: Text(ticket.assignedTo == null ? 'Assign' : 'Reassign'),
-                ),
-              ],
-              if (canEscalate) ...[
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _showEscalateDialog(context, ticket, viewer),
-                  icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                  label: const Text('Escalate'),
-                ),
-              ],
-              const SizedBox(width: 8),
-              // Plain FilledButton/FilledButton.icon silently fails to paint
-              // here (repro'd: TextButton renders fine in the same spot,
-              // FilledButton never does, with or without an icon/closure) —
-              // this Row doesn't get a tightly-bounded width from its Column
-              // ancestor (no crossAxisAlignment.stretch upstream), and
-              // FilledButton's internal Material/ink layout needs one.
-              // IntrinsicWidth forces a two-pass measure so the button gets
-              // a concrete size regardless, without changing its appearance.
-              IntrinsicWidth(
-                child: FilledButton.icon(
-                  key: _actionsButtonKey,
-                  onPressed: () => _showActionsMenu(
-                    context,
-                    ticket,
-                    viewer,
-                    isAssignee,
-                    canAssign,
-                    canEscalate,
-                    canStartWork,
-                    canResolve,
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () => context.popOrGo('/tickets'),
+                    child: const Text('← Tickets'),
                   ),
-                  icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                  label: const Text('Actions'),
+                  Text(
+                    ' / #${ticket.ticketReference}',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                  ),
+                  const Spacer(),
+                  if (canAssign) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          context.push('/tickets/${ticket.id}/assign'),
+                      icon: const Icon(Icons.person_add_alt_rounded, size: 18),
+                      label: Text(
+                        ticket.assignedTo == null ? 'Assign' : 'Reassign',
+                      ),
+                    ),
+                  ],
+                  if (canEscalate) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          _showEscalateDialog(context, ticket, viewer),
+                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                      label: const Text('Escalate'),
+                    ),
+                  ],
+                  const SizedBox(width: 8),
+                  // Plain FilledButton/FilledButton.icon silently fails to paint
+                  // here (repro'd: TextButton renders fine in the same spot,
+                  // FilledButton never does, with or without an icon/closure) —
+                  // this Row doesn't get a tightly-bounded width from its Column
+                  // ancestor (no crossAxisAlignment.stretch upstream), and
+                  // FilledButton's internal Material/ink layout needs one.
+                  // IntrinsicWidth forces a two-pass measure so the button gets
+                  // a concrete size regardless, without changing its appearance.
+                  IntrinsicWidth(
+                    child: FilledButton.icon(
+                      key: _actionsButtonKey,
+                      onPressed: () => _showActionsMenu(
+                        context,
+                        ticket,
+                        viewer,
+                        isAssignee,
+                        canAssign,
+                        canEscalate,
+                        canStartWork,
+                        canResolve,
+                      ),
+                      icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                      label: const Text('Actions'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _MainColumn(
+                        ticket: ticket,
+                        tabController: _tabController,
+                        noteController: _noteController,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 1,
+                      child: SingleChildScrollView(
+                        child: _SidebarColumn(ticket: ticket),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _MainColumn(
-                    ticket: ticket,
-                    tabController: _tabController,
-                    noteController: _noteController,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  flex: 1,
-                  child: SingleChildScrollView(
-                    child: _SidebarColumn(ticket: ticket),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
           ),
         ),
         Positioned(
@@ -898,6 +903,7 @@ class _SidebarColumn extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
         ],
+        RequesterTicketHistoryPanel(ticket: ticket, compact: true),
         if (ticket.assignedTo != null)
           _SidebarCard(
             title: 'Assigned To',

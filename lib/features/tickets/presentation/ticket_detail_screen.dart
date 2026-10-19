@@ -16,6 +16,7 @@ import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
+import 'package:hyport/features/tickets/presentation/requester_ticket_history_panel.dart';
 import 'package:intl/intl.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 
@@ -259,6 +260,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
                   ),
                 ),
                 _buildActions(context, ref),
+                RequesterTicketHistoryPanel(ticket: ticket),
                 const SizedBox(height: 12),
               ],
             ),
