@@ -59,6 +59,11 @@ const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
 const GUEST_CATEGORIES = [
   "Open Bids", "Bid Submission", "Association of Officers", "Account Activation",
   "Login", "Publishing Notice", "Payment",
+  "Accounts Payable (AP)", "General Ledger (GL)", "Cash Management (CE)",
+  "Budget Management", "Purchasing (PO)", "Workflow and Approvals",
+  "User Management", "Financial Reporting", "Technical Support",
+  "Interfaces and Integrations", "Training and User Support",
+  "System Configuration and Changes", "Receivables", "General GIFMIS Support",
   // Keep accepting labels sent by already-open or cached clients from the
   // previous GHANEPS/GIFMIS guest journey while the web app rolls forward.
   "Login & Account Access", "Registration & Onboarding", "Tender Creation & Publishing",
