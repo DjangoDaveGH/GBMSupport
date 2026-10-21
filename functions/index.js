@@ -949,8 +949,8 @@ const DEFAULT_OPEN_STATUSES = ["assigned", "in_progress", "escalated", "reopened
 
 /**
  * Auto-assigns a freshly created ticket to a member of the category's
- * eligible pool (config/assignment_rules, seeded from
- * "GBMSAPP user and roles.docx" by scripts/seed_assignment_rules.js).
+ * eligible pool in config/assignment_rules. GBMS categories use their wire
+ * values; GIFMIS/GHANEPS categories use their product labels.
  *
  * Selection: fewest currently-open assigned tickets, tie-broken by
  * longest-idle (oldest assignment_state/{uid}.lastAssignedAt). Does NOT
@@ -968,14 +968,16 @@ async function autoAssignTicket(ticketId, ticket) {
 
   const db = admin.firestore();
   const rulesSnap = await db.collection("config").doc("assignment_rules").get();
-  const rules = rulesSnap.data();
-  if (!rules || rules.enabled === false) return false;
+  const rules = rulesSnap.data() || {enabled: true};
+  if (rules.enabled === false) return false;
 
-  const rule = (rules.categories || {})[ticket.category];
+  const isProductTicket = ["ghaneps", "gifmis"].includes(ticket.system);
+  const categoryKey = isProductTicket ? ticket.productCategoryLabel : ticket.category;
+  const rule = (rules.categories || {})[categoryKey];
   if (!rule) return false;
   const openStatuses = rules.openStatuses || DEFAULT_OPEN_STATUSES;
   const systemPool = rules.systemPools?.[ticket.system || "gbms"];
-  const effectiveRule = Array.isArray(systemPool) ? {userIds: systemPool} : rule;
+  const effectiveRule = !isProductTicket && Array.isArray(systemPool) ? {userIds: systemPool} : rule;
 
   // Resolve the candidate pool.
   let candidateIds;
@@ -1061,8 +1063,7 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
   const ticketId = event.params.ticketId;
 
   // Guest tickets have no authenticated requester to notify. GHANEPS/GIFMIS
-  // tickets (including signed-in government users) are kept in the product
-  // queue for coordinator triage and must not enter GBMS auto-assignment.
+  // Guest tickets have no authenticated requester to notify.
   if (ticket.createdBy === "guest") {
     const msg = `New ${String(ticket.system || "support").toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
     const coordinators = await notifyUsersWithRole("support_coordinator", {
@@ -1081,18 +1082,6 @@ exports.onTicketCreated = onDocumentCreated("tickets/{ticketId}", async (event) 
     message: `Your ticket ${ticket.ticketReference} has been received.`,
     ticketId,
   });
-
-  if (["ghaneps", "gifmis"].includes(ticket.system)) {
-    const msg = `New ${ticket.system.toUpperCase()} ticket ${ticket.ticketReference} needs triage.`;
-    const coordinators = await notifyUsersWithRole("support_coordinator", {
-      type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
-      system: ticket.system,
-    });
-    if (coordinators === 0) await notifyUsersWithRole("pfm_management", {
-      type: "pending_action", message: msg, ticketId, exclude: ticket.createdBy,
-    });
-    return;
-  }
 
   // Auto-assign from the category pool. The ticket update triggers
   // onTicketUpdated, which sends the assignee their "assigned to you" push.

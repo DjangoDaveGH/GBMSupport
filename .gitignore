@@ -69,6 +69,8 @@ app.*.map.json
 /scripts/*_login_emails.csv
 /scripts/ticket_backup_*.json
 /scripts/*_users.js
+/scripts/provision_gifmis_support_coordinators.js
+/functions/gifmis_assignment_rules.js
 *.xlsx
 *.docx
 
