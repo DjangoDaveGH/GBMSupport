@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/routing/safe_pop.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/status_chip.dart';
 import 'package:hyport/features/auth/data/institution_providers.dart';
@@ -32,6 +33,11 @@ class TicketDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Back to tickets',
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.popOrGo('/tickets'),
+        ),
         title: ticketAsync.valueOrNull != null
             ? Text('Ticket #${ticketAsync.valueOrNull!.ticketReference}')
             : const Text('Ticket Details'),
@@ -163,6 +169,7 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
                                 Text(
                                   ticket.title,
                                   style: Theme.of(context).textTheme.titleLarge,
+                                  maxLines: 3,
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
@@ -347,6 +354,21 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
   Widget _buildAdminToolbar(BuildContext context, WidgetRef ref) {
     final overflow = <(String, IconData, VoidCallback)>[];
 
+    if (_canAssign) {
+      overflow.add((
+        ticket.assignedTo == null ? 'Assign' : 'Reassign',
+        Icons.person_add_alt_rounded,
+        () => context.push('/tickets/${ticket.id}/assign'),
+      ));
+    }
+    if (_canEscalate) {
+      overflow.add((
+        'Escalate',
+        Icons.arrow_upward_rounded,
+        () => _showEscalateDialog(context, ref),
+      ));
+    }
+
     if ((viewer.role == UserRole.functionalLead ||
             viewer.role == UserRole.technicalLead) &&
         _canStartWork) {
@@ -398,40 +420,45 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
       ));
     }
 
-    return Row(
-      children: [
-        Expanded(
-          child: _ToolbarButton(
-            icon: Icons.chat_bubble_outline_rounded,
-            label: 'Chat',
-            onTap: () => context.push('/tickets/${ticket.id}/chat'),
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Ticket Actions', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => context.push('/tickets/${ticket.id}/chat'),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                label: const Text('Chat'),
+              ),
+              if (_canAssign)
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/tickets/${ticket.id}/assign'),
+                  icon: const Icon(Icons.person_add_alt_rounded, size: 18),
+                  label: Text(
+                    ticket.assignedTo == null ? 'Assign' : 'Reassign',
+                  ),
+                ),
+              if (_canEscalate)
+                OutlinedButton.icon(
+                  onPressed: () => _showEscalateDialog(context, ref),
+                  icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                  label: const Text('Escalate'),
+                ),
+              if (overflow.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: () => _showMoreSheet(context, overflow),
+                  icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                  label: const Text('Actions'),
+                ),
+            ],
           ),
-        ),
-        if (_canAssign)
-          Expanded(
-            child: _ToolbarButton(
-              icon: Icons.person_add_alt_rounded,
-              label: ticket.assignedTo == null ? 'Assign' : 'Reassign',
-              onTap: () => context.push('/tickets/${ticket.id}/assign'),
-            ),
-          ),
-        if (_canEscalate)
-          Expanded(
-            child: _ToolbarButton(
-              icon: Icons.arrow_upward_rounded,
-              label: 'Escalate',
-              onTap: () => _showEscalateDialog(context, ref),
-            ),
-          ),
-        if (overflow.isNotEmpty)
-          Expanded(
-            child: _ToolbarButton(
-              icon: Icons.more_horiz_rounded,
-              label: 'More',
-              onTap: () => _showMoreSheet(context, overflow),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1271,45 +1298,6 @@ class _RequestedByCard extends ConsumerWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _ToolbarButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ToolbarButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: AppTheme.navy),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: AppTheme.navy),
-            ),
-          ],
-        ),
       ),
     );
   }

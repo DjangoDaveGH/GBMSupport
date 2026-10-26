@@ -526,7 +526,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 mobile: const ProfileScreen(),
                 desktop: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 480),
+                    constraints: const BoxConstraints(maxWidth: 720),
                     child: const ProfileScreen(),
                   ),
                 ),
@@ -589,7 +589,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               desktop: Padding(
                 padding: const EdgeInsets.all(24),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
+                  constraints: const BoxConstraints(maxWidth: 760),
                   child: AssignTicketScreen(ticketId: id, embedded: true),
                 ),
               ),
@@ -811,7 +811,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             desktop: Padding(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
+                constraints: const BoxConstraints(maxWidth: 760),
                 child: const SettingsScreen(embedded: true),
               ),
             ),
@@ -828,7 +828,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             desktop: Padding(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
+                constraints: const BoxConstraints(maxWidth: 760),
                 child: const SystemStatusScreen(embedded: true),
               ),
             ),
@@ -858,7 +858,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             desktop: Padding(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
+                constraints: const BoxConstraints(maxWidth: 720),
                 child: AddUserScreen(
                   embedded: true,
                   initialSystem: state.uri.queryParameters['system'],

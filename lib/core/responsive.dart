@@ -9,6 +9,11 @@ import 'package:flutter/material.dart';
 // Keep the desktop shell for viewports with enough room for its navigation
 // rail and content columns. Narrower tablets and small laptop windows use the
 // compact layout instead of producing cramped desktop cards and panes.
-const double kDesktopBreakpoint = 1100;
+// A standard laptop browser viewport is often 1024px wide (and can be
+// narrower still when the browser is zoomed). Keep the back-office desktop
+// ticket screen available at that size so its desktop Actions menu does not
+// disappear merely because the window is not a large monitor.
+const double kDesktopBreakpoint = 900;
 
-bool isDesktopWidth(BuildContext context) => MediaQuery.sizeOf(context).width >= kDesktopBreakpoint;
+bool isDesktopWidth(BuildContext context) =>
+    MediaQuery.sizeOf(context).width >= kDesktopBreakpoint;

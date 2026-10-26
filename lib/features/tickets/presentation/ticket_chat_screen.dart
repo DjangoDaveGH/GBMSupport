@@ -99,11 +99,20 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
   /// exposed by a generic file-picker dialog.
   Future<void> _selectImage(ImageSource source) async {
     try {
-      final xFile = await ImagePicker().pickImage(source: source, imageQuality: 85);
+      final xFile = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 85,
+      );
       if (xFile == null) return;
       final bytes = await xFile.readAsBytes();
       if (!mounted) return;
-      setState(() => _pickedImage = PlatformFile(name: xFile.name, size: bytes.length, bytes: bytes));
+      setState(
+        () => _pickedImage = PlatformFile(
+          name: xFile.name,
+          size: bytes.length,
+          bytes: bytes,
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -175,14 +184,20 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
       if (mounted) {
         setState(() => _sending = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not attach the image (attachment storage isn't available yet). Add a caption or try again.")),
+          const SnackBar(
+            content: Text(
+              "Could not attach the image (attachment storage isn't available yet). Add a caption or try again.",
+            ),
+          ),
         );
       }
       return;
     }
 
     try {
-      await ref.read(ticketRepositoryProvider).addComment(
+      await ref
+          .read(ticketRepositoryProvider)
+          .addComment(
             ticketId: widget.ticketId,
             actorId: viewer.id,
             note: text,
@@ -191,9 +206,9 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _sending = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not send message: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not send message: $e')));
       }
       return;
     }
@@ -206,7 +221,11 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     });
     if (attachmentFailed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Message sent, but the image could not be attached (attachment storage isn\'t available yet).')),
+        const SnackBar(
+          content: Text(
+            'Message sent, but the image could not be attached (attachment storage isn\'t available yet).',
+          ),
+        ),
       );
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -228,9 +247,12 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     return Scaffold(
       body: ticketAsync.when(
         loading: () => const Scaffold(body: BrandedLoaderCenter()),
-        error: (e, _) => const Scaffold(body: Center(child: Text('We could not load this ticket.'))),
+        error: (e, _) => const Scaffold(
+          body: Center(child: Text('We could not load this ticket.')),
+        ),
         data: (ticket) {
-          if (ticket == null || viewer == null) return const BrandedLoaderCenter();
+          if (ticket == null || viewer == null)
+            return const BrandedLoaderCenter();
           return _ChatBody(
             ticket: ticket,
             viewer: viewer,
@@ -263,6 +285,7 @@ class _ChatBody extends ConsumerWidget {
   final VoidCallback onUploadMedia;
   final VoidCallback onRemoveImage;
   final Future<void> Function(AppUser viewer) onSend;
+
   /// Where the viewer's receipt stood before this screen opened — null until
   /// [capturedReadBefore] is true, then possibly still null for a
   /// never-before-opened chat (everything from the other party counts as
@@ -290,13 +313,16 @@ class _ChatBody extends ConsumerWidget {
   /// The other party in this conversation: if the viewer is the requester,
   /// it's the assignee (may be null pre-assignment); otherwise it's always
   /// the requester.
-  String? get _partnerId => viewer.id == ticket.createdBy ? ticket.assignedTo : ticket.createdBy;
+  String? get _partnerId =>
+      viewer.id == ticket.createdBy ? ticket.assignedTo : ticket.createdBy;
 
   /// Once a ticket is resolved or closed, the conversation is over — the
   /// requester can still Reopen from the ticket detail screen (header menu
   /// icon) if support left something unfinished, but the chat itself stops
   /// accepting new messages so it can't turn into an unmonitored channel.
-  bool get _chatClosed => ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed;
+  bool get _chatClosed =>
+      ticket.status == TicketStatus.resolved ||
+      ticket.status == TicketStatus.closed;
 
   /// Chat alignment follows the two conversation participants, not only the
   /// exact uid of the person viewing the screen. A staff member may reply to
@@ -309,11 +335,16 @@ class _ChatBody extends ConsumerWidget {
 
   /// Sent/Delivered/Read for one of *your own* messages, from the partner's
   /// receipt on this chat — Read implies Delivered, so it's checked first.
-  _MessageStatus _statusFor(TicketActivity comment, ChatReceipt? partnerReceipt) {
+  _MessageStatus _statusFor(
+    TicketActivity comment,
+    ChatReceipt? partnerReceipt,
+  ) {
     final readAt = partnerReceipt?.lastReadAt;
-    if (readAt != null && !readAt.isBefore(comment.timestamp)) return _MessageStatus.read;
+    if (readAt != null && !readAt.isBefore(comment.timestamp))
+      return _MessageStatus.read;
     final deliveredAt = partnerReceipt?.lastDeliveredAt;
-    if (deliveredAt != null && !deliveredAt.isBefore(comment.timestamp)) return _MessageStatus.delivered;
+    if (deliveredAt != null && !deliveredAt.isBefore(comment.timestamp))
+      return _MessageStatus.delivered;
     return _MessageStatus.sent;
   }
 
@@ -324,12 +355,16 @@ class _ChatBody extends ConsumerWidget {
     // — support-side only). Only look it up when allowed; a requester falls
     // back to the denormalized assignee name stored on the ticket.
     final canReadPartner = viewer.role.isSupportSide;
-    final partnerAsync = (partnerId != null && canReadPartner) ? ref.watch(userByIdProvider(partnerId)) : null;
-    final fallbackName = (partnerId != null && !canReadPartner && viewer.id == ticket.createdBy)
+    final partnerAsync = (partnerId != null && canReadPartner)
+        ? ref.watch(userByIdProvider(partnerId))
+        : null;
+    final fallbackName =
+        (partnerId != null && !canReadPartner && viewer.id == ticket.createdBy)
         ? (ticket.assignedToName ?? 'Support agent')
         : null;
     final activityAsync = ref.watch(ticketActivityProvider(ticket.id));
-    final receipts = ref.watch(chatReceiptsProvider(ticket.id)).valueOrNull ?? const {};
+    final receipts =
+        ref.watch(chatReceiptsProvider(ticket.id)).valueOrNull ?? const {};
     final partnerReceipt = partnerId != null ? receipts[partnerId] : null;
 
     return Scaffold(
@@ -339,16 +374,30 @@ class _ChatBody extends ConsumerWidget {
       // background, same way a chat "wallpaper" reads differently from app
       // chrome in most messaging apps.
       backgroundColor: const Color(0xFFAEB6C4),
-      appBar: _ChatAppBar(ticketId: ticket.id, partner: partnerAsync?.valueOrNull, fallbackName: fallbackName),
+      appBar: _ChatAppBar(
+        ticketId: ticket.id,
+        partner: partnerAsync?.valueOrNull,
+        fallbackName: fallbackName,
+      ),
       body: Column(
         children: [
           Expanded(
             child: activityAsync.when(
               loading: () => const BrandedLoaderCenter(),
-              error: (e, _) => Center(child: Text('Could not load messages: $e', style: const TextStyle(color: Colors.white))),
+              error: (e, _) => Center(
+                child: Text(
+                  'Could not load messages: $e',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
               data: (activity) {
-                final comments = activity.where((a) => a.action == TicketActivityAction.commented).toList()
-                  ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+                final comments =
+                    activity
+                        .where(
+                          (a) => a.action == TicketActivityAction.commented,
+                        )
+                        .toList()
+                      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
                 if (comments.isEmpty) {
                   return Center(
                     child: Padding(
@@ -356,14 +405,18 @@ class _ChatBody extends ConsumerWidget {
                       child: Text(
                         'No messages yet. Say hello below.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.white),
                       ),
                     ),
                   );
                 }
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (scrollController.hasClients) {
-                    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+                    scrollController.jumpTo(
+                      scrollController.position.maxScrollExtent,
+                    );
                   }
                   onCommentsChanged(comments);
                 });
@@ -378,7 +431,8 @@ class _ChatBody extends ConsumerWidget {
                   for (var i = 0; i < comments.length; i++) {
                     final c = comments[i];
                     if (!_isViewerSide(c) &&
-                        (readBeforeOpening == null || c.timestamp.isAfter(readBeforeOpening!))) {
+                        (readBeforeOpening == null ||
+                            c.timestamp.isAfter(readBeforeOpening!))) {
                       unreadDividerIndex = i;
                       break;
                     }
@@ -402,7 +456,9 @@ class _ChatBody extends ConsumerWidget {
                           // Ticks only mean something on your own sent
                           // messages — WhatsApp never shows them on
                           // incoming ones either.
-                          status: isSelf ? _statusFor(comment, partnerReceipt) : null,
+                          status: isSelf
+                              ? _statusFor(comment, partnerReceipt)
+                              : null,
                         ),
                       ],
                     );
@@ -437,7 +493,11 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// to the assignee's user doc) — the denormalized name from the ticket.
   final String? fallbackName;
 
-  const _ChatAppBar({required this.ticketId, required this.partner, this.fallbackName});
+  const _ChatAppBar({
+    required this.ticketId,
+    required this.partner,
+    this.fallbackName,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(72);
@@ -446,7 +506,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final online = partner?.isRecentlyActive ?? false;
     final displayName = partner?.name ?? fallbackName ?? 'Support Team';
-    final subtitle = partner?.role.shortLabel ?? (fallbackName != null ? 'Support agent' : 'Awaiting assignment');
+    final subtitle =
+        partner?.role.shortLabel ??
+        (fallbackName != null ? 'Support agent' : 'Awaiting assignment');
     return AppBar(
       toolbarHeight: 72,
       titleSpacing: 0,
@@ -463,7 +525,10 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ? const Icon(Icons.support_agent_rounded, color: AppTheme.navy)
                 : Text(
                     displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
           ),
           const SizedBox(width: 10),
@@ -492,7 +557,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                         width: 7,
                         height: 7,
                         decoration: BoxDecoration(
-                          color: online ? StatusColors.resolved : Theme.of(context).colorScheme.outline,
+                          color: online
+                              ? StatusColors.resolved
+                              : Theme.of(context).colorScheme.outline,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -543,9 +610,9 @@ class _UnreadDivider extends StatelessWidget {
               child: Text(
                 'Unread messages',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppTheme.navy,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -564,21 +631,69 @@ class _UnreadDivider extends StatelessWidget {
 /// chat and implies delivered.
 enum _MessageStatus { sent, delivered, read }
 
+Future<void> _showChatMediaViewer(BuildContext context, String imageUrl) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black,
+    builder: (viewerContext) => Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Close media',
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(viewerContext).pop(),
+          ),
+          title: const Text('Media'),
+        ),
+        body: Center(
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.contain,
+              placeholder: (context, url) =>
+                  const CircularProgressIndicator(color: Colors.white),
+              errorWidget: (context, url, error) => const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white,
+                size: 48,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _MessageBubble extends StatelessWidget {
   final TicketActivity activity;
   final bool isSelf;
+
   /// Only set when [isSelf] — incoming messages never show a tick at all,
   /// same as WhatsApp.
   final _MessageStatus? status;
 
-  const _MessageBubble({required this.activity, required this.isSelf, required this.status});
+  const _MessageBubble({
+    required this.activity,
+    required this.isSelf,
+    required this.status,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
+        ),
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -589,7 +704,9 @@ class _MessageBubble extends StatelessWidget {
           color: isSelf ? Colors.white : AppTheme.navy,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isSelf ? Theme.of(context).colorScheme.outlineVariant : AppTheme.navy,
+            color: isSelf
+                ? Theme.of(context).colorScheme.outlineVariant
+                : AppTheme.navy,
           ),
         ),
         child: Column(
@@ -597,32 +714,75 @@ class _MessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (activity.attachmentUrl != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: CachedNetworkImage(
-                  imageUrl: activity.attachmentUrl!,
-                  width: 200,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const SizedBox(
-                    width: 200,
-                    height: 140,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  ),
-                  errorWidget: (context, url, error) => const SizedBox(
-                    width: 200,
-                    height: 80,
-                    child: Icon(Icons.broken_image_outlined),
+              Tooltip(
+                message: 'Open media',
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () =>
+                        _showChatMediaViewer(context, activity.attachmentUrl!),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 320,
+                              maxHeight: 220,
+                            ),
+                            child: CachedNetworkImage(
+                              imageUrl: activity.attachmentUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const SizedBox(
+                                width: 200,
+                                height: 140,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const SizedBox(
+                                    width: 200,
+                                    height: 80,
+                                    child: Icon(Icons.broken_image_outlined),
+                                  ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(6),
+                              child: Icon(
+                                Icons.open_in_full,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              if (activity.note != null && activity.note!.isNotEmpty) const SizedBox(height: 8),
+              if (activity.note != null && activity.note!.isNotEmpty)
+                const SizedBox(height: 8),
             ],
             if (activity.note != null && activity.note!.isNotEmpty)
               Text(
                 activity.note!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelf ? AppTheme.ink : Colors.white,
-                    ),
+                  color: isSelf ? AppTheme.ink : Colors.white,
+                ),
               ),
             const SizedBox(height: 4),
             Row(
@@ -631,13 +791,17 @@ class _MessageBubble extends StatelessWidget {
                 Text(
                   DateFormat.jm().format(activity.timestamp),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isSelf ? Theme.of(context).colorScheme.onSurfaceVariant : Colors.white70,
-                      ),
+                    color: isSelf
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Colors.white70,
+                  ),
                 ),
                 if (status != null) ...[
                   const SizedBox(width: 4),
                   Icon(
-                    status == _MessageStatus.sent ? Icons.done_rounded : Icons.done_all_rounded,
+                    status == _MessageStatus.sent
+                        ? Icons.done_rounded
+                        : Icons.done_all_rounded,
                     size: 15,
                     color: status == _MessageStatus.read
                         ? AppTheme.accentBlue
@@ -670,14 +834,22 @@ class _ChatClosedBanner extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                Icon(Icons.lock_outline_rounded, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -685,9 +857,9 @@ class _ChatClosedBanner extends StatelessWidget {
                         ? 'This ticket has been resolved and the chat is now closed. Need more help? Open a new ticket.'
                         : 'This ticket has been resolved and the chat is now closed.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -737,7 +909,11 @@ class _ChatInputBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -747,7 +923,10 @@ class _ChatInputBar extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Chip(
                   avatar: const Icon(Icons.image_outlined, size: 16),
-                  label: Text(pickedImage!.name, overflow: TextOverflow.ellipsis),
+                  label: Text(
+                    pickedImage!.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   onDeleted: onRemoveImage,
                 ),
               ),
@@ -773,9 +952,14 @@ class _ChatInputBar extends StatelessWidget {
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                      fillColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerLow,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         borderSide: BorderSide.none,
@@ -804,9 +988,16 @@ class _ChatInputBar extends StatelessWidget {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                          : const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                     ),
                   ),
                 ),

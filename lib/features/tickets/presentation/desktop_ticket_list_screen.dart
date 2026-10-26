@@ -387,6 +387,7 @@ class _DesktopTicketListScreenState
                                       DataColumn(label: Text('Assigned To')),
                                       DataColumn(label: Text('Status')),
                                       DataColumn(label: Text('Created')),
+                                      DataColumn(label: Text('Actions')),
                                     ],
                                     rows: pageItems.map((t) {
                                       final assignee = t.assignedTo == null
@@ -449,6 +450,76 @@ class _DesktopTicketListScreenState
                                               DateFormat.MMMd().add_jm().format(
                                                 t.createdAt,
                                               ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                OutlinedButton.icon(
+                                                  onPressed: () => context.push(
+                                                    '/tickets/${t.id}',
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.more_horiz_rounded,
+                                                    size: 16,
+                                                  ),
+                                                  label: const Text('Actions'),
+                                                ),
+                                                if ((appUser.role ==
+                                                            UserRole
+                                                                .supportCoordinator ||
+                                                        appUser.role ==
+                                                            UserRole
+                                                                .pfmManagement) &&
+                                                    t.status !=
+                                                        TicketStatus.closed)
+                                                  TextButton.icon(
+                                                    onPressed: () => context.push(
+                                                      '/tickets/${t.id}/assign',
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .person_add_alt_rounded,
+                                                      size: 16,
+                                                    ),
+                                                    label: Text(
+                                                      t.assignedTo == null
+                                                          ? 'Assign'
+                                                          : 'Reassign',
+                                                    ),
+                                                  ),
+                                                if (appUser.role ==
+                                                        UserRole
+                                                            .supportCoordinator &&
+                                                    t.status !=
+                                                        TicketStatus.closed &&
+                                                    t.status !=
+                                                        TicketStatus.resolved)
+                                                  IconButton(
+                                                    tooltip:
+                                                        'Open ticket to escalate',
+                                                    onPressed: () =>
+                                                        context.push(
+                                                          '/tickets/${t.id}',
+                                                        ),
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .arrow_upward_rounded,
+                                                      size: 18,
+                                                    ),
+                                                  ),
+                                                IconButton(
+                                                  tooltip: 'Open ticket',
+                                                  onPressed: () => context.push(
+                                                    '/tickets/${t.id}',
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.open_in_new_rounded,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],

@@ -150,25 +150,97 @@ class _DesktopTicketDetailScreenState
                   // FilledButton's internal Material/ink layout needs one.
                   // IntrinsicWidth forces a two-pass measure so the button gets
                   // a concrete size regardless, without changing its appearance.
-                  IntrinsicWidth(
-                    child: FilledButton.icon(
-                      key: _actionsButtonKey,
-                      onPressed: () => _showActionsMenu(
-                        context,
-                        ticket,
-                        viewer,
-                        isAssignee,
-                        canAssign,
-                        canEscalate,
-                        canStartWork,
-                        canResolve,
-                      ),
-                      icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                      label: const Text('Actions'),
+                  OutlinedButton.icon(
+                    key: _actionsButtonKey,
+                    onPressed: () => _showActionsMenu(
+                      context,
+                      ticket,
+                      viewer,
+                      isAssignee,
+                      canAssign,
+                      canEscalate,
+                      canStartWork,
+                      canResolve,
                     ),
+                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                    label: const Text('Actions'),
                   ),
                 ],
               ),
+              if (viewer.role.hasBackOfficeAccess) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Ticket Actions',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      if (canAssign)
+                        SizedBox(
+                          width: 150,
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                context.push('/tickets/${ticket.id}/assign'),
+                            icon: const Icon(
+                              Icons.person_add_alt_rounded,
+                              size: 18,
+                            ),
+                            label: Text(
+                              ticket.assignedTo == null ? 'Assign' : 'Reassign',
+                            ),
+                          ),
+                        ),
+                      if (canEscalate)
+                        SizedBox(
+                          width: 150,
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                _showEscalateDialog(context, ticket, viewer),
+                            icon: const Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 18,
+                            ),
+                            label: const Text('Escalate'),
+                          ),
+                        ),
+                      SizedBox(
+                        width: 150,
+                        child: OutlinedButton.icon(
+                          key: _actionsButtonKey,
+                          onPressed: () => _showActionsMenu(
+                            context,
+                            ticket,
+                            viewer,
+                            isAssignee,
+                            canAssign,
+                            canEscalate,
+                            canStartWork,
+                            canResolve,
+                          ),
+                          icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                          label: const Text('Actions'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               Expanded(
                 child: Row(
@@ -436,8 +508,8 @@ class _MainColumn extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(
-            fit: FlexFit.loose,
+          Expanded(
+            flex: 3,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -446,6 +518,7 @@ class _MainColumn extends ConsumerWidget {
                   Text(
                     ticket.title,
                     style: Theme.of(context).textTheme.titleLarge,
+                    maxLines: 3,
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -508,6 +581,7 @@ class _MainColumn extends ConsumerWidget {
             ),
           ),
           Expanded(
+            flex: 4,
             child: TabBarView(
               controller: tabController,
               children: [
@@ -841,16 +915,12 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 160,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
     );
