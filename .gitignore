@@ -79,3 +79,11 @@ app.*.map.json
 
 # Firebase CLI local deploy cache — not meant for version control.
 /.firebase/
+
+# Personal-data exports and ticket backups (never commit)
+/scripts/*.csv
+/scripts/*_backup_*.json
+/scripts/*activity.json
+/scripts/ashanti_raw.json
+/allusers.csv
+GBMS*User Journey*.pdf
