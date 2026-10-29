@@ -167,80 +167,6 @@ class _DesktopTicketDetailScreenState
                   ),
                 ],
               ),
-              if (viewer.role.hasBackOfficeAccess) ...[
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Ticket Actions',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      if (canAssign)
-                        SizedBox(
-                          width: 150,
-                          child: OutlinedButton.icon(
-                            onPressed: () =>
-                                context.push('/tickets/${ticket.id}/assign'),
-                            icon: const Icon(
-                              Icons.person_add_alt_rounded,
-                              size: 18,
-                            ),
-                            label: Text(
-                              ticket.assignedTo == null ? 'Assign' : 'Reassign',
-                            ),
-                          ),
-                        ),
-                      if (canEscalate)
-                        SizedBox(
-                          width: 150,
-                          child: OutlinedButton.icon(
-                            onPressed: () =>
-                                _showEscalateDialog(context, ticket, viewer),
-                            icon: const Icon(
-                              Icons.arrow_upward_rounded,
-                              size: 18,
-                            ),
-                            label: const Text('Escalate'),
-                          ),
-                        ),
-                      SizedBox(
-                        width: 150,
-                        child: OutlinedButton.icon(
-                          key: _actionsButtonKey,
-                          onPressed: () => _showActionsMenu(
-                            context,
-                            ticket,
-                            viewer,
-                            isAssignee,
-                            canAssign,
-                            canEscalate,
-                            canStartWork,
-                            canResolve,
-                          ),
-                          icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                          label: const Text('Actions'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 16),
               Expanded(
                 child: Row(
@@ -499,59 +425,51 @@ class _MainColumn extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final borderColor = Theme.of(context).colorScheme.outlineVariant;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 3,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ticket.title,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      TicketStatusChip(status: ticket.status),
-                      TicketPriorityChip(priority: ticket.priority),
-                      _PlainBadge(label: ticket.categoryLabel),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    ticket.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (ticket.attachmentUrls.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    TicketAttachmentsSection(
-                      attachmentUrls: ticket.attachmentUrls,
-                    ),
+          // Summary keeps its natural height so the title, status and
+          // description are readable at a glance; the tabs take the rest.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ticket.title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TicketStatusChip(status: ticket.status),
+                    TicketPriorityChip(priority: ticket.priority),
+                    _PlainBadge(label: ticket.categoryLabel),
+                    if (ticket.subCategory.isNotEmpty)
+                      _PlainBadge(label: ticket.subCategory),
                   ],
+                ),
+                if (ticket.description.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _ExpandableText(text: ticket.description),
                 ],
-              ),
+              ],
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
+              border: Border(top: BorderSide(color: borderColor)),
             ),
             child: TabBar(
               controller: tabController,
@@ -581,7 +499,6 @@ class _MainColumn extends ConsumerWidget {
             ),
           ),
           Expanded(
-            flex: 4,
             child: TabBarView(
               controller: tabController,
               children: [
@@ -603,11 +520,7 @@ class _MainColumn extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
+                border: Border(top: BorderSide(color: borderColor)),
               ),
               child: Text(
                 'This ticket is ${ticket.status == TicketStatus.closed ? 'closed' : 'resolved'} — chat is now closed.',
@@ -620,11 +533,7 @@ class _MainColumn extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
+                border: Border(top: BorderSide(color: borderColor)),
               ),
               child: Row(
                 children: [
@@ -660,6 +569,47 @@ class _MainColumn extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Shows the first few lines of a long description with a toggle, so one long
+/// description can't push the tabs below the fold.
+class _ExpandableText extends StatefulWidget {
+  final String text;
+
+  const _ExpandableText({required this.text});
+
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = widget.text.length > 160;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.text,
+          style: Theme.of(context).textTheme.bodyMedium,
+          maxLines: _expanded || !isLong ? null : 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (isLong)
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () => setState(() => _expanded = !_expanded),
+            child: Text(_expanded ? 'Show less' : 'Show more'),
+          ),
+      ],
     );
   }
 }
@@ -839,23 +789,37 @@ class _DetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A wrapping grid instead of one tall list, so the fields are visible
+    // together on a wide screen.
+    final fields = <Widget>[
+      _InfoRow(label: 'Category', value: ticket.categoryLabel),
+      if (ticket.subCategory.isNotEmpty)
+        _InfoRow(label: 'Sub-category', value: ticket.subCategory),
+      _InfoRow(label: 'Priority', value: ticket.priority.label),
+      _InfoRow(label: 'Impact', value: ticket.impact.label),
+      _InfoRow(label: 'Status', value: ticket.status.label),
+      _InfoRow(label: 'Escalation Level', value: '${ticket.escalationLevel}'),
+      _InfoRow(
+        label: 'Created',
+        value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
+      ),
+      if (ticket.resolutionNotes != null &&
+          ticket.resolutionNotes!.isNotEmpty)
+        _InfoRow(label: 'Resolution Notes', value: ticket.resolutionNotes!),
+    ];
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _InfoRow(label: 'Category', value: ticket.categoryLabel),
-        if (ticket.subCategory.isNotEmpty)
-          _InfoRow(label: 'Sub-category', value: ticket.subCategory),
-        _InfoRow(label: 'Priority', value: ticket.priority.label),
-        _InfoRow(label: 'Impact', value: ticket.impact.label),
-        _InfoRow(label: 'Status', value: ticket.status.label),
-        _InfoRow(label: 'Escalation Level', value: '${ticket.escalationLevel}'),
-        _InfoRow(
-          label: 'Created',
-          value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
+        Wrap(
+          spacing: 32,
+          children: fields
+              .map((field) => SizedBox(width: 240, child: field))
+              .toList(),
         ),
-        if (ticket.resolutionNotes != null &&
-            ticket.resolutionNotes!.isNotEmpty)
-          _InfoRow(label: 'Resolution Notes', value: ticket.resolutionNotes!),
+        if (ticket.attachmentUrls.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
+        ],
       ],
     );
   }

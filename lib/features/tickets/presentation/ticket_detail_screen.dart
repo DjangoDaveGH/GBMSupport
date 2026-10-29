@@ -135,8 +135,10 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Flexible(
-          fit: FlexFit.loose,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.42,
+          ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
@@ -267,8 +269,6 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
                   ),
                 ),
                 _buildActions(context, ref),
-                RequesterTicketHistoryPanel(ticket: ticket),
-                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -289,8 +289,8 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
             ).colorScheme.onSurfaceVariant,
             indicatorColor: AppTheme.navy,
             tabs: const [
-              Tab(text: 'Timeline'),
               Tab(text: 'Details'),
+              Tab(text: 'Timeline'),
               Tab(text: 'SLA'),
             ],
           ),
@@ -299,8 +299,8 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _TimelineTab(ticketId: ticket.id),
               _DetailsTab(ticket: ticket),
+              _TimelineTab(ticketId: ticket.id),
               _SlaTab(ticket: ticket),
             ],
           ),
@@ -759,6 +759,7 @@ class _DetailsTab extends ConsumerWidget {
             ],
           ),
         ),
+        RequesterTicketHistoryPanel(ticket: ticket),
       ],
     );
   }
