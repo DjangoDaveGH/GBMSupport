@@ -1433,3 +1433,6 @@ exports.clearDemoAccountTickets = onSchedule(
       }
     },
 );
+
+// Quarantines invalid or active-content PDFs uploaded to Storage. See pdf_scan.js.
+exports.scanUploadedPdf = require("./pdf_scan").scanUploadedPdf;

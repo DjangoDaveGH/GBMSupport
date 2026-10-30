@@ -40,7 +40,6 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
   final _scrollController = ScrollController();
   PlatformFile? _pickedImage;
   bool _sending = false;
-  static const _maxChatFileBytes = 15 * 1024 * 1024;
 
   /// Where the viewer's own read receipt stood *before* this screen marked
   /// it forward just now — captured once, up front, so the "Unread
@@ -141,7 +140,13 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
       );
       if (result == null || result.files.isEmpty || !mounted) return;
       final file = result.files.first;
-      if (file.size > _maxChatFileBytes) {
+      if (file.bytes == null || !isPdfBytes(file.bytes!)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("That file isn't a valid PDF.")),
+        );
+        return;
+      }
+      if (file.size > maxPdfBytes) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('That PDF is larger than 15 MB. Choose a smaller file.')),
         );

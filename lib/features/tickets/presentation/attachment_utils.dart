@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
@@ -8,6 +10,21 @@ enum AttachmentKind { image, pdf, text, other }
 
 const _imageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'bmp'};
 const _textExtensions = {'txt', 'log', 'csv', 'md'};
+
+/// Largest PDF the app attaches or displays. Matches the Storage rule limit.
+const maxPdfBytes = 15 * 1024 * 1024;
+
+/// True when [bytes] start with the PDF signature `%PDF-`. The file name
+/// alone isn't enough, since any file can be renamed to .pdf.
+bool isPdfBytes(Uint8List bytes) {
+  const signature = [0x25, 0x50, 0x44, 0x46, 0x2D]; // %PDF-
+  if (bytes.length < signature.length) return false;
+  for (var i = 0; i < signature.length; i++) {
+    if (bytes[i] != signature[i]) return false;
+  }
+  return true;
+}
+
 
 /// Firebase Storage download URLs percent-encode the full object path into
 /// a single path segment (`.../o/attachments%2F{uid}%2F{millis}_{name}`),

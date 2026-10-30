@@ -3,7 +3,7 @@
   "description": "Cloud Functions for Hyperion Support — admin user provisioning and ticket-lifecycle notifications",
   "private": true,
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "scripts": {

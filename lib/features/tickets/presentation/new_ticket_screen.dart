@@ -15,6 +15,7 @@ import 'package:hyport/features/tickets/data/draft_ticket.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/impact_priority_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
+import 'package:hyport/features/tickets/presentation/attachment_utils.dart';
 import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
 import 'package:uuid/uuid.dart';
@@ -192,8 +193,23 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
       allowMultiple: true,
       withData: true,
     );
-    if (result != null) {
-      setState(() => _attachments.addAll(result.files));
+    if (result == null) return;
+    final rejected = <String>[];
+    final accepted = result.files.where((file) {
+      // A .pdf must actually be a PDF, not some other file renamed to .pdf.
+      final isValid =
+          attachmentExtension(file.name) != 'pdf' ||
+          (file.bytes != null && isPdfBytes(file.bytes!));
+      if (!isValid) rejected.add(file.name);
+      return isValid;
+    }).toList();
+    setState(() => _attachments.addAll(accepted));
+    if (rejected.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Not attached, not a valid PDF: ${rejected.join(', ')}'),
+        ),
+      );
     }
   }
 
