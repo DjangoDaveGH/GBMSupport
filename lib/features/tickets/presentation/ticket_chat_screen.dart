@@ -733,10 +733,12 @@ Future<void> _showChatMediaViewer(BuildContext context, String imageUrl) {
         appBar: AppBar(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
           leading: IconButton(
             tooltip: 'Close media',
-            icon: const Icon(Icons.close),
+            icon: const Icon(Icons.close, color: Colors.white),
             onPressed: () => Navigator.of(viewerContext).pop(),
           ),
           title: const Text('Media'),

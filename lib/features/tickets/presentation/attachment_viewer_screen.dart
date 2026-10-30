@@ -55,6 +55,7 @@ class _AttachmentViewerScreenState extends State<AttachmentViewerScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           widget.urls.length > 1 ? '$fileName  (${_index + 1}/${widget.urls.length})' : fileName,
           overflow: TextOverflow.ellipsis,
@@ -68,7 +69,7 @@ class _AttachmentViewerScreenState extends State<AttachmentViewerScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Icon(Icons.download_rounded),
+                : const Icon(Icons.download_rounded, color: Colors.white),
             onPressed: _downloading ? null : _download,
           ),
         ],
