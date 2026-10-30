@@ -17,6 +17,8 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
+import 'package:hyport/features/tickets/presentation/attachment_utils.dart';
+import 'package:hyport/features/tickets/presentation/attachment_viewer_screen.dart';
 import 'package:intl/intl.dart';
 
 /// Mockup's dedicated Chat/Conversation screen — replaces the old
@@ -38,6 +40,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
   final _scrollController = ScrollController();
   PlatformFile? _pickedImage;
   bool _sending = false;
+  static const _maxChatFileBytes = 15 * 1024 * 1024;
 
   /// Where the viewer's own read receipt stood *before* this screen marked
   /// it forward just now — captured once, up front, so the "Unread
@@ -127,6 +130,32 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     }
   }
 
+  /// Picks a PDF to send in the chat. The image picker can't return documents,
+  /// so this uses the file picker, like the new-ticket attachments do.
+  Future<void> _pickPdf() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty || !mounted) return;
+      final file = result.files.first;
+      if (file.size > _maxChatFileBytes) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('That PDF is larger than 15 MB. Choose a smaller file.')),
+        );
+        return;
+      }
+      setState(() => _pickedImage = file);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open your files. Check permission and try again.')),
+      );
+    }
+  }
+
   Future<String?> _uploadImage(String userId) async {
     final file = _pickedImage;
     if (file == null || file.bytes == null) return null;
@@ -134,16 +163,17 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     final storageRef = storage.ref(
       'chat/$userId/${DateTime.now().millisecondsSinceEpoch}_${file.name}',
     );
-    // storage.rules requires an image/* contentType on this path — putData
-    // leaves it unset otherwise, which the rule would then reject outright.
+    // storage.rules requires an image/* or application/pdf contentType on this
+    // path — putData leaves it unset otherwise, which the rule would reject.
     final snapshot = await storageRef.putData(
       file.bytes!,
-      SettableMetadata(contentType: _imageContentType(file.name)),
+      SettableMetadata(contentType: _contentType(file.name)),
     );
     return snapshot.ref.getDownloadURL();
   }
 
-  String _imageContentType(String fileName) {
+  String _contentType(String fileName) {
+    if (attachmentExtension(fileName) == 'pdf') return 'application/pdf';
     switch (fileName.toLowerCase().split('.').last) {
       case 'png':
         return 'image/png';
@@ -186,7 +216,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Could not attach the image (attachment storage isn't available yet). Add a caption or try again.",
+              "Could not attach the file (attachment storage isn't available yet). Add a caption or try again.",
             ),
           ),
         );
@@ -223,7 +253,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Message sent, but the image could not be attached (attachment storage isn\'t available yet).',
+            'Message sent, but the file could not be attached (attachment storage isn\'t available yet).',
           ),
         ),
       );
@@ -262,6 +292,7 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
             sending: _sending,
             onTakePhoto: _takePhoto,
             onUploadMedia: _uploadMedia,
+            onAttachPdf: _pickPdf,
             onRemoveImage: () => setState(() => _pickedImage = null),
             onSend: _send,
             readBeforeOpening: _readBeforeOpening,
@@ -283,6 +314,7 @@ class _ChatBody extends ConsumerWidget {
   final bool sending;
   final VoidCallback onTakePhoto;
   final VoidCallback onUploadMedia;
+  final VoidCallback onAttachPdf;
   final VoidCallback onRemoveImage;
   final Future<void> Function(AppUser viewer) onSend;
 
@@ -303,6 +335,7 @@ class _ChatBody extends ConsumerWidget {
     required this.sending,
     required this.onTakePhoto,
     required this.onUploadMedia,
+    required this.onAttachPdf,
     required this.onRemoveImage,
     required this.onSend,
     required this.readBeforeOpening,
@@ -476,6 +509,7 @@ class _ChatBody extends ConsumerWidget {
               sending: sending,
               onTakePhoto: onTakePhoto,
               onUploadMedia: onUploadMedia,
+              onAttachPdf: onAttachPdf,
               onRemoveImage: onRemoveImage,
               onSend: () => onSend(viewer),
             ),
@@ -631,6 +665,63 @@ class _UnreadDivider extends StatelessWidget {
 /// chat and implies delivered.
 enum _MessageStatus { sent, delivered, read }
 
+bool _isPdfUrl(String url) =>
+    attachmentKind(attachmentFileName(url)) == AttachmentKind.pdf;
+
+/// A PDF in the chat. It has no image preview, so it's a file tile that opens
+/// the in-app PDF viewer, which also offers the download action.
+class _ChatPdfTile extends StatelessWidget {
+  final String url;
+  final bool isSelf;
+
+  const _ChatPdfTile({required this.url, required this.isSelf});
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = isSelf ? AppTheme.ink : Colors.white;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AttachmentViewerScreen(urls: [url]),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.picture_as_pdf_outlined, color: foreground, size: 30),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  attachmentFileName(url),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'PDF - tap to open',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isSelf
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 Future<void> _showChatMediaViewer(BuildContext context, String imageUrl) {
   return showDialog<void>(
     context: context,
@@ -713,7 +804,12 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (activity.attachmentUrl != null) ...[
+            if (activity.attachmentUrl != null &&
+                _isPdfUrl(activity.attachmentUrl!)) ...[
+              _ChatPdfTile(url: activity.attachmentUrl!, isSelf: isSelf),
+              if (activity.note != null && activity.note!.isNotEmpty)
+                const SizedBox(height: 8),
+            ] else if (activity.attachmentUrl != null) ...[
               Tooltip(
                 message: 'Open media',
                 child: MouseRegion(
@@ -888,6 +984,7 @@ class _ChatInputBar extends StatelessWidget {
   final bool sending;
   final VoidCallback onTakePhoto;
   final VoidCallback onUploadMedia;
+  final VoidCallback onAttachPdf;
   final VoidCallback onRemoveImage;
   final VoidCallback onSend;
 
@@ -897,6 +994,7 @@ class _ChatInputBar extends StatelessWidget {
     required this.sending,
     required this.onTakePhoto,
     required this.onUploadMedia,
+    required this.onAttachPdf,
     required this.onRemoveImage,
     required this.onSend,
   });
@@ -922,7 +1020,7 @@ class _ChatInputBar extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Chip(
-                  avatar: const Icon(Icons.image_outlined, size: 16),
+                  avatar: Icon(attachmentIcon(pickedImage!.name), size: 16),
                   label: Text(
                     pickedImage!.name,
                     overflow: TextOverflow.ellipsis,
@@ -943,6 +1041,12 @@ class _ChatInputBar extends StatelessWidget {
                   color: AppTheme.accentBlue,
                   tooltip: 'Upload media',
                   onPressed: sending ? null : onUploadMedia,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.attach_file_rounded),
+                  color: AppTheme.accentBlue,
+                  tooltip: 'Attach PDF',
+                  onPressed: sending ? null : onAttachPdf,
                 ),
                 Expanded(
                   child: TextField(
