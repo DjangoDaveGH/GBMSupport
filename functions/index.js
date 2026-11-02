@@ -85,6 +85,9 @@ function cleanText(value, max) {
 function normalizeRecoveryPhone(value) {
   const raw = cleanText(value, 40).replace(/[\s().-]/g, "");
   if (raw.startsWith("00")) return `+${raw.slice(2)}`;
+  // Ghanaian local format (0XXXXXXXXX) → E.164, so a profile saved as
+  // "0241234567" matches the "+233241234567" that Phone Auth verified.
+  if (/^0\d{9}$/.test(raw)) return `+233${raw.slice(1)}`;
   return raw;
 }
 
@@ -661,20 +664,16 @@ exports.recoverPasswordByPhone = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "The new password must be between 6 and 128 characters.");
   }
 
+  // Look the account up by its Auth email (case-insensitive) rather than
+  // querying users.email, which is stored as typed and can differ in case.
+  const target = await admin.auth().getUserByEmail(email).catch((error) => {
+    if (error.code === "auth/user-not-found") return null;
+    throw error;
+  });
   const db = admin.firestore();
-  const matches = await db.collection("users")
-      .where("email", "==", email)
-      .limit(5)
-      .get();
-  const matchingProfile = matches.docs.find((doc) =>
-    normalizeRecoveryPhone(doc.data().phone) === phone,
-  );
-  if (!matchingProfile) {
-    throw new HttpsError("permission-denied", "The recovery details could not be verified.");
-  }
-
-  const target = await admin.auth().getUserByEmail(email);
-  if (target.uid !== matchingProfile.id) {
+  const profile = target ? (await db.collection("users").doc(target.uid).get()).data() : null;
+  if (!target || !profile || profile.isActive === false ||
+      normalizeRecoveryPhone(profile.phone) !== phone) {
     throw new HttpsError("permission-denied", "The recovery details could not be verified.");
   }
 

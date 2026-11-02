@@ -3,7 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hyport/core/services/firebase_providers.dart';
+
+/// Firebase Phone Auth only accepts E.164 numbers (+233…). Accepts the local
+/// Ghanaian form (0XXXXXXXXX), the 00-prefixed form, or an already-E.164 number.
+String toE164PhoneNumber(String input) {
+  final digits = input.replaceAll(RegExp(r'[\s().-]'), '');
+  if (digits.startsWith('00')) return '+${digits.substring(2)}';
+  if (RegExp(r'^0\d{9}$').hasMatch(digits)) return '+233${digits.substring(1)}';
+  return digits;
+}
 
 /// Self-service password recovery for accounts whose registered phone can
 /// receive SMS. Phone Auth proves possession of the phone; the callable
@@ -43,6 +51,22 @@ class _PhonePasswordRecoveryScreenState
     super.dispose();
   }
 
+  String _friendlyAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-phone-number':
+        return 'That phone number is not valid. Use the format 0241234567.';
+      case 'too-many-requests':
+      case 'quota-exceeded':
+        return 'Too many attempts. Please wait a while and try again.';
+      case 'invalid-verification-code':
+        return 'The SMS code is incorrect. Check it and try again.';
+      case 'session-expired':
+        return 'The SMS code has expired. Request a new one.';
+      default:
+        return e.message ?? e.code;
+    }
+  }
+
   Future<void> _sendCode() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
@@ -50,7 +74,7 @@ class _PhonePasswordRecoveryScreenState
       _error = null;
     });
     try {
-      final phone = _phone.text.trim();
+      final phone = toE164PhoneNumber(_phone.text);
       if (kIsWeb) {
         _webConfirmation = await _auth.signInWithPhoneNumber(phone);
         _codeSent = true;
@@ -58,9 +82,13 @@ class _PhonePasswordRecoveryScreenState
         await _auth.verifyPhoneNumber(
           phoneNumber: phone,
           verificationCompleted: (credential) async {
+            // Some Android devices verify the SMS automatically. The phone
+            // session is then already signed in, so the code step is skipped.
             await _auth.signInWithCredential(credential);
+            if (mounted) setState(() => _codeSent = true);
           },
-          verificationFailed: (e) => setState(() => _error = e.message),
+          verificationFailed: (e) =>
+              setState(() => _error = _friendlyAuthError(e)),
           codeSent: (verificationId, _) => setState(() {
             _mobileVerificationId = verificationId;
             _codeSent = true;
@@ -70,10 +98,11 @@ class _PhonePasswordRecoveryScreenState
         );
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _error = e.message ?? e.code);
+      if (mounted) setState(() => _error = _friendlyAuthError(e));
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Could not send the verification code: $e');
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -86,23 +115,29 @@ class _PhonePasswordRecoveryScreenState
       _error = null;
     });
     try {
-      if (kIsWeb) {
-        await _webConfirmation!.confirm(_code.text.trim());
-      } else {
-        final verificationId = _mobileVerificationId;
-        if (verificationId == null) throw StateError('Request a new code.');
-        final credential = PhoneAuthProvider.credential(
-          verificationId: verificationId,
-          smsCode: _code.text.trim(),
-        );
-        await _auth.signInWithCredential(credential);
+      // Skip the code step if the phone session already exists (automatic
+      // verification above, or a confirmed web session).
+      if (_auth.currentUser?.phoneNumber == null) {
+        if (kIsWeb) {
+          final confirmation = _webConfirmation;
+          if (confirmation == null) throw StateError('Request a new code.');
+          await confirmation.confirm(_code.text.trim());
+        } else {
+          final verificationId = _mobileVerificationId;
+          if (verificationId == null) throw StateError('Request a new code.');
+          final credential = PhoneAuthProvider.credential(
+            verificationId: verificationId,
+            smsCode: _code.text.trim(),
+          );
+          await _auth.signInWithCredential(credential);
+        }
       }
 
       await FirebaseFunctions.instance
           .httpsCallable('recoverPasswordByPhone')
           .call({
             'email': _email.text.trim(),
-            'phone': _phone.text.trim(),
+            'phone': toE164PhoneNumber(_phone.text),
             'newPassword': _password.text,
           });
       await _auth.signOut();
@@ -113,12 +148,16 @@ class _PhonePasswordRecoveryScreenState
         context.go('/login');
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _error = e.message ?? e.code);
+      if (mounted) setState(() => _error = _friendlyAuthError(e));
     } on FirebaseFunctionsException catch (e) {
-      if (mounted)
-        setState(
-          () => _error = e.message ?? 'Recovery details could not be verified.',
-        );
+      if (mounted) {
+        setState(() => _error = e.code == 'permission-denied' ||
+                e.code == 'invalid-argument' ||
+                e.code == 'unauthenticated'
+            ? e.message ?? 'Recovery details could not be verified.'
+            : 'Password reset is unavailable right now. Please try again '
+                'or contact the Applications Systems Unit.');
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Could not reset password: $e');
     } finally {
@@ -170,9 +209,11 @@ class _PhonePasswordRecoveryScreenState
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
                         labelText: 'Registered phone number',
-                        hintText: '+233XXXXXXXXX',
+                        hintText: '0241234567',
                       ),
-                      validator: (v) => v == null || v.trim().length < 7
+                      validator: (v) => v == null ||
+                              !RegExp(r'^\+\d{8,15}$')
+                                  .hasMatch(toE164PhoneNumber(v))
                           ? 'Enter your registered phone number'
                           : null,
                     ),
