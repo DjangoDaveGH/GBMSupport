@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
@@ -164,6 +166,167 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
+/// Rounded label chip used for ticket category, sub-category and escalation.
+class TicketBadge extends StatelessWidget {
+  final String label;
+  final Color? color;
+
+  const TicketBadge({super.key, required this.label, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppTheme.ink;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: c.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c),
+      ),
+    );
+  }
+}
+
+/// One label/value cell of the ticket facts (Created, Updated, Impact, ...).
+class TicketFactCell extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const TicketFactCell({super.key, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+      ],
+    );
+  }
+}
+
+/// "Assigned To" fact — the assignee's avatar + name. Requesters can't read
+/// the assignee's user doc, so they get the denormalized name instead.
+class TicketAssignedCell extends ConsumerWidget {
+  final String userId;
+
+  /// Denormalized name from the ticket, used when [attemptRead] is false
+  /// (requesters can't read the assignee's user doc) or the read fails.
+  final String? fallbackName;
+
+  /// Only support-side viewers may read `users/{uid}`; a requester passes
+  /// false here so no denied read is even attempted.
+  final bool attemptRead;
+
+  const TicketAssignedCell({
+    super.key,
+    required this.userId,
+    this.fallbackName,
+    this.attemptRead = true,
+  });
+
+  Widget _cell(BuildContext context, String name) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('Assigned To', style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 4),
+      Row(
+        children: [
+          CircleAvatar(
+            radius: 11,
+            backgroundColor: AppTheme.navy.withValues(alpha: 0.12),
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!attemptRead) return _cell(context, fallbackName ?? 'A support agent');
+    final userAsync = ref.watch(userByIdProvider(userId));
+    return userAsync.when(
+      loading: () =>
+          TicketFactCell(label: 'Assigned To', value: fallbackName ?? '…'),
+      error: (e, _) => fallbackName != null
+          ? _cell(context, fallbackName!)
+          : const TicketFactCell(label: 'Assigned To', value: '—'),
+      data: (user) {
+        if (user == null) return _cell(context, fallbackName ?? 'Unknown');
+        return _cell(context, user.name);
+      },
+    );
+  }
+}
+
+/// Shows the first few lines of a long description with a toggle, so one long
+/// description can't push the rest of the ticket below the fold.
+class TicketDescription extends StatefulWidget {
+  final String text;
+
+  const TicketDescription({super.key, required this.text});
+
+  @override
+  State<TicketDescription> createState() => _TicketDescriptionState();
+}
+
+class _TicketDescriptionState extends State<TicketDescription> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = widget.text.length > 160;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.text,
+          style: Theme.of(context).textTheme.bodyMedium,
+          maxLines: _expanded || !isLong ? null : 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (isLong)
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () => setState(() => _expanded = !_expanded),
+            child: Text(_expanded ? 'Show less' : 'Show more'),
+          ),
+      ],
+    );
+  }
+}
+
 /// The "Resolution notes" callout shown on a resolved/closed ticket.
 class TicketResolutionNotesCard extends StatelessWidget {
   final String notes;
@@ -194,9 +357,9 @@ class TicketResolutionNotesCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Resolution notes',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: StatusColors.resolved,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: StatusColors.resolved),
               ),
             ],
           ),

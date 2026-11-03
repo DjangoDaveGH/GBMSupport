@@ -16,14 +16,16 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
 import 'package:hyport/features/tickets/presentation/ticket_detail_shared.dart';
+import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
+    show categoryIcon;
 import 'package:hyport/features/tickets/presentation/requester_ticket_history_panel.dart';
 import 'package:intl/intl.dart';
 
-/// Phase 5 mockup screen 32 — the same ticket, activity, SLA and escalation
-/// content as the mobile Ticket Detail, laid out as a two-column web page
-/// (main content + info sidebar) with an "Actions" menu instead of a bottom
-/// toolbar. Calls the exact same TicketRepository methods as the mobile
-/// version; only the chrome around them differs.
+/// Phase 5 mockup screen 32 — the PC web view of the ticket detail. It shows
+/// the same content as the mobile Ticket Detail, in the same order, laid out
+/// as a two-column page: the ticket and its tabs on the left, SLA and history
+/// on the right. Calls the exact same TicketRepository methods as mobile;
+/// only the chrome around them differs.
 class DesktopTicketDetailScreen extends ConsumerStatefulWidget {
   final String ticketId;
 
@@ -60,8 +62,9 @@ class _DesktopTicketDetailScreenState
       loading: () => const BrandedLoaderCenter(),
       error: (e, _) => Center(child: Text('Could not load ticket: $e')),
       data: (ticket) {
-        if (ticket == null)
+        if (ticket == null) {
           return const Center(child: Text('Ticket not found.'));
+        }
         if (viewer == null) return const BrandedLoaderCenter();
         return _buildBody(context, ticket, viewer);
       },
@@ -164,31 +167,26 @@ class _DesktopTicketDetailScreenState
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => context.popOrGo('/tickets'),
-                          child: const Text('← Tickets'),
-                        ),
-                        Flexible(
-                          child: Text(
-                            ' / #${ticket.ticketReference}',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.black54),
-                          ),
-                        ),
-                      ],
+                  TextButton(
+                    onPressed: () => context.popOrGo('/tickets'),
+                    child: const Text('← Tickets'),
+                  ),
+                  Flexible(
+                    child: Text(
+                      ' / #${ticket.ticketReference}',
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              // Same action set as the mobile ticket detail: Chat, Assign,
-              // Escalate, then the Actions menu for the status changes. Sits on
-              // its own row under the breadcrumb (not beside it) so it always
-              // gets the full width and is never squeezed out of the header.
+              const SizedBox(height: 8),
+              // Same action set as the mobile action row: Chat, Assign,
+              // Escalate, then the Actions menu for the status changes. It
+              // sits on its own right-aligned row so the buttons always get
+              // the full width.
               Align(
                 alignment: Alignment.centerRight,
                 child: Wrap(
@@ -243,6 +241,7 @@ class _DesktopTicketDetailScreenState
                       flex: 3,
                       child: _MainColumn(
                         ticket: ticket,
+                        viewer: viewer,
                         tabController: _tabController,
                         noteController: _noteController,
                       ),
@@ -384,8 +383,9 @@ class _DesktopTicketDetailScreenState
                                   actorId: viewer.id,
                                   note: noteController.text.trim(),
                                 );
-                            if (dialogContext.mounted)
+                            if (dialogContext.mounted) {
                               Navigator.of(dialogContext).pop();
+                            }
                           },
                         ),
                       ),
@@ -411,13 +411,17 @@ class _DesktopTicketDetailScreenState
   }
 }
 
+/// Left column: the ticket summary (title, chips, the three facts people look
+/// for first), then the Details / Timeline / SLA tabs, then the chat composer.
 class _MainColumn extends ConsumerWidget {
   final Ticket ticket;
+  final AppUser viewer;
   final TabController tabController;
   final TextEditingController noteController;
 
   const _MainColumn({
     required this.ticket,
+    required this.viewer,
     required this.tabController,
     required this.noteController,
   });
@@ -434,61 +438,9 @@ class _MainColumn extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Summary keeps its natural height so the title, status and
-          // description are readable at a glance; the tabs take the rest.
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ticket.title,
-                  style: Theme.of(context).textTheme.titleLarge,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (ticket.priority == TicketPriority.critical ||
-                    ticket.priority == TicketPriority.high) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.flag_rounded,
-                        size: 15,
-                        color: StatusColors.critical,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${ticket.priority.label} Priority',
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(color: StatusColors.critical),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TicketStatusChip(status: ticket.status),
-                    TicketPriorityChip(priority: ticket.priority),
-                    _PlainBadge(label: ticket.categoryLabel),
-                    if (ticket.subCategory.isNotEmpty)
-                      _PlainBadge(label: ticket.subCategory),
-                    if (ticket.escalationLevel > 0)
-                      _PlainBadge(
-                        label: 'Escalation level ${ticket.escalationLevel}',
-                        color: StatusColors.critical,
-                      ),
-                  ],
-                ),
-                if (ticket.description.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _ExpandableText(text: ticket.description),
-                ],
-              ],
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            child: _SummaryPanel(ticket: ticket, viewer: viewer),
           ),
           Container(
             decoration: BoxDecoration(
@@ -513,7 +465,7 @@ class _MainColumn extends ConsumerWidget {
             child: TabBarView(
               controller: tabController,
               children: [
-                _DetailsView(ticket: ticket),
+                _DetailsView(ticket: ticket, viewer: viewer),
                 _TimelineView(ticketId: ticket.id),
                 _SlaView(ticket: ticket),
               ],
@@ -560,8 +512,10 @@ class _MainColumn extends ConsumerWidget {
                       final viewer = ref
                           .read(currentAppUserProvider)
                           .valueOrNull;
-                      if (viewer == null || noteController.text.trim().isEmpty)
+                      if (viewer == null ||
+                          noteController.text.trim().isEmpty) {
                         return;
+                      }
                       await ref
                           .read(ticketRepositoryProvider)
                           .addComment(
@@ -582,42 +536,202 @@ class _MainColumn extends ConsumerWidget {
   }
 }
 
-/// Shows the first few lines of a long description with a toggle, so one long
-/// description can't push the tabs below the fold.
-class _ExpandableText extends StatefulWidget {
-  final String text;
+/// Summary at the top of the left column — the same facts as the mobile
+/// header card: title, reference, chips, then Assigned / Created / Updated.
+class _SummaryPanel extends StatelessWidget {
+  final Ticket ticket;
+  final AppUser viewer;
 
-  const _ExpandableText({required this.text});
-
-  @override
-  State<_ExpandableText> createState() => _ExpandableTextState();
-}
-
-class _ExpandableTextState extends State<_ExpandableText> {
-  bool _expanded = false;
+  const _SummaryPanel({required this.ticket, required this.viewer});
 
   @override
   Widget build(BuildContext context) {
-    final isLong = widget.text.length > 160;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.text,
-          style: Theme.of(context).textTheme.bodyMedium,
-          maxLines: _expanded || !isLong ? null : 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (isLong)
-          TextButton(
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.accentBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(
+                categoryIcon(ticket.category),
+                color: AppTheme.accentBlue,
+                size: 20,
+              ),
             ),
-            onPressed: () => setState(() => _expanded = !_expanded),
-            child: Text(_expanded ? 'Show less' : 'Show more'),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ticket.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '#${ticket.ticketReference}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            TicketPriorityChip(priority: ticket.priority),
+            TicketBadge(label: ticket.categoryLabel),
+            if (ticket.subCategory.isNotEmpty)
+              TicketBadge(label: ticket.subCategory),
+            if (ticket.escalationLevel > 0)
+              TicketBadge(
+                label: 'Escalation level ${ticket.escalationLevel}',
+                color: StatusColors.critical,
+              ),
+          ],
+        ),
+        const Divider(height: 26),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: ticket.assignedTo != null
+                  ? TicketAssignedCell(
+                      userId: ticket.assignedTo!,
+                      fallbackName: ticket.assignedToName,
+                      attemptRead: viewer.role.isSupportSide,
+                    )
+                  : const TicketFactCell(
+                      label: 'Assigned To',
+                      value: 'Unassigned',
+                    ),
+            ),
+            Expanded(
+              child: TicketFactCell(
+                label: 'Created',
+                value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
+              ),
+            ),
+            Expanded(
+              child: TicketFactCell(
+                label: 'Updated',
+                value: DateFormat.yMMMd().add_jm().format(ticket.updatedAt),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Details tab, two columns so the whole thing fits without scrolling on a
+/// typical laptop: description, attachments and resolution on the left; the
+/// remaining facts and the Requested By card on the right.
+class _DetailsView extends StatelessWidget {
+  final Ticket ticket;
+  final AppUser viewer;
+
+  const _DetailsView({required this.ticket, required this.viewer});
+
+  @override
+  Widget build(BuildContext context) {
+    final facts = <Widget>[
+      if (ticket.subCategory.isNotEmpty)
+        TicketFactCell(label: 'Sub-category', value: ticket.subCategory),
+      TicketFactCell(label: 'Impact', value: ticket.impact.label),
+      TicketFactCell(label: 'Status', value: ticket.status.label),
+      if (ticket.resolvedAt != null)
+        TicketFactCell(
+          label: 'Resolved',
+          value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!),
+        ),
+      if (ticket.closedAt != null)
+        TicketFactCell(
+          label: 'Closed',
+          value: DateFormat.yMMMd().add_jm().format(ticket.closedAt!),
+        ),
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Description',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  TicketDescription(text: ticket.description),
+                  if (ticket.attachmentUrls.isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    TicketAttachmentsSection(
+                      attachmentUrls: ticket.attachmentUrls,
+                    ),
+                  ],
+                  if (ticket.resolutionNotes != null &&
+                      ticket.resolutionNotes!.isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    TicketResolutionNotesCard(notes: ticket.resolutionNotes!),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ticket information',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 24,
+                    runSpacing: 16,
+                    children: facts
+                        .map((fact) => SizedBox(width: 150, child: fact))
+                        .toList(),
+                  ),
+                  if (viewer.role.isSupportSide) ...[
+                    const SizedBox(height: 22),
+                    Text(
+                      'Requested By',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 12),
+                    _AssigneeInfo(
+                      userId: ticket.createdBy,
+                      showInstitution: true,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -642,60 +756,6 @@ class _TimelineView extends ConsumerWidget {
   }
 }
 
-class _DetailsView extends StatelessWidget {
-  final Ticket ticket;
-
-  const _DetailsView({required this.ticket});
-
-  @override
-  Widget build(BuildContext context) {
-    // A wrapping grid instead of one tall list, so the fields are visible
-    // together on a wide screen.
-    final fields = <Widget>[
-      _InfoRow(label: 'Category', value: ticket.categoryLabel),
-      if (ticket.subCategory.isNotEmpty)
-        _InfoRow(label: 'Sub-category', value: ticket.subCategory),
-      _InfoRow(label: 'Priority', value: ticket.priority.label),
-      _InfoRow(label: 'Impact', value: ticket.impact.label),
-      _InfoRow(label: 'Status', value: ticket.status.label),
-      _InfoRow(
-        label: 'Created',
-        value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
-      ),
-      if (ticket.resolvedAt != null)
-        _InfoRow(
-          label: 'Resolved',
-          value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!),
-        ),
-      if (ticket.closedAt != null)
-        _InfoRow(
-          label: 'Closed',
-          value: DateFormat.yMMMd().add_jm().format(ticket.closedAt!),
-        ),
-    ];
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Wrap(
-          spacing: 32,
-          children: fields
-              .map((field) => SizedBox(width: 240, child: field))
-              .toList(),
-        ),
-        if (ticket.attachmentUrls.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
-        ],
-        if (ticket.resolutionNotes != null &&
-            ticket.resolutionNotes!.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          TicketResolutionNotesCard(notes: ticket.resolutionNotes!),
-        ],
-      ],
-    );
-  }
-}
-
 class _SlaView extends ConsumerWidget {
   final Ticket ticket;
 
@@ -715,28 +775,9 @@ class _SlaView extends ConsumerWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
+/// Right column: the SLA due date and the requester's ticket history. The
+/// facts and people live in the summary and the Details tab, so they are not
+/// repeated here.
 class _SidebarColumn extends ConsumerWidget {
   final Ticket ticket;
 
@@ -749,56 +790,9 @@ class _SidebarColumn extends ConsumerWidget {
     final due = ticket.createdAt.add(
       Duration(hours: policy.targetHoursFor(ticket.priority)),
     );
-    final viewer = ref.watch(currentAppUserProvider).valueOrNull;
 
     return Column(
       children: [
-        _SidebarCard(
-          title: 'Ticket Information',
-          child: Column(
-            children: [
-              _InfoRow(label: 'ID', value: ticket.ticketReference),
-              _InfoRow(label: 'Status', value: ticket.status.label),
-              _InfoRow(label: 'Priority', value: ticket.priority.label),
-              _InfoRow(label: 'Category', value: ticket.categoryLabel),
-              _InfoRow(
-                label: 'Created',
-                value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
-              ),
-              _InfoRow(
-                label: 'Last Updated',
-                value: DateFormat.yMMMd().add_jm().format(ticket.updatedAt),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Same visibility rule as the mobile Details tab: every support-side
-        // role (including Vendor/Specialist) sees who raised the ticket.
-        if (viewer?.role.isSupportSide ?? false) ...[
-          _SidebarCard(
-            title: 'Requested By',
-            child: _AssigneeInfo(
-              userId: ticket.createdBy,
-              showInstitution: true,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        RequesterTicketHistoryPanel(ticket: ticket, compact: true),
-        if (ticket.assignedTo != null)
-          _SidebarCard(
-            title: 'Assigned To',
-            child: (viewer?.role.isSupportSide ?? false)
-                ? _AssigneeInfo(userId: ticket.assignedTo!)
-                // Requester can't read the assignee's users/{uid} doc — show
-                // the denormalized name from the ticket.
-                : Text(
-                    ticket.assignedToName ?? 'A support agent',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-          ),
-        const SizedBox(height: 16),
         _SidebarCard(
           title: 'SLA Due',
           child: Row(
@@ -816,6 +810,8 @@ class _SidebarColumn extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        RequesterTicketHistoryPanel(ticket: ticket, compact: true),
       ],
     );
   }
@@ -849,13 +845,11 @@ class _SidebarCard extends StatelessWidget {
   }
 }
 
+/// Avatar, name, and role/institution for a person on the ticket. Used for
+/// the Requested By card; [showInstitution] shows the requester's specific
+/// MDA/MMDA name instead of just the broad type.
 class _AssigneeInfo extends ConsumerWidget {
   final String userId;
-
-  /// When true, show the user's specific assembly/MDA (resolved from
-  /// institutionId) beside their role instead of just the role — used for the
-  /// "Requested By" card so back-office staff see which institution the
-  /// end user belongs to, not merely "MDA/MMDA User".
   final bool showInstitution;
 
   const _AssigneeInfo({required this.userId, this.showInstitution = false});
@@ -910,29 +904,6 @@ class _AssigneeInfo extends ConsumerWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _PlainBadge extends StatelessWidget {
-  final String label;
-  final Color? color;
-
-  const _PlainBadge({required this.label, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color ?? AppTheme.ink;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c),
-      ),
     );
   }
 }
