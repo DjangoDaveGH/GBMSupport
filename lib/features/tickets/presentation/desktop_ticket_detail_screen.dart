@@ -13,18 +13,17 @@ import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
-import 'package:hyport/features/tickets/domain/sla_calculator.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
-import 'package:hyport/features/tickets/domain/ticket_activity.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
+import 'package:hyport/features/tickets/presentation/ticket_detail_shared.dart';
 import 'package:hyport/features/tickets/presentation/requester_ticket_history_panel.dart';
 import 'package:intl/intl.dart';
 
-/// Phase 5 mockup screen 32 — same ticket/activity/SLA data as the mobile
-/// Ticket Detail, laid out as a two-column web page (main content + info
-/// sidebar) with an "Actions" menu instead of a bottom toolbar. Calls the
-/// exact same TicketRepository methods as the mobile version; only the
-/// chrome around them differs.
+/// Phase 5 mockup screen 32 — the same ticket, activity, SLA and escalation
+/// content as the mobile Ticket Detail, laid out as a two-column web page
+/// (main content + info sidebar) with an "Actions" menu instead of a bottom
+/// toolbar. Calls the exact same TicketRepository methods as the mobile
+/// version; only the chrome around them differs.
 class DesktopTicketDetailScreen extends ConsumerStatefulWidget {
   final String ticketId;
 
@@ -39,7 +38,7 @@ class _DesktopTicketDetailScreenState
     extends ConsumerState<DesktopTicketDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController = TabController(
-    length: 4,
+    length: 3,
     vsync: this,
   );
   final _noteController = TextEditingController();
@@ -101,6 +100,61 @@ class _DesktopTicketDetailScreenState
           TicketStatus.reopened,
         }.contains(ticket.status);
 
+    // Same role/status rules as the mobile ticket detail's overflow menu, so
+    // the desktop Actions menu offers exactly what mobile's Actions sheet does.
+    final menuItems = <(String, IconData, VoidCallback)>[
+      if (canAssign)
+        (
+          ticket.assignedTo == null ? 'Assign' : 'Reassign',
+          Icons.person_add_alt_rounded,
+          () => context.push('/tickets/${ticket.id}/assign'),
+        ),
+      if (canEscalate)
+        (
+          'Escalate',
+          Icons.arrow_upward_rounded,
+          () => _showEscalateDialog(context, ticket, viewer),
+        ),
+      if (viewer.role == UserRole.functionalLead ||
+          viewer.role == UserRole.technicalLead) ...[
+        if (canStartWork)
+          (
+            'Start Work',
+            Icons.play_arrow_rounded,
+            () => _changeStatus(ticket, viewer, TicketStatus.inProgress),
+          ),
+        if (canResolve)
+          (
+            'Resolve',
+            Icons.check_circle_outline_rounded,
+            () => _changeStatus(ticket, viewer, TicketStatus.resolved),
+          ),
+      ],
+      if (viewer.role == UserRole.vendorSupport && canResolve)
+        (
+          'Resolve',
+          Icons.check_circle_outline_rounded,
+          () => _changeStatus(ticket, viewer, TicketStatus.resolved),
+        ),
+      if (viewer.role == UserRole.pfmManagement &&
+          (ticket.status == TicketStatus.resolved ||
+              ticket.status == TicketStatus.closed))
+        (
+          'Reopen Ticket',
+          Icons.replay_rounded,
+          () => _changeStatus(ticket, viewer, TicketStatus.reopened),
+        ),
+      if (viewer.role.hasBackOfficeAccess &&
+          ticket.status == TicketStatus.resolved)
+        (
+          'Close Ticket',
+          Icons.lock_outline_rounded,
+          () => ref
+              .read(ticketRepositoryProvider)
+              .close(ticketId: ticket.id, actorId: viewer.id),
+        ),
+    ];
+
     return Stack(
       children: [
         Padding(
@@ -110,60 +164,71 @@ class _DesktopTicketDetailScreenState
             children: [
               Row(
                 children: [
-                  TextButton(
-                    onPressed: () => context.popOrGo('/tickets'),
-                    child: const Text('← Tickets'),
-                  ),
-                  Text(
-                    ' / #${ticket.ticketReference}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                  ),
-                  const Spacer(),
-                  if (canAssign) ...[
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          context.push('/tickets/${ticket.id}/assign'),
-                      icon: const Icon(Icons.person_add_alt_rounded, size: 18),
-                      label: Text(
-                        ticket.assignedTo == null ? 'Assign' : 'Reassign',
-                      ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        TextButton(
+                          onPressed: () => context.popOrGo('/tickets'),
+                          child: const Text('← Tickets'),
+                        ),
+                        Flexible(
+                          child: Text(
+                            ' / #${ticket.ticketReference}',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                  if (canEscalate) ...[
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          _showEscalateDialog(context, ticket, viewer),
-                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                      label: const Text('Escalate'),
-                    ),
-                  ],
+                  ),
                   const SizedBox(width: 8),
-                  // Plain FilledButton/FilledButton.icon silently fails to paint
-                  // here (repro'd: TextButton renders fine in the same spot,
-                  // FilledButton never does, with or without an icon/closure) —
-                  // this Row doesn't get a tightly-bounded width from its Column
-                  // ancestor (no crossAxisAlignment.stretch upstream), and
-                  // FilledButton's internal Material/ink layout needs one.
-                  // IntrinsicWidth forces a two-pass measure so the button gets
-                  // a concrete size regardless, without changing its appearance.
-                  OutlinedButton.icon(
-                    key: _actionsButtonKey,
-                    onPressed: () => _showActionsMenu(
-                      context,
-                      ticket,
-                      viewer,
-                      isAssignee,
-                      canAssign,
-                      canEscalate,
-                      canStartWork,
-                      canResolve,
-                    ),
-                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                    label: const Text('Actions'),
+                  // Same action set as the mobile ticket detail: Chat, Assign,
+                  // Escalate, then the Actions menu for the status changes. Wrap
+                  // (not a single Row) so buttons drop to a new line instead of
+                  // running off the right edge on narrower windows.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push('/tickets/${ticket.id}/chat'),
+                        icon: const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 18,
+                        ),
+                        label: const Text('Chat'),
+                      ),
+                      if (canAssign)
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              context.push('/tickets/${ticket.id}/assign'),
+                          icon: const Icon(
+                            Icons.person_add_alt_rounded,
+                            size: 18,
+                          ),
+                          label: Text(
+                            ticket.assignedTo == null ? 'Assign' : 'Reassign',
+                          ),
+                        ),
+                      if (canEscalate)
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              _showEscalateDialog(context, ticket, viewer),
+                          icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                          label: const Text('Escalate'),
+                        ),
+                      if (menuItems.isNotEmpty)
+                        OutlinedButton.icon(
+                          key: _actionsButtonKey,
+                          onPressed: () => _showActionsMenu(context, menuItems),
+                          icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                          label: const Text('Actions'),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -211,13 +276,7 @@ class _DesktopTicketDetailScreenState
 
   void _showActionsMenu(
     BuildContext context,
-    Ticket ticket,
-    AppUser viewer,
-    bool isAssignee,
-    bool canAssign,
-    bool canEscalate,
-    bool canStartWork,
-    bool canResolve,
+    List<(String, IconData, VoidCallback)> items,
   ) {
     final button =
         _actionsButtonKey.currentContext!.findRenderObject() as RenderBox;
@@ -235,62 +294,21 @@ class _DesktopTicketDetailScreenState
     showMenu<void>(
       context: context,
       position: position,
-      items: [
-        if (canAssign)
-          PopupMenuItem(
-            onTap: () => context.push('/tickets/${ticket.id}/assign'),
-            child: Text(ticket.assignedTo == null ? 'Assign' : 'Reassign'),
-          ),
-        if (canEscalate)
-          PopupMenuItem(
-            onTap: () => _showEscalateDialog(context, ticket, viewer),
-            child: const Text('Escalate'),
-          ),
-        if ((viewer.role == UserRole.functionalLead ||
-                viewer.role == UserRole.technicalLead) &&
-            canStartWork)
-          PopupMenuItem(
-            onTap: () => _changeStatus(ticket, viewer, TicketStatus.inProgress),
-            child: const Text('Start Work'),
-          ),
-        if ((viewer.role == UserRole.functionalLead ||
-                viewer.role == UserRole.technicalLead) &&
-            canResolve)
-          PopupMenuItem(
-            onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
-            child: const Text('Resolve'),
-          ),
-        if (viewer.role == UserRole.vendorSupport && canResolve)
-          PopupMenuItem(
-            onTap: () => _changeStatus(ticket, viewer, TicketStatus.resolved),
-            child: const Text('Resolve'),
-          ),
-        if (viewer.role == UserRole.pfmManagement &&
-            (ticket.status == TicketStatus.resolved ||
-                ticket.status == TicketStatus.closed))
-          PopupMenuItem(
-            onTap: () => _changeStatus(ticket, viewer, TicketStatus.reopened),
-            child: const Text('Reopen Ticket'),
-          ),
-        if (viewer.role.hasBackOfficeAccess &&
-            ticket.status == TicketStatus.resolved)
-          PopupMenuItem(
-            onTap: () => ref
-                .read(ticketRepositoryProvider)
-                .close(ticketId: ticket.id, actorId: viewer.id),
-            child: const Text('Close Ticket'),
-          ),
-        // Mirrors TicketChatScreen's _chatClosed: once resolved/closed, the
-        // chat stops accepting new messages from either side — otherwise a
-        // desktop agent could post into a conversation the requester was
-        // just told had ended.
-        if (ticket.status != TicketStatus.resolved &&
-            ticket.status != TicketStatus.closed)
-          PopupMenuItem(
-            onTap: () => _showCommentDialog(context, ticket, viewer),
-            child: const Text('Add Chat Message'),
-          ),
-      ],
+      items: items
+          .map<PopupMenuEntry<void>>(
+            (item) => PopupMenuItem<void>(
+              onTap: item.$3,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(item.$2, size: 18, color: AppTheme.accentBlue),
+                  const SizedBox(width: 10),
+                  Text(item.$1),
+                ],
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -309,6 +327,7 @@ class _DesktopTicketDetailScreenState
     Ticket ticket,
     AppUser viewer,
   ) {
+    final noteController = TextEditingController();
     final targetLevel = ticket.escalationLevel < 1 ? 1 : 2;
     showDialog(
       context: context,
@@ -340,26 +359,39 @@ class _DesktopTicketDetailScreenState
                   width: 320,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: eligible
-                        .map(
-                          (u) => ListTile(
-                            title: Text(u.name),
-                            subtitle: Text(u.role.shortLabel),
-                            onTap: () async {
-                              await ref
-                                  .read(ticketRepositoryProvider)
-                                  .escalate(
-                                    ticketId: ticket.id,
-                                    toLevel: targetLevel,
-                                    assigneeId: u.id,
-                                    actorId: viewer.id,
-                                  );
-                              if (dialogContext.mounted)
-                                Navigator.of(dialogContext).pop();
-                            },
-                          ),
-                        )
-                        .toList(),
+                    children: [
+                      TextField(
+                        controller: noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Escalation note (optional)',
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 8),
+                      ...eligible.map(
+                        (u) => ListTile(
+                          title: Text(u.name),
+                          subtitle: Text(u.role.shortLabel),
+                          onTap: () async {
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .escalate(
+                                  ticketId: ticket.id,
+                                  toLevel: targetLevel,
+                                  assigneeId: u.id,
+                                  actorId: viewer.id,
+                                  note: noteController.text.trim(),
+                                );
+                            if (dialogContext.mounted)
+                              Navigator.of(dialogContext).pop();
+                          },
+                        ),
+                      ),
+                      if (eligible.isEmpty)
+                        const Text(
+                          'No eligible staff found for this category.',
+                        ),
+                    ],
                   ),
                 );
               },
@@ -372,41 +404,6 @@ class _DesktopTicketDetailScreenState
             ],
           );
         },
-      ),
-    );
-  }
-
-  void _showCommentDialog(BuildContext context, Ticket ticket, AppUser viewer) {
-    final noteController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Add Chat Message'),
-        content: TextField(
-          controller: noteController,
-          decoration: const InputDecoration(labelText: 'Message'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (noteController.text.trim().isEmpty) return;
-              await ref
-                  .read(ticketRepositoryProvider)
-                  .addComment(
-                    ticketId: ticket.id,
-                    actorId: viewer.id,
-                    note: noteController.text.trim(),
-                  );
-              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Post'),
-          ),
-        ],
       ),
     );
   }
@@ -448,6 +445,25 @@ class _MainColumn extends ConsumerWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (ticket.priority == TicketPriority.critical ||
+                    ticket.priority == TicketPriority.high) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.flag_rounded,
+                        size: 15,
+                        color: StatusColors.critical,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${ticket.priority.label} Priority',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: StatusColors.critical),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -458,6 +474,11 @@ class _MainColumn extends ConsumerWidget {
                     _PlainBadge(label: ticket.categoryLabel),
                     if (ticket.subCategory.isNotEmpty)
                       _PlainBadge(label: ticket.subCategory),
+                    if (ticket.escalationLevel > 0)
+                      _PlainBadge(
+                        label: 'Escalation level ${ticket.escalationLevel}',
+                        color: StatusColors.critical,
+                      ),
                   ],
                 ),
                 if (ticket.description.isNotEmpty) ...[
@@ -480,41 +501,27 @@ class _MainColumn extends ConsumerWidget {
               ).colorScheme.onSurfaceVariant,
               indicatorColor: AppTheme.navy,
               tabs: const [
-                Tab(text: 'Timeline'),
-                Tab(text: 'Chat'),
                 Tab(text: 'Details'),
+                Tab(text: 'Timeline'),
                 Tab(text: 'SLA'),
               ],
-              // Chat is a full dedicated page (same one mobile uses), not an
-              // inline pane like the other three tabs — TabController.animateTo
-              // has already run by the time onTap fires, so this snaps the
-              // selection straight back before pushing, rather than leaving
-              // "Chat" highlighted over its (now-unused) inline pane.
-              onTap: (index) {
-                if (index == 1) {
-                  tabController.index = tabController.previousIndex;
-                  context.push('/tickets/${ticket.id}/chat');
-                }
-              },
             ),
           ),
           Expanded(
             child: TabBarView(
               controller: tabController,
               children: [
-                _TimelineView(ticketId: ticket.id),
-                _ConversationView(ticketId: ticket.id),
                 _DetailsView(ticket: ticket),
+                _TimelineView(ticketId: ticket.id),
                 _SlaView(ticket: ticket),
               ],
             ),
           ),
           // This composer writes a plain TicketActivity comment — the same
-          // feed rendered to the requester in _ConversationView/the mobile
-          // chat screen, not a private note and not a status change. Locked
-          // once resolved/closed, mirroring TicketChatScreen's _chatClosed
-          // so this screen can't be used to post into a conversation the
-          // requester was told had ended.
+          // feed rendered to the requester and the mobile chat screen, not a
+          // private note and not a status change. Locked once resolved/closed,
+          // mirroring TicketChatScreen's _chatClosed so this screen can't be
+          // used to post into a conversation the requester was told had ended.
           if (ticket.status == TicketStatus.resolved ||
               ticket.status == TicketStatus.closed)
             Container(
@@ -614,45 +621,6 @@ class _ExpandableTextState extends State<_ExpandableText> {
   }
 }
 
-IconData _activityIcon(TicketActivityAction action) => switch (action) {
-  TicketActivityAction.created => Icons.add_circle_outline_rounded,
-  TicketActivityAction.assigned => Icons.person_add_alt_rounded,
-  TicketActivityAction.statusChanged => Icons.sync_alt_rounded,
-  TicketActivityAction.escalated => Icons.arrow_upward_rounded,
-  TicketActivityAction.commented => Icons.chat_bubble_outline_rounded,
-  TicketActivityAction.reopened => Icons.replay_rounded,
-  TicketActivityAction.closed => Icons.lock_outline_rounded,
-};
-
-Color _activityColor(TicketActivityAction action) => switch (action) {
-  TicketActivityAction.created => AppTheme.accentBlue,
-  TicketActivityAction.assigned => StatusColors.assigned,
-  TicketActivityAction.statusChanged => AppTheme.accentBlue,
-  TicketActivityAction.escalated => StatusColors.critical,
-  TicketActivityAction.commented => StatusColors.closed,
-  TicketActivityAction.reopened => StatusColors.critical,
-  TicketActivityAction.closed => StatusColors.closed,
-};
-
-String _describeActivity(TicketActivity a) {
-  switch (a.action) {
-    case TicketActivityAction.created:
-      return 'Ticket Created';
-    case TicketActivityAction.assigned:
-      return 'Assigned';
-    case TicketActivityAction.statusChanged:
-      return 'Status changed: ${a.fromValue} → ${a.toValue}';
-    case TicketActivityAction.escalated:
-      return 'Escalated';
-    case TicketActivityAction.commented:
-      return 'Chat message';
-    case TicketActivityAction.reopened:
-      return 'Reopened';
-    case TicketActivityAction.closed:
-      return 'Closed';
-  }
-}
-
 class _TimelineView extends ConsumerWidget {
   final String ticketId;
 
@@ -663,121 +631,11 @@ class _TimelineView extends ConsumerWidget {
     final activityAsync = ref.watch(ticketActivityProvider(ticketId));
     return activityAsync.when(
       loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => const Center(child: Text('Timeline unavailable')),
-      data: (activity) {
-        if (activity.isEmpty)
-          return const Center(child: Text('No activity yet.'));
-        return ListView.builder(
-          padding: const EdgeInsets.all(20),
-          itemCount: activity.length,
-          itemBuilder: (context, i) {
-            final a = activity[i];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: _activityColor(a.action).withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _activityIcon(a.action),
-                      size: 15,
-                      color: _activityColor(a.action),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _describeActivity(a),
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                            ),
-                            Text(
-                              DateFormat.MMMd().add_jm().format(a.timestamp),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                        if (a.note != null && a.note!.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            a.note!,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _ConversationView extends ConsumerWidget {
-  final String ticketId;
-
-  const _ConversationView({required this.ticketId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activityAsync = ref.watch(ticketActivityProvider(ticketId));
-    return activityAsync.when(
-      loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => const Center(child: Text('Conversation unavailable')),
-      data: (activity) {
-        final comments =
-            activity
-                .where((a) => a.action == TicketActivityAction.commented)
-                .toList()
-              ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        if (comments.isEmpty)
-          return const Center(child: Text('No chat messages yet.'));
-        return ListView.builder(
-          padding: const EdgeInsets.all(20),
-          itemCount: comments.length,
-          itemBuilder: (context, i) {
-            final c = comments[i];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    c.note ?? '',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat.MMMd().add_jm().format(c.timestamp),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      error: (e, _) => Center(child: Text('Could not load activity: $e')),
+      data: (activity) => ListView(
+        padding: const EdgeInsets.all(20),
+        children: [TicketActivityTrail(activity: activity)],
+      ),
     );
   }
 }
@@ -798,14 +656,20 @@ class _DetailsView extends StatelessWidget {
       _InfoRow(label: 'Priority', value: ticket.priority.label),
       _InfoRow(label: 'Impact', value: ticket.impact.label),
       _InfoRow(label: 'Status', value: ticket.status.label),
-      _InfoRow(label: 'Escalation Level', value: '${ticket.escalationLevel}'),
       _InfoRow(
         label: 'Created',
         value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
       ),
-      if (ticket.resolutionNotes != null &&
-          ticket.resolutionNotes!.isNotEmpty)
-        _InfoRow(label: 'Resolution Notes', value: ticket.resolutionNotes!),
+      if (ticket.resolvedAt != null)
+        _InfoRow(
+          label: 'Resolved',
+          value: DateFormat.yMMMd().add_jm().format(ticket.resolvedAt!),
+        ),
+      if (ticket.closedAt != null)
+        _InfoRow(
+          label: 'Closed',
+          value: DateFormat.yMMMd().add_jm().format(ticket.closedAt!),
+        ),
     ];
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -820,6 +684,11 @@ class _DetailsView extends StatelessWidget {
           const SizedBox(height: 8),
           TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
         ],
+        if (ticket.resolutionNotes != null &&
+            ticket.resolutionNotes!.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          TicketResolutionNotesCard(notes: ticket.resolutionNotes!),
+        ],
       ],
     );
   }
@@ -832,39 +701,14 @@ class _SlaView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final policy =
-        ref.watch(slaPolicyProvider).valueOrNull ?? const SlaPolicy();
-    final targetHours = policy.targetHoursFor(ticket.priority);
-    final due = ticket.createdAt.add(Duration(hours: targetHours));
-    final resolvedAt = ticket.resolvedAt ?? ticket.closedAt;
-    final met = resolvedAt != null
-        ? SlaCalculator.metSla(ticket, policy)
-        : null;
-    final overdue = SlaCalculator.isOverdue(ticket, policy);
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        _InfoRow(
-          label: 'Target Resolution Window',
-          value: '$targetHours hours (${ticket.priority.label})',
-        ),
-        _InfoRow(
-          label: 'SLA Due',
-          value: DateFormat.yMMMd().add_jm().format(due),
-        ),
-        if (resolvedAt != null)
-          _InfoRow(
-            label: 'Resolved',
-            value:
-                '${DateFormat.yMMMd().add_jm().format(resolvedAt)} · ${met! ? 'Within SLA' : 'Breached SLA'}',
-          )
-        else
-          _InfoRow(
-            label: 'Current Status',
-            value: overdue ? 'Overdue' : 'Within SLA',
-          ),
-      ],
+    final policyAsync = ref.watch(slaPolicyProvider);
+    return policyAsync.when(
+      loading: () => const BrandedLoaderCenter(),
+      error: (e, _) => const Center(child: Text('SLA information unavailable')),
+      data: (policy) => ListView(
+        padding: const EdgeInsets.all(20),
+        children: [TicketSlaCard(ticket: ticket, policy: policy)],
+      ),
     );
   }
 }
@@ -917,17 +761,19 @@ class _SidebarColumn extends ConsumerWidget {
               _InfoRow(label: 'Category', value: ticket.categoryLabel),
               _InfoRow(
                 label: 'Created',
-                value: DateFormat.yMMMd().format(ticket.createdAt),
+                value: DateFormat.yMMMd().add_jm().format(ticket.createdAt),
               ),
               _InfoRow(
                 label: 'Last Updated',
-                value: DateFormat.yMMMd().format(ticket.updatedAt),
+                value: DateFormat.yMMMd().add_jm().format(ticket.updatedAt),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (viewer?.role.hasBackOfficeAccess ?? false) ...[
+        // Same visibility rule as the mobile Details tab: every support-side
+        // role (including Vendor/Specialist) sees who raised the ticket.
+        if (viewer?.role.isSupportSide ?? false) ...[
           _SidebarCard(
             title: 'Requested By',
             child: _AssigneeInfo(
@@ -1068,22 +914,22 @@ class _AssigneeInfo extends ConsumerWidget {
 
 class _PlainBadge extends StatelessWidget {
   final String label;
+  final Color? color;
 
-  const _PlainBadge({required this.label});
+  const _PlainBadge({required this.label, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final c = color ?? AppTheme.ink;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.ink.withValues(alpha: 0.08),
+        color: c.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
-        style: Theme.of(
-          context,
-        ).textTheme.labelMedium?.copyWith(color: AppTheme.ink),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c),
       ),
     );
   }
