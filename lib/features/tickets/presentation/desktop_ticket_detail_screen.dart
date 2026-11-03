@@ -175,62 +175,64 @@ class _DesktopTicketDetailScreenState
                           child: Text(
                             ' / #${ticket.ticketReference}',
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.black54),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Same action set as the mobile ticket detail: Chat, Assign,
-                  // Escalate, then the Actions menu for the status changes. Wrap
-                  // (not a single Row) so buttons drop to a new line instead of
-                  // running off the right edge on narrower windows.
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.end,
-                    children: [
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Same action set as the mobile ticket detail: Chat, Assign,
+              // Escalate, then the Actions menu for the status changes. Sits on
+              // its own row under the breadcrumb (not beside it) so it always
+              // gets the full width and is never squeezed out of the header.
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          context.push('/tickets/${ticket.id}/chat'),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 18,
+                      ),
+                      label: const Text('Chat'),
+                    ),
+                    if (canAssign)
                       OutlinedButton.icon(
                         onPressed: () =>
-                            context.push('/tickets/${ticket.id}/chat'),
+                            context.push('/tickets/${ticket.id}/assign'),
                         icon: const Icon(
-                          Icons.chat_bubble_outline_rounded,
+                          Icons.person_add_alt_rounded,
                           size: 18,
                         ),
-                        label: const Text('Chat'),
+                        label: Text(
+                          ticket.assignedTo == null ? 'Assign' : 'Reassign',
+                        ),
                       ),
-                      if (canAssign)
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              context.push('/tickets/${ticket.id}/assign'),
-                          icon: const Icon(
-                            Icons.person_add_alt_rounded,
-                            size: 18,
-                          ),
-                          label: Text(
-                            ticket.assignedTo == null ? 'Assign' : 'Reassign',
-                          ),
-                        ),
-                      if (canEscalate)
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              _showEscalateDialog(context, ticket, viewer),
-                          icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                          label: const Text('Escalate'),
-                        ),
-                      if (menuItems.isNotEmpty)
-                        OutlinedButton.icon(
-                          key: _actionsButtonKey,
-                          onPressed: () => _showActionsMenu(context, menuItems),
-                          icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                          label: const Text('Actions'),
-                        ),
-                    ],
-                  ),
-                ],
+                    if (canEscalate)
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            _showEscalateDialog(context, ticket, viewer),
+                        icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                        label: const Text('Escalate'),
+                      ),
+                    if (menuItems.isNotEmpty)
+                      OutlinedButton.icon(
+                        key: _actionsButtonKey,
+                        onPressed: () => _showActionsMenu(context, menuItems),
+                        icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                        label: const Text('Actions'),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(

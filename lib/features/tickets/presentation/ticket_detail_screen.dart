@@ -267,10 +267,15 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
                     ],
                   ),
                 ),
-                _buildActions(context, ref),
               ],
             ),
           ),
+        ),
+        // Outside the capped header scroll area so the action buttons are
+        // always visible on a phone, not pushed below the fold.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildActions(context, ref),
         ),
         Container(
           decoration: BoxDecoration(
