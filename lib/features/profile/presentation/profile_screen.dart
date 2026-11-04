@@ -200,6 +200,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           _ActionCard(
+            icon: Icons.fact_check_outlined,
+            label: 'Audit Log',
+            onTap: () => context.push('/audit-logs'),
+          ),
+          const SizedBox(height: 12),
+          _ActionCard(
             icon: Icons.settings_outlined,
             label: 'Settings',
             onTap: () => context.push('/settings'),

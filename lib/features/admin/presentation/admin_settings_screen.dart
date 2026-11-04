@@ -18,71 +18,79 @@ class AdminSettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SettingsCard(children: [
-            _SettingsTile(
-              icon: Icons.tune_rounded,
-              label: 'General',
-              subtitle: 'App preferences, language, timezone',
-              onTap: () => _showComingSoon(context, 'General', 'App-wide preferences like language and timezone aren\'t configurable in this build yet.'),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.rule_folder_outlined,
-              label: 'SLA Management',
-              subtitle: 'SLA policies and response times',
-              onTap: () => context.push('/admin-settings/sla'),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.auto_awesome_motion_outlined,
-              label: 'Auto-Assignment',
-              subtitle: 'Which staff handle each ticket category',
-              onTap: () => context.push('/admin-settings/assignment'),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.confirmation_number_outlined,
-              label: 'Ticket Settings',
-              subtitle: 'Categories, priorities, workflows',
-              onTap: () => context.push('/admin-settings/tickets'),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.campaign_outlined,
-              label: 'Announcements',
-              subtitle: 'Send a system-wide notice to all users',
-              onTap: () => context.push('/admin-settings/announcements'),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.notifications_none_rounded,
-              label: 'Notifications',
-              subtitle: 'Email, push, in-app notifications',
-              onTap: () => _showComingSoon(
-                context,
-                'Notifications',
-                'Org-wide notification templates and channels aren\'t configurable here yet. Each user manages their own preferences from Profile → Settings.',
+          _SettingsCard(
+            children: [
+              _SettingsTile(
+                icon: Icons.tune_rounded,
+                label: 'General',
+                subtitle: 'App preferences, language, timezone',
+                onTap: () => _showComingSoon(
+                  context,
+                  'General',
+                  'App-wide preferences like language and timezone aren\'t configurable in this build yet.',
+                ),
               ),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.security_rounded,
-              label: 'Security',
-              subtitle: 'Password policy, 2FA, sessions',
-              onTap: () => _showComingSoon(
-                context,
-                'Security',
-                'Org-wide password policy and session controls aren\'t configurable here yet. Users can turn on their own two-factor login from Profile → Settings.',
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.rule_folder_outlined,
+                label: 'SLA Management',
+                subtitle: 'SLA policies and response times',
+                onTap: () => context.push('/admin-settings/sla'),
               ),
-            ),
-            const Divider(height: 1, indent: 56),
-            _SettingsTile(
-              icon: Icons.dns_outlined,
-              label: 'System',
-              subtitle: 'System configuration and logs',
-              onTap: () => _showComingSoon(context, 'System', 'System configuration and audit logs aren\'t exposed in this build yet.'),
-            ),
-          ]),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.auto_awesome_motion_outlined,
+                label: 'Auto-Assignment',
+                subtitle: 'Which staff handle each ticket category',
+                onTap: () => context.push('/admin-settings/assignment'),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.confirmation_number_outlined,
+                label: 'Ticket Settings',
+                subtitle: 'Categories, priorities, workflows',
+                onTap: () => context.push('/admin-settings/tickets'),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.campaign_outlined,
+                label: 'Announcements',
+                subtitle: 'Send a system-wide notice to all users',
+                onTap: () => context.push('/admin-settings/announcements'),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.notifications_none_rounded,
+                label: 'Notifications',
+                subtitle: 'Email, push, in-app notifications',
+                onTap: () => _showComingSoon(
+                  context,
+                  'Notifications',
+                  'Org-wide notification templates and channels aren\'t configurable here yet. Each user manages their own preferences from Profile → Settings.',
+                ),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.security_rounded,
+                label: 'Security',
+                subtitle: 'Password policy, 2FA, sessions',
+                onTap: () => _showComingSoon(
+                  context,
+                  'Security',
+                  'Org-wide password policy and session controls aren\'t configurable here yet. Users can turn on their own two-factor login from Profile → Settings.',
+                ),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
+                icon: Icons.dns_outlined,
+                label: 'System',
+                subtitle: 'System configuration and logs',
+                // Same Audit Logs screen the desktop nav opens: the admin sees
+                // ticket activity, user actions and settings changes system-wide.
+                onTap: () => context.push('/audit-logs'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -94,7 +102,12 @@ class AdminSettingsScreen extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: Text(title),
         content: Text(message),
-        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('OK'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -124,7 +137,12 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
-  const _SettingsTile({required this.icon, required this.label, required this.subtitle, required this.onTap});
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -233,7 +233,10 @@ service cloud.firestore {
     // isn't a thing this app models a safe migration for.
     match /institutions/{institutionId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && role() == 'pfm_management';
+      // updatedBy must be the caller: the onInstitutionWritten Cloud Function
+      // records it in audit_logs, so it has to be the real admin, not a guess.
+      allow create, update: if isSignedIn() && role() == 'pfm_management'
+        && request.resource.data.updatedBy == request.auth.uid;
       allow delete: if false;
     }
 
@@ -248,7 +251,10 @@ service cloud.firestore {
     // isSupportSide() this used to allow.
     match /config/{docId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && role() == 'pfm_management';
+      // updatedBy must be the caller: the onConfigWritten Cloud Function
+      // records it in audit_logs, so it has to be the real admin, not a guess.
+      allow write: if isSignedIn() && role() == 'pfm_management'
+        && request.resource.data.updatedBy == request.auth.uid;
     }
 
     // ----- counters (ticket reference sequence) -----
@@ -497,7 +503,10 @@ service cloud.firestore {
     // not just isSupportSide() — this keeps the collection-group rule
     // aligned with the per-ticket system boundary.
     match /{path=**}/activity/{activityId} {
-      allow read: if canViewAllTickets()
+      // Anyone can read the activity entries they performed (AuditLogRepository.
+      // watchOwn). Everything else stays scoped as below.
+      allow read: if resource.data.actorId == request.auth.uid
+        || canViewAllTickets()
         || (role() == 'support_coordinator'
             && hasAllowedSystem(ticketSystem(get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data)))
         || ((isFunctionalLead() || isTechnicalLead())

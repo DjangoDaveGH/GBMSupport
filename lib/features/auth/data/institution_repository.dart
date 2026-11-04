@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/features/auth/domain/institution.dart';
 
@@ -7,21 +8,31 @@ class InstitutionRepository {
 
   InstitutionRepository(this._db);
 
-  CollectionReference<Map<String, dynamic>> get _institutions => _db.collection('institutions');
+  CollectionReference<Map<String, dynamic>> get _institutions =>
+      _db.collection('institutions');
 
   Stream<List<Institution>> watchAll() {
-    return _institutions.orderBy('name').snapshots().map(
-          (snap) => snap.docs.map((d) => Institution.fromMap(d.id, d.data())).toList(),
+    return _institutions
+        .orderBy('name')
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => Institution.fromMap(d.id, d.data()))
+              .toList(),
         );
   }
 
-  Future<void> create({
-    required String name,
-    required InstitutionType type,
-  }) {
+  Future<void> create({required String name, required InstitutionType type}) {
     final ref = _institutions.doc();
-    return ref.set(
-      Institution(id: ref.id, name: name, type: type, focalPersonIds: const []).toMap(),
-    );
+    return ref.set({
+      ...Institution(
+        id: ref.id,
+        name: name,
+        type: type,
+        focalPersonIds: const [],
+      ).toMap(),
+      // Read by onInstitutionWritten to record who created the institution.
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid,
+    });
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hyport/features/config/domain/assignment_rules.dart';
 
 /// Reads/writes `config/assignment_rules` — the category → eligible-staff
@@ -16,8 +17,9 @@ class AssignmentRulesRepository {
   Stream<AssignmentRules> watch() =>
       _doc.snapshots().map((d) => AssignmentRules.fromMap(d.data()));
 
-  Future<void> update(AssignmentRules rules) => _doc.set(
-        {...rules.toMap(), 'updatedAt': FieldValue.serverTimestamp()},
-        SetOptions(merge: true),
-      );
+  Future<void> update(AssignmentRules rules) => _doc.set({
+    ...rules.toMap(),
+    'updatedAt': FieldValue.serverTimestamp(),
+    'updatedBy': FirebaseAuth.instance.currentUser?.uid,
+  }, SetOptions(merge: true));
 }

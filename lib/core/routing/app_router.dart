@@ -102,7 +102,6 @@ const supportSideOnlyPaths = [
   '/reports',
   '/assignments',
   '/sla-monitoring',
-  '/audit-logs',
 ];
 // Everything under /admin-settings (SLA, Assignment Rules, Ticket Settings,
 // Announcements) is PFM-Management-only server-side (config/{docId}'s write

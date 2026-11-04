@@ -48,14 +48,10 @@ String _actionLabel(TicketActivityAction action) => switch (action) {
   TicketActivityAction.closed => 'Closed Ticket',
 };
 
-/// Phase 5 mockup screen 40. See AuditLogRepository's doc comment for the
-/// honest scope of what this covers: ticket lifecycle events (via a real
-/// collectionGroup query) for every back-office role, plus — for PFM
-/// Management/Administrator only, per FR-SEC-03 ("only Administrators may
-/// view the audit log") — a second tab of user-management actions written
-/// by the adminCreateUser/adminUpdateUser Cloud Functions. Not a full
-/// system audit trail (no login events or settings changes), since that
-/// would need Cloud Functions this project can't deploy yet.
+/// Phase 5 mockup screen 40. Admins (PFM Management) see every ticket event
+/// across all systems, plus a second tab of admin actions (user and settings
+/// changes). Every other user sees only the ticket activity they performed.
+/// Login events are not recorded yet.
 class DesktopAuditLogsScreen extends ConsumerStatefulWidget {
   const DesktopAuditLogsScreen({super.key});
 
@@ -457,13 +453,16 @@ class _DesktopAuditLogsScreenState
                           DataColumn(label: Text('Date & Time')),
                           DataColumn(label: Text('Admin')),
                           DataColumn(label: Text('Action')),
-                          DataColumn(label: Text('Target User')),
+                          DataColumn(label: Text('Target')),
                           DataColumn(label: Text('Details')),
                         ],
                         rows: entries.map((a) {
                           final actor = usersById[a.actorId];
                           final target = usersById[a.targetId];
-                          final targetName = target?.name ?? a.targetId;
+                          final targetName = adminTargetLabel(
+                            a,
+                            userName: target?.name,
+                          );
                           return DataRow(
                             cells: [
                               DataCell(

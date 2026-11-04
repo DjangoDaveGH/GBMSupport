@@ -45,7 +45,7 @@
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {onDocumentCreated, onDocumentUpdated} = require("firebase-functions/v2/firestore");
+const {onDocumentCreated, onDocumentUpdated, onDocumentWritten} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {randomBytes, randomInt, createHash} = require("crypto");
 const {defineSecret} = require("firebase-functions/params");
@@ -1434,4 +1434,51 @@ exports.clearDemoAccountTickets = onSchedule(
 );
 
 // Quarantines invalid or active-content PDFs uploaded to Storage. See pdf_scan.js.
+/**
+ * System-wide audit trail for admin-configured settings (SLA policy, assignment
+ * rules, general settings). Written here, not by the client, so the record
+ * can't be skipped. The writer comes from `updatedBy`, which firestore.rules
+ * requires to equal the signed-in admin's uid on every write.
+ */
+function changedFields(before, after) {
+  const ignore = new Set(["updatedBy", "updatedAt"]);
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return [...keys]
+      .filter((k) => !ignore.has(k) && JSON.stringify(before[k]) !== JSON.stringify(after[k]))
+      .sort();
+}
+
+exports.onConfigWritten = onDocumentWritten("config/{docId}", async (event) => {
+  const after = event.data && event.data.after && event.data.after.data();
+  if (!after) return; // deleted; firestore.rules doesn't allow deletes anyway
+  const before = (event.data.before && event.data.before.data()) || {};
+  const fields = changedFields(before, after);
+  if (fields.length === 0) return; // re-save with no real edits
+  await admin.firestore().collection("audit_logs").add({
+    actorId: after.updatedBy || "",
+    action: "config_changed",
+    targetType: "config",
+    targetId: event.params.docId,
+    metadata: {changed: fields.join(", ")},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+});
+
+exports.onInstitutionWritten = onDocumentWritten("institutions/{institutionId}", async (event) => {
+  const after = event.data && event.data.after && event.data.after.data();
+  if (!after) return;
+  const existed = event.data.before && event.data.before.exists;
+  const before = existed ? event.data.before.data() : {};
+  const fields = changedFields(before, after);
+  if (existed && fields.length === 0) return;
+  await admin.firestore().collection("audit_logs").add({
+    actorId: after.updatedBy || "",
+    action: existed ? "institution_changed" : "institution_created",
+    targetType: "institution",
+    targetId: event.params.institutionId,
+    metadata: existed ? {name: after.name || "", changed: fields.join(", ")} : {name: after.name || ""},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+});
+
 exports.scanUploadedPdf = require("./pdf_scan").scanUploadedPdf;

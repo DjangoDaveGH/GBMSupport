@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/audit_log.dart';
+import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/features/dashboard/data/audit_log_repository.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
@@ -9,12 +10,20 @@ final auditLogRepositoryProvider = Provider<AuditLogRepository>((ref) {
   return AuditLogRepository(ref.watch(firestoreProvider));
 });
 
-final auditLogProvider = StreamProvider.autoDispose<List<TicketActivity>>((ref) {
+final auditLogProvider = StreamProvider.autoDispose<List<TicketActivity>>((
+  ref,
+) {
   final viewer = ref.watch(currentAppUserProvider).valueOrNull;
   if (viewer == null) return Stream.value(const <TicketActivity>[]);
-  return ref.watch(auditLogRepositoryProvider).watchRecent(viewer);
+  final repo = ref.watch(auditLogRepositoryProvider);
+  // Admins see every ticket event; everyone else sees only their own.
+  return viewer.role == UserRole.pfmManagement
+      ? repo.watchRecent()
+      : repo.watchOwn(viewer);
 });
 
-final adminActionsAuditLogProvider = StreamProvider.autoDispose<List<AuditLog>>((ref) {
-  return ref.watch(auditLogRepositoryProvider).watchAdminActions();
-});
+final adminActionsAuditLogProvider = StreamProvider.autoDispose<List<AuditLog>>(
+  (ref) {
+    return ref.watch(auditLogRepositoryProvider).watchAdminActions();
+  },
+);
