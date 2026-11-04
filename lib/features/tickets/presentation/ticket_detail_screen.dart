@@ -181,27 +181,49 @@ class _SummaryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: ticket.assignedTo != null
-                    ? TicketAssignedCell(
-                        userId: ticket.assignedTo!,
-                        fallbackName: ticket.assignedToName,
-                        attemptRead: viewer.role.isSupportSide,
-                      )
-                    : const TicketFactCell(
-                        label: 'Assigned To',
-                        value: 'Unassigned',
-                      ),
-              ),
-              Expanded(
-                child: TicketFactCell(
-                  label: 'Created',
-                  value: DateFormat.MMMd().add_jm().format(ticket.createdAt),
+                child: _FactTile(
+                  child: ticket.assignedTo != null
+                      ? TicketAssignedCell(
+                          userId: ticket.assignedTo!,
+                          fallbackName: ticket.assignedToName,
+                          attemptRead: viewer.role.isSupportSide,
+                        )
+                      : const TicketFactCell(
+                          label: 'Assigned To',
+                          value: 'Unassigned',
+                        ),
                 ),
               ),
+              const SizedBox(width: 10),
               Expanded(
-                child: TicketFactCell(
-                  label: 'Updated',
-                  value: DateFormat.MMMd().add_jm().format(ticket.updatedAt),
+                child: _FactTile(
+                  child: TicketFactCell(
+                    label: 'Created',
+                    value: DateFormat.MMMd().add_jm().format(ticket.createdAt),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _FactTile(
+                  child: TicketFactCell(
+                    label: 'Last updated',
+                    value: DateFormat.MMMd().add_jm().format(ticket.updatedAt),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _FactTile(
+                  child: TicketFactCell(
+                    label: 'Status',
+                    value: ticket.status.label,
+                  ),
                 ),
               ),
             ],
@@ -575,6 +597,27 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
   }
 }
 
+/// A bordered tile around one fact, so each fact reads as its own block.
+class _FactTile extends StatelessWidget {
+  final Widget child;
+
+  const _FactTile({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _TimelineTab extends ConsumerWidget {
   final String ticketId;
 
@@ -638,7 +681,10 @@ class _DetailsTab extends ConsumerWidget {
                 spacing: 16,
                 runSpacing: 12,
                 children: facts
-                    .map((fact) => SizedBox(width: 150, child: fact))
+                    .map(
+                      (fact) =>
+                          SizedBox(width: 160, child: _FactTile(child: fact)),
+                    )
                     .toList(),
               ),
             ],
@@ -653,7 +699,12 @@ class _DetailsTab extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
-              TicketDescription(text: ticket.description),
+              // Full text, not clamped: the description is the first thing
+              // people read, so nothing in it is hidden behind "Show more".
+              Text(
+                ticket.description,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
               if (ticket.attachmentUrls.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),

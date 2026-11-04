@@ -204,12 +204,7 @@ class TicketFactCell extends StatelessWidget {
       children: [
         Text(label, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text(value, style: Theme.of(context).textTheme.titleSmall),
       ],
     );
   }
@@ -256,12 +251,7 @@ class TicketAssignedCell extends ConsumerWidget {
           ),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            child: Text(name, style: Theme.of(context).textTheme.titleSmall),
           ),
         ],
       ),
