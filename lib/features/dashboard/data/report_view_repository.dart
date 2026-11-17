@@ -11,7 +11,8 @@ class ReportViewRepository {
 
   ReportViewRepository(this._db);
 
-  CollectionReference<Map<String, dynamic>> get _views => _db.collection('report_views');
+  CollectionReference<Map<String, dynamic>> get _views =>
+      _db.collection('report_views');
 
   Future<void> logView({
     required String viewedBy,
@@ -38,6 +39,9 @@ class ReportViewRepository {
         .orderBy('viewedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => ReportView.fromMap(d.id, d.data())).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => ReportView.fromMap(d.id, d.data())).toList(),
+        );
   }
 }

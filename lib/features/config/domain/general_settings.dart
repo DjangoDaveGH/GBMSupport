@@ -29,10 +29,10 @@ class GeneralSettings {
   }
 
   Map<String, dynamic> toMap() => {
-        'appName': appName,
-        'timezone': timezone,
-        'dateFormat': dateFormat,
-        'timeFormat': timeFormat,
-        'logoUrl': logoUrl,
-      };
+    'appName': appName,
+    'timezone': timezone,
+    'dateFormat': dateFormat,
+    'timeFormat': timeFormat,
+    'logoUrl': logoUrl,
+  };
 }

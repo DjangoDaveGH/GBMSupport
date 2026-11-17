@@ -35,6 +35,7 @@ import 'package:hyport/features/dashboard/domain/report_section_data.dart'
     show reportTypeLabels;
 import 'package:hyport/features/dashboard/presentation/home_screen.dart';
 import 'package:hyport/features/dashboard/presentation/desktop_reports_screen.dart';
+import 'package:hyport/features/admin/presentation/admin_reports_screen.dart';
 import 'package:hyport/features/dashboard/presentation/report_detail_screen.dart';
 import 'package:hyport/features/dashboard/presentation/reports_screen.dart';
 import 'package:hyport/features/dashboard/presentation/system_status_screen.dart';
@@ -761,6 +762,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             mobile: InstitutionsScreen(),
             desktop: DesktopInstitutionsScreen(),
             desktopTitle: 'Institutions',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/reports',
+        pageBuilder: (context, state) => _slideUpPage(
+          state,
+          const ResponsiveScreen(
+            mobile: AdminReportsScreen(),
+            desktop: Padding(
+              padding: EdgeInsets.all(24),
+              child: AdminReportsScreen(),
+            ),
+            desktopTitle: 'Admin Reports',
           ),
         ),
       ),

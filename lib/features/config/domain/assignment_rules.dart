@@ -12,14 +12,18 @@ class CategoryRule {
   factory CategoryRule.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const CategoryRule();
     if (map['pool'] == 'ALL') return const CategoryRule(useAll: true);
-    return CategoryRule(userIds: List<String>.from(map['userIds'] as List? ?? const []));
+    return CategoryRule(
+      userIds: List<String>.from(map['userIds'] as List? ?? const []),
+    );
   }
 
   Map<String, dynamic> toMap() =>
       useAll ? {'pool': 'ALL'} : {'userIds': userIds};
 
-  CategoryRule copyWith({bool? useAll, List<String>? userIds}) =>
-      CategoryRule(useAll: useAll ?? this.useAll, userIds: userIds ?? this.userIds);
+  CategoryRule copyWith({bool? useAll, List<String>? userIds}) => CategoryRule(
+    useAll: useAll ?? this.useAll,
+    userIds: userIds ?? this.userIds,
+  );
 
   bool get isEmpty => !useAll && userIds.isEmpty;
 }
@@ -34,11 +38,13 @@ class AssignmentRules {
 
   const AssignmentRules({this.enabled = true, this.categories = const {}});
 
-  CategoryRule ruleFor(TicketCategory c) => categories[c] ?? const CategoryRule();
+  CategoryRule ruleFor(TicketCategory c) =>
+      categories[c] ?? const CategoryRule();
 
   factory AssignmentRules.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const AssignmentRules();
-    final rawCats = (map['categories'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final rawCats =
+        (map['categories'] as Map?)?.cast<String, dynamic>() ?? const {};
     final categories = <TicketCategory, CategoryRule>{};
     for (final c in TicketCategory.values) {
       final entry = rawCats[c.wireValue];
@@ -55,15 +61,17 @@ class AssignmentRules {
   /// Only the fields this screen owns — `strategy` / `openStatuses` in the
   /// Firestore doc are left untouched (the repository writes with merge).
   Map<String, dynamic> toMap() => {
-        'enabled': enabled,
-        'categories': {
-          for (final e in categories.entries) e.key.wireValue: e.value.toMap(),
-        },
-      };
+    'enabled': enabled,
+    'categories': {
+      for (final e in categories.entries) e.key.wireValue: e.value.toMap(),
+    },
+  };
 
-  AssignmentRules copyWith({bool? enabled, Map<TicketCategory, CategoryRule>? categories}) =>
-      AssignmentRules(
-        enabled: enabled ?? this.enabled,
-        categories: categories ?? this.categories,
-      );
+  AssignmentRules copyWith({
+    bool? enabled,
+    Map<TicketCategory, CategoryRule>? categories,
+  }) => AssignmentRules(
+    enabled: enabled ?? this.enabled,
+    categories: categories ?? this.categories,
+  );
 }

@@ -29,11 +29,17 @@ class ReportPdfExporter {
     final bytes = await _buildPdf(reportLabel, sections);
     final fileName = '${DateTime.now().millisecondsSinceEpoch}_$reportType.pdf';
     final storageRef = _storage.ref('reports/$uid/$fileName');
-    final snapshot = await storageRef.putData(bytes, SettableMetadata(contentType: 'application/pdf'));
+    final snapshot = await storageRef.putData(
+      bytes,
+      SettableMetadata(contentType: 'application/pdf'),
+    );
     return snapshot.ref.getDownloadURL();
   }
 
-  Future<Uint8List> _buildPdf(String reportLabel, List<ReportSectionData> sections) async {
+  Future<Uint8List> _buildPdf(
+    String reportLabel,
+    List<ReportSectionData> sections,
+  ) async {
     final doc = pw.Document();
     final generatedAt = DateTime.now();
 

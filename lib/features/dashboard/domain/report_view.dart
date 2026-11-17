@@ -29,10 +29,10 @@ class ReportView {
   }
 
   Map<String, dynamic> toMap() => {
-        'reportType': reportType,
-        'reportLabel': reportLabel,
-        'viewedBy': viewedBy,
-        'viewedAt': FieldValue.serverTimestamp(),
-        if (pdfUrl != null) 'pdfUrl': pdfUrl,
-      };
+    'reportType': reportType,
+    'reportLabel': reportLabel,
+    'viewedBy': viewedBy,
+    'viewedAt': FieldValue.serverTimestamp(),
+    if (pdfUrl != null) 'pdfUrl': pdfUrl,
+  };
 }

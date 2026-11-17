@@ -28,23 +28,28 @@ class SlaPolicy {
   }
 
   Map<String, dynamic> toMap() => {
-        'criticalHours': criticalHours,
-        'highHours': highHours,
-        'mediumHours': mediumHours,
-        'lowHours': lowHours,
-      };
+    'criticalHours': criticalHours,
+    'highHours': highHours,
+    'mediumHours': mediumHours,
+    'lowHours': lowHours,
+  };
 
   int targetHoursFor(TicketPriority priority) => switch (priority) {
-        TicketPriority.critical => criticalHours,
-        TicketPriority.high => highHours,
-        TicketPriority.medium => mediumHours,
-        TicketPriority.low => lowHours,
-      };
+    TicketPriority.critical => criticalHours,
+    TicketPriority.high => highHours,
+    TicketPriority.medium => mediumHours,
+    TicketPriority.low => lowHours,
+  };
 
-  SlaPolicy copyWith({int? criticalHours, int? highHours, int? mediumHours, int? lowHours}) => SlaPolicy(
-        criticalHours: criticalHours ?? this.criticalHours,
-        highHours: highHours ?? this.highHours,
-        mediumHours: mediumHours ?? this.mediumHours,
-        lowHours: lowHours ?? this.lowHours,
-      );
+  SlaPolicy copyWith({
+    int? criticalHours,
+    int? highHours,
+    int? mediumHours,
+    int? lowHours,
+  }) => SlaPolicy(
+    criticalHours: criticalHours ?? this.criticalHours,
+    highHours: highHours ?? this.highHours,
+    mediumHours: mediumHours ?? this.mediumHours,
+    lowHours: lowHours ?? this.lowHours,
+  );
 }

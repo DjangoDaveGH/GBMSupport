@@ -7,6 +7,7 @@ final reportViewRepositoryProvider = Provider<ReportViewRepository>((ref) {
   return ReportViewRepository(ref.watch(firestoreProvider));
 });
 
-final recentReportViewsProvider = StreamProvider.autoDispose.family<List<ReportView>, String>((ref, uid) {
-  return ref.watch(reportViewRepositoryProvider).watchRecent(uid);
-});
+final recentReportViewsProvider = StreamProvider.autoDispose
+    .family<List<ReportView>, String>((ref, uid) {
+      return ref.watch(reportViewRepositoryProvider).watchRecent(uid);
+    });

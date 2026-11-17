@@ -74,6 +74,12 @@ const _navItems = [
     'Institutions',
     pfmManagementOnly: true,
   ),
+  _NavItem(
+    '/admin/reports',
+    Icons.summarize_outlined,
+    'Admin Reports',
+    pfmManagementOnly: true,
+  ),
   _NavItem('/sla-monitoring', Icons.gpp_good_outlined, 'SLA Monitoring'),
   _NavItem(
     '/admin-settings',

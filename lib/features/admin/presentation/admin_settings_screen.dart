@@ -60,6 +60,13 @@ class AdminSettingsScreen extends StatelessWidget {
               ),
               const Divider(height: 1, indent: 56),
               _SettingsTile(
+                icon: Icons.summarize_outlined,
+                label: 'Admin Reports',
+                subtitle: 'All reports by date and system, with downloads',
+                onTap: () => context.push('/admin/reports'),
+              ),
+              const Divider(height: 1, indent: 56),
+              _SettingsTile(
                 icon: Icons.notifications_none_rounded,
                 label: 'Notifications',
                 subtitle: 'Email, push, in-app notifications',
