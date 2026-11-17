@@ -37,18 +37,12 @@ class DesktopTicketDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _DesktopTicketDetailScreenState
-    extends ConsumerState<DesktopTicketDetailScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(
-    length: 3,
-    vsync: this,
-  );
+    extends ConsumerState<DesktopTicketDetailScreen> {
   final _noteController = TextEditingController();
   final _actionsButtonKey = GlobalKey();
 
   @override
   void dispose() {
-    _tabController.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -242,7 +236,6 @@ class _DesktopTicketDetailScreenState
                       child: _MainColumn(
                         ticket: ticket,
                         viewer: viewer,
-                        tabController: _tabController,
                         noteController: _noteController,
                       ),
                     ),
@@ -412,17 +405,16 @@ class _DesktopTicketDetailScreenState
 }
 
 /// Left column: the ticket summary (title, chips, the three facts people look
-/// for first), then the Details / Timeline / SLA tabs, then the chat composer.
+/// for first), then every ticket section on one scrollable page, then the chat
+/// composer. Nothing sits behind a tab or a "Show more" toggle.
 class _MainColumn extends ConsumerWidget {
   final Ticket ticket;
   final AppUser viewer;
-  final TabController tabController;
   final TextEditingController noteController;
 
   const _MainColumn({
     required this.ticket,
     required this.viewer,
-    required this.tabController,
     required this.noteController,
   });
 
@@ -442,33 +434,12 @@ class _MainColumn extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
             child: _SummaryPanel(ticket: ticket, viewer: viewer),
           ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: borderColor)),
-            ),
-            child: TabBar(
-              controller: tabController,
-              isScrollable: true,
-              labelColor: AppTheme.navy,
-              unselectedLabelColor: Theme.of(
-                context,
-              ).colorScheme.onSurfaceVariant,
-              indicatorColor: AppTheme.navy,
-              tabs: const [
-                Tab(text: 'Details'),
-                Tab(text: 'Timeline'),
-                Tab(text: 'SLA'),
-              ],
-            ),
-          ),
           Expanded(
-            child: TabBarView(
-              controller: tabController,
-              children: [
-                _DetailsView(ticket: ticket, viewer: viewer),
-                _TimelineView(ticketId: ticket.id),
-                _SlaView(ticket: ticket),
-              ],
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: borderColor)),
+              ),
+              child: _TicketSections(ticket: ticket, viewer: viewer),
             ),
           ),
           // This composer writes a plain TicketActivity comment — the same
@@ -638,17 +609,17 @@ class _SummaryPanel extends StatelessWidget {
   }
 }
 
-/// Details tab, two columns so the whole thing fits without scrolling on a
-/// typical laptop: description, attachments and resolution on the left; the
-/// remaining facts and the Requested By card on the right.
-class _DetailsView extends StatelessWidget {
+/// Every section of the ticket on one scrollable page: the facts, the full
+/// description (not clamped), attachments, resolution notes, the requester
+/// (support side only), SLA and the activity timeline.
+class _TicketSections extends ConsumerWidget {
   final Ticket ticket;
   final AppUser viewer;
 
-  const _DetailsView({required this.ticket, required this.viewer});
+  const _TicketSections({required this.ticket, required this.viewer});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final facts = <Widget>[
       if (ticket.subCategory.isNotEmpty)
         TicketFactCell(label: 'Sub-category', value: ticket.subCategory),
@@ -669,109 +640,69 @@ class _DetailsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Description',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  TicketDescription(text: ticket.description),
-                  if (ticket.attachmentUrls.isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    TicketAttachmentsSection(
-                      attachmentUrls: ticket.attachmentUrls,
-                    ),
-                  ],
-                  if (ticket.resolutionNotes != null &&
-                      ticket.resolutionNotes!.isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    TicketResolutionNotesCard(notes: ticket.resolutionNotes!),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 28),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ticket information',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 24,
-                    runSpacing: 16,
-                    children: facts
-                        .map((fact) => SizedBox(width: 150, child: fact))
-                        .toList(),
-                  ),
-                  if (viewer.role.isSupportSide) ...[
-                    const SizedBox(height: 22),
-                    Text(
-                      'Requested By',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 12),
-                    _AssigneeInfo(
-                      userId: ticket.createdBy,
-                      showInstitution: true,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+        const _SectionTitle('Ticket information'),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 24,
+          runSpacing: 16,
+          children: facts
+              .map((fact) => SizedBox(width: 150, child: fact))
+              .toList(),
         ),
+        const SizedBox(height: 22),
+        const _SectionTitle('Description'),
+        const SizedBox(height: 8),
+        Text(ticket.description, style: Theme.of(context).textTheme.bodyMedium),
+        if (ticket.attachmentUrls.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          TicketAttachmentsSection(attachmentUrls: ticket.attachmentUrls),
+        ],
+        if (ticket.resolutionNotes != null &&
+            ticket.resolutionNotes!.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          TicketResolutionNotesCard(notes: ticket.resolutionNotes!),
+        ],
+        if (viewer.role.isSupportSide) ...[
+          const SizedBox(height: 22),
+          const _SectionTitle('Requested By'),
+          const SizedBox(height: 12),
+          _AssigneeInfo(userId: ticket.createdBy, showInstitution: true),
+        ],
+        const SizedBox(height: 22),
+        const _SectionTitle('SLA'),
+        const SizedBox(height: 12),
+        ref
+            .watch(slaPolicyProvider)
+            .when(
+              loading: () =>
+                  const SizedBox(height: 80, child: BrandedLoaderCenter()),
+              error: (e, _) => const Text('SLA information unavailable'),
+              data: (policy) => TicketSlaCard(ticket: ticket, policy: policy),
+            ),
+        const SizedBox(height: 10),
+        const _SectionTitle('Timeline'),
+        const SizedBox(height: 12),
+        ref
+            .watch(ticketActivityProvider(ticket.id))
+            .when(
+              loading: () =>
+                  const SizedBox(height: 80, child: BrandedLoaderCenter()),
+              error: (e, _) => Text('Could not load activity: $e'),
+              data: (activity) => TicketActivityTrail(activity: activity),
+            ),
       ],
     );
   }
 }
 
-class _TimelineView extends ConsumerWidget {
-  final String ticketId;
+class _SectionTitle extends StatelessWidget {
+  final String text;
 
-  const _TimelineView({required this.ticketId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activityAsync = ref.watch(ticketActivityProvider(ticketId));
-    return activityAsync.when(
-      loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => Center(child: Text('Could not load activity: $e')),
-      data: (activity) => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [TicketActivityTrail(activity: activity)],
-      ),
-    );
-  }
-}
-
-class _SlaView extends ConsumerWidget {
-  final Ticket ticket;
-
-  const _SlaView({required this.ticket});
+  const _SectionTitle(this.text);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final policyAsync = ref.watch(slaPolicyProvider);
-    return policyAsync.when(
-      loading: () => const BrandedLoaderCenter(),
-      error: (e, _) => const Center(child: Text('SLA information unavailable')),
-      data: (policy) => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [TicketSlaCard(ticket: ticket, policy: policy)],
-      ),
-    );
+  Widget build(BuildContext context) {
+    return Text(text, style: Theme.of(context).textTheme.titleSmall);
   }
 }
 
