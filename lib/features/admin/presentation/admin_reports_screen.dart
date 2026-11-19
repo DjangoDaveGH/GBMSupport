@@ -1,27 +1,22 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
-import 'package:hyport/core/services/firebase_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
-import 'package:hyport/features/dashboard/data/report_pdf_export.dart';
-import 'package:hyport/features/dashboard/data/report_providers.dart';
+import 'package:hyport/features/dashboard/data/report_export.dart';
 import 'package:hyport/features/dashboard/domain/report_csv.dart';
 import 'package:hyport/features/dashboard/domain/report_section_data.dart';
+import 'package:hyport/features/dashboard/presentation/report_download_menu.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Admin-only (PFM Management) reports page: every report type, scoped by
-/// date range and system, with PDF and CSV downloads. Route guard lives in
+/// date range and system, downloadable as PDF, Word, PowerPoint or CSV
+/// (plus a raw per-ticket CSV). Route guard lives in
 /// app_router.dart (`/admin` prefix), so this screen is not linked for
 /// anyone else.
 class AdminReportsScreen extends ConsumerStatefulWidget {
@@ -116,67 +111,37 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     }
   }
 
-  Future<String> _uploadCsv(String uid, String name, List<List<String>> rows) async {
-    // UTF-8 BOM so Excel reads non-ASCII names correctly.
-    final bytes = Uint8List.fromList(
-      utf8.encode('﻿${csvFromRows(rows)}'),
-    );
-    final storageRef = ref
-        .read(firebaseStorageProvider)
-        .ref('reports/$uid/${DateTime.now().millisecondsSinceEpoch}_$name.csv');
-    final snapshot = await storageRef.putData(
-      bytes,
-      SettableMetadata(contentType: 'text/csv; charset=utf-8'),
-    );
-    return snapshot.ref.getDownloadURL();
-  }
-
   Future<void> _download({
-    required _DownloadKind kind,
+    required ReportFormat format,
     required AppUser me,
     required DateTimeRange? range,
     required List<Ticket> tickets,
     required List<ReportSectionData> sections,
-    required Map<String, String> userNames,
+    Map<String, String>? ticketCsvUserNames,
   }) async {
     setState(() => _busy = true);
     final typeLabel = reportTypeLabels[_reportType] ?? _reportType;
-    final rangeText = _rangeLabel(range);
-    final logLabel = '$typeLabel · $rangeText';
+    final systemLabel = _systemOptions.firstWhere((o) => o.$1 == _system).$2;
+    final isTicketList = ticketCsvUserNames != null;
     try {
-      final String url;
-      switch (kind) {
-        case _DownloadKind.pdf:
-          url = await ref
-              .read(reportPdfExporterProvider)
-              .exportAndUpload(
-                uid: me.id,
-                reportType: _reportType,
-                reportLabel: logLabel,
-                sections: sections,
-              );
-        case _DownloadKind.summaryCsv:
-          url = await _uploadCsv(
-            me.id,
-            _reportType,
-            reportSectionsToRows(typeLabel, rangeText, sections),
-          );
-        case _DownloadKind.ticketsCsv:
-          url = await _uploadCsv(
-            me.id,
-            'tickets',
-            ticketsToRows(tickets, userNames),
-          );
-      }
       await ref
-          .read(reportViewRepositoryProvider)
-          .logView(
-            viewedBy: me.id,
+          .read(reportExporterProvider)
+          .export(
+            format: format,
+            uid: me.id,
             reportType: _reportType,
-            reportLabel: logLabel,
-            pdfUrl: url,
+            reportLabel: isTicketList ? 'Tickets List' : typeLabel,
+            sections: sections,
+            subtitleLines: [_rangeLabel(range), systemLabel],
+            csvRows: isTicketList
+                ? ticketsToRows(tickets, ticketCsvUserNames)
+                : null,
           );
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${format.label} downloaded.')),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -260,30 +225,14 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _DownloadButton(
-                      icon: Icons.picture_as_pdf_outlined,
-                      label: 'Download PDF',
+                    ReportDownloadMenu(
                       busy: _busy,
-                      onPressed: () => _download(
-                        kind: _DownloadKind.pdf,
+                      onSelected: (format) => _download(
+                        format: format,
                         me: appUser,
                         range: range,
                         tickets: tickets,
                         sections: sections,
-                        userNames: userNames,
-                      ),
-                    ),
-                    _DownloadButton(
-                      icon: Icons.table_chart_outlined,
-                      label: 'Download report CSV',
-                      busy: _busy,
-                      onPressed: () => _download(
-                        kind: _DownloadKind.summaryCsv,
-                        me: appUser,
-                        range: range,
-                        tickets: tickets,
-                        sections: sections,
-                        userNames: userNames,
                       ),
                     ),
                     _DownloadButton(
@@ -291,12 +240,12 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                       label: 'Download tickets CSV',
                       busy: _busy,
                       onPressed: () => _download(
-                        kind: _DownloadKind.ticketsCsv,
+                        format: ReportFormat.csv,
                         me: appUser,
                         range: range,
                         tickets: tickets,
                         sections: sections,
-                        userNames: userNames,
+                        ticketCsvUserNames: userNames,
                       ),
                     ),
                   ],
@@ -311,8 +260,6 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     );
   }
 }
-
-enum _DownloadKind { pdf, summaryCsv, ticketsCsv }
 
 class _FilterCard extends StatelessWidget {
   final String reportType;

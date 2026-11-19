@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/theme/app_theme.dart';
+import 'package:hyport/features/dashboard/data/report_export.dart';
 import 'package:hyport/features/dashboard/data/report_providers.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,7 +42,7 @@ const _reportTypes = [
 ];
 
 /// Phase 4 mockup screen 24. Reports are computed live from real ticket
-/// data (see ReportDetailScreen); PDF export (report_pdf_export.dart)
+/// data (see ReportDetailScreen); downloads (report_export.dart)
 /// renders that same live data and uploads it to Storage. "Recent Reports"
 /// is a genuine log of report types this admin looked at — entries with an
 /// exported PDF link to the real Storage file, not a fabricated one.
@@ -153,6 +154,9 @@ class ReportsScreen extends ConsumerWidget {
                 return Column(
                   children: views.map((v) {
                     final hasPdf = v.pdfUrl != null;
+                    final fileFormat = hasPdf
+                        ? ReportFormat.fromUrl(v.pdfUrl!)
+                        : null;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
@@ -181,9 +185,8 @@ class ReportsScreen extends ConsumerWidget {
                             child: Row(
                               children: [
                                 Icon(
-                                  hasPdf
-                                      ? Icons.picture_as_pdf_outlined
-                                      : Icons.description_outlined,
+                                  fileFormat?.icon ??
+                                      Icons.description_outlined,
                                   size: 18,
                                   color: AppTheme.gold,
                                 ),

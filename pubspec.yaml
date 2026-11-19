@@ -81,6 +81,11 @@ dependencies:
   pdf: ^3.11.1
   url_launcher: ^6.3.1
 
+  # Word/PowerPoint report export (zipped Office Open XML) and browser
+  # downloads on web
+  archive: ^4.0.9
+  web: ^1.1.1
+
   # In-app preview for ticket attachments (attachment_viewer_screen.dart):
   # PDFs via pdfx, pinch-zoomable images via photo_view (already pulled in
   # transitively by pdfx, promoted to direct since we use it ourselves).

@@ -10,9 +10,10 @@ import 'package:hyport/core/widgets/app_error_state.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
 import 'package:hyport/features/config/domain/sla_policy.dart';
-import 'package:hyport/features/dashboard/data/report_pdf_export.dart';
+import 'package:hyport/features/dashboard/data/report_export.dart';
 import 'package:hyport/features/dashboard/data/report_providers.dart';
 import 'package:hyport/features/dashboard/domain/report_section_data.dart';
+import 'package:hyport/features/dashboard/presentation/report_download_menu.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 
@@ -25,8 +26,8 @@ import 'package:hyport/features/tickets/domain/ticket.dart';
 /// a true count. A filter (status/priority/category, via the same
 /// TicketFiltersScreen the Ticket Queue uses) plus a title/reference search
 /// let the report be scoped to a subset before those figures are computed —
-/// PDF export uses that same filtered set, so the exported file matches
-/// what's on screen.
+/// Downloads (PDF, Word, PowerPoint, CSV — see report_export.dart) use
+/// that same filtered set, so the file matches what's on screen.
 class ReportDetailScreen extends ConsumerStatefulWidget {
   final String reportType;
   final String reportLabel;
@@ -104,36 +105,49 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     }
   }
 
-  Future<void> _exportPdf(String uid, List<ReportSectionData> sections) async {
+  /// What the downloaded file was scoped to, so it says so on the page.
+  List<String> _scopeLines(TicketFilter filter) {
+    final system = filter.system;
+    return [
+      if (system != null) 'System: ${system.toUpperCase()}',
+      if (filter.statuses.isNotEmpty ||
+          filter.priorities.isNotEmpty ||
+          filter.category != null ||
+          filter.overdueOnly ||
+          filter.createdAfter != null ||
+          filter.createdBefore != null)
+        'Filters applied',
+      if (_search.isNotEmpty) 'Search: "$_search"',
+    ];
+  }
+
+  Future<void> _export(
+    ReportFormat format,
+    String uid,
+    List<ReportSectionData> sections,
+    TicketFilter filter,
+  ) async {
     setState(() => _exporting = true);
     try {
-      final url = await ref
-          .read(reportPdfExporterProvider)
-          .exportAndUpload(
+      await ref
+          .read(reportExporterProvider)
+          .export(
+            format: format,
             uid: uid,
             reportType: widget.reportType,
             reportLabel: widget.reportLabel,
             sections: sections,
-          );
-      await ref
-          .read(reportViewRepositoryProvider)
-          .logView(
-            viewedBy: uid,
-            reportType: widget.reportType,
-            reportLabel: widget.reportLabel,
-            pdfUrl: url,
+            subtitleLines: _scopeLines(filter),
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PDF exported — see Recent Reports to open it.'),
-        ),
+        SnackBar(content: Text('${format.label} downloaded.')),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not export PDF: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not download ${format.label}: $e')),
+      );
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -180,18 +194,11 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 usersAsync.valueOrNull ?? const [],
                 slaPolicy,
               );
-              return IconButton(
-                tooltip: 'Export PDF',
-                icon: _exporting
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.picture_as_pdf_outlined),
-                onPressed: _exporting
-                    ? null
-                    : () => _exportPdf(appUser.id, sections),
+              return ReportDownloadMenu(
+                compact: true,
+                busy: _exporting,
+                onSelected: (format) =>
+                    _export(format, appUser.id, sections, effectiveFilter),
               );
             },
             orElse: () => const SizedBox.shrink(),

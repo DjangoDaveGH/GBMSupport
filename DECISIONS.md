@@ -435,6 +435,19 @@ pending Storage got built for real rather than left disabled:
   entry (`ReportView.pdfUrl`, new nullable field) — so "Recent Reports"
   entries with an export are now real, re-openable files (`url_launcher`,
   new dependency) rather than just a view-history log.
+- **Reports export** (supersedes the upload-only PDF flow above): exporting
+  used to only upload the PDF and log it, so nothing reached the user's
+  device until they found it under "Recent Reports". `ReportExporter`
+  (`report_export.dart`) now builds PDF, Word (.docx), PowerPoint (.pptx)
+  or CSV from the same `ReportSectionData` and saves it directly — an
+  anchor download on web (`file_saver_web.dart`, `package:web`), the OS
+  share/save sheet on Android/iOS (`share_plus`). The Storage upload +
+  `report_views` log still happen alongside it (best-effort, never blocks
+  the download) so Recent Reports keeps working. DOCX/PPTX are generated as
+  zipped Office Open XML with `archive` (`report_office_export.dart`)
+  instead of adding a heavyweight Office library; PPTX paginates tables at
+  10 rows per slide. `ReportView.pdfUrl` keeps its name for back-compat but
+  may now point at any of the four formats.
 - Doc comments and README that previously said "blocked on the Blaze
   billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
   `audit_log_repository.dart`) were corrected: Blaze is active now, so
