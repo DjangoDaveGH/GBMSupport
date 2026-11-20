@@ -470,6 +470,13 @@ pending Storage got built for real rather than left disabled:
   `/assets/*.json`, `/assets/AssetManifest.bin` and `/manifest.json` as
   `no-cache`. (Flutter 3.44's `flutter_service_worker.js` only unregisters
   itself, so no service-worker cache is involved.)
+- **Icon fonts revalidate on every load.** `flutter build web` tree-shakes
+  `MaterialIcons-Regular.otf` (and CupertinoIcons) to the icons the code
+  uses, so the file changes between releases at the same URL; with the
+  default `max-age=3600` a browser could pair a new build with the old
+  subset and show blank icons for up to an hour after a deploy.
+  `firebase.json` now serves `/assets/fonts/**` and `/assets/packages/**`
+  as `no-cache` (header-only change, deployed with build 1.0.13+17).
 - Doc comments and README that previously said "blocked on the Blaze
   billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
   `audit_log_repository.dart`) were corrected: Blaze is active now, so
