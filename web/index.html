@@ -220,6 +220,40 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Start-up self-heal. Hosting answers a missing file with index.html,
+    // and browsers keep that answer in their HTTP cache (max-age=3600). After
+    // an incomplete release, a cached HTML "FontManifest.json" left the app
+    // stuck on this loading screen even once the site was fixed. Refetching
+    // these small boot files with cache: 'reload' bypasses and overwrites
+    // any stale copy before Flutter reads them. Bounded so a slow network
+    // never delays start-up by more than a few seconds.
+    (function () {
+      var bootFiles = [
+        'assets/FontManifest.json',
+        'assets/AssetManifest.bin.json',
+        'assets/AssetManifest.bin',
+      ];
+      function startFlutter() {
+        if (window.__hyportBootStarted) return;
+        window.__hyportBootStarted = true;
+        var script = document.createElement('script');
+        script.src = 'flutter_bootstrap.js';
+        script.async = true;
+        document.body.appendChild(script);
+      }
+      try {
+        var refresh = Promise.all(bootFiles.map(function (file) {
+          return fetch(file, { cache: 'reload' }).then(function (r) {
+            return r.arrayBuffer();
+          }).catch(function () {});
+        }));
+        var limit = new Promise(function (resolve) { setTimeout(resolve, 4000); });
+        Promise.race([refresh, limit]).then(startFlutter, startFlutter);
+      } catch (e) {
+        startFlutter();
+      }
+    })();
+  </script>
 </body>
 </html>

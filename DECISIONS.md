@@ -459,6 +459,17 @@ pending Storage got built for real rather than left disabled:
   Chromium on both sites (load, `hyportReloadApp()`, F5). Added
   `scripts/check_web_build.js` as a Hosting `predeploy` step in
   `firebase.json` so a deploy with missing core files now fails instead.
+- **Follow-up: browsers stayed stuck after that fix (1.0.13+17).** During
+  the outage each missing file was served as index.html with Hosting's
+  default `max-age=3600`, so browsers that opened the app then kept an HTML
+  "FontManifest.json" in their HTTP cache and stayed on the loading screen
+  even after the fixed deploy (reproduced with a local Hosting-like server).
+  `web/index.html` now refetches the boot manifests with
+  `cache: 'reload'` (bounded to 4s) before loading `flutter_bootstrap.js`,
+  which overwrites any stale copy, and `firebase.json` serves
+  `/assets/*.json`, `/assets/AssetManifest.bin` and `/manifest.json` as
+  `no-cache`. (Flutter 3.44's `flutter_service_worker.js` only unregisters
+  itself, so no service-worker cache is involved.)
 - Doc comments and README that previously said "blocked on the Blaze
   billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
   `audit_log_repository.dart`) were corrected: Blaze is active now, so
