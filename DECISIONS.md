@@ -448,6 +448,17 @@ pending Storage got built for real rather than left disabled:
   instead of adding a heavyweight Office library; PPTX paginates tables at
   10 rows per slide. `ReportView.pdfUrl` keeps its name for back-compat but
   may now point at any of the four formats.
+- **Fixed: web app frozen on the loading screen after the 1.0.12+16
+  release.** That release's `build/web` came out incomplete (no
+  `assets/FontManifest.json`, asset manifests, `manifest.json`, icons or
+  service workers) and still deployed, because the `**` → `/index.html`
+  rewrite answers every missing file with HTML. Flutter then failed to parse
+  FontManifest.json and never rendered its first frame — on any fresh load,
+  which is what "Refresh now" does after clearing the cache. Fixed by a
+  clean rebuild (`rm -rf build/web`) and redeploy, verified with headless
+  Chromium on both sites (load, `hyportReloadApp()`, F5). Added
+  `scripts/check_web_build.js` as a Hosting `predeploy` step in
+  `firebase.json` so a deploy with missing core files now fails instead.
 - Doc comments and README that previously said "blocked on the Blaze
   billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
   `audit_log_repository.dart`) were corrected: Blaze is active now, so
