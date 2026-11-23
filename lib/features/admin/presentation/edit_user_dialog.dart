@@ -38,7 +38,7 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   late UserRole _role = widget.user.role;
   late InstitutionType _institutionType = widget.user.institutionType;
   late bool _isActive = widget.user.isActive;
-  late Set<String> _systems = {...widget.user.systems};
+  late final Set<String> _systems = {...widget.user.systems};
   bool _submitting = false;
   String? _error;
 
@@ -66,10 +66,12 @@ class _EditUserDialogState extends State<_EditUserDialog> {
       if (name != widget.user.name) data['name'] = name;
       if (email != widget.user.email) data['email'] = email;
       if (phone != widget.user.phone) data['phone'] = phone;
-      if (institutionId != widget.user.institutionId)
+      if (institutionId != widget.user.institutionId) {
         data['institutionId'] = institutionId;
-      if (_institutionType != widget.user.institutionType)
+      }
+      if (_institutionType != widget.user.institutionType) {
         data['institutionType'] = _institutionType.wireValue;
+      }
       if (_role != widget.user.role) data['role'] = _role.wireValue;
       if (_isActive != widget.user.isActive) data['isActive'] = _isActive;
       if (!_systems.containsAll(widget.user.systems) ||
@@ -88,10 +90,11 @@ class _EditUserDialogState extends State<_EditUserDialog> {
       await callable.call(data);
       if (mounted) Navigator.of(context).pop();
     } on FirebaseFunctionsException catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error = e.message ?? 'Could not update user (${e.code}).',
         );
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Could not update user: $e');
     } finally {

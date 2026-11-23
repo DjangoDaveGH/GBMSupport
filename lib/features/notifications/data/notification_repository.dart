@@ -27,6 +27,21 @@ class NotificationRepository {
         .map((snap) => snap.size);
   }
 
+  /// Unread admin announcements, oldest first. Same equality-only query as
+  /// [watchUnreadCount] (no composite index needed); ticket notifications
+  /// are filtered out here because they have no announcementId.
+  Stream<List<AppNotification>> watchUnreadAnnouncements(String userId) {
+    return _notifications
+        .where('userId', isEqualTo: userId)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => AppNotification.fromMap(d.id, d.data()))
+            .where((n) => n.announcementId != null)
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt)));
+  }
+
   Future<void> markRead(String notificationId) {
     return _notifications.doc(notificationId).update({'read': true});
   }

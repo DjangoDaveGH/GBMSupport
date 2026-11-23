@@ -95,10 +95,11 @@ class _DesktopAssignmentsScreenState
             .length;
 
         var filtered = tickets.where((t) => t.status.isOpenState).toList();
-        if (_officerFilter != null)
+        if (_officerFilter != null) {
           filtered = filtered
               .where((t) => t.assignedTo == _officerFilter)
               .toList();
+        }
         if (_search.isNotEmpty) {
           final q = _search.toLowerCase();
           filtered = filtered

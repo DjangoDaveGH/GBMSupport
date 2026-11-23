@@ -70,8 +70,8 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     final f = widget.initialFilter;
     if (f != null) {
       _system = f.system;
-      _systems = f.systems;
-      _statuses = f.statuses;
+      _systems = {...f.systems};
+      _statuses = {...f.statuses};
       _category = f.category;
       _priorities = f.priorities;
       _institutionId = f.institutionId;
@@ -126,7 +126,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     );
     if (result != null && mounted) {
       setState(() {
-        _statuses = result.statuses;
+        _statuses = {...result.statuses};
         _category = result.category;
         _priorities = result.priorities;
         _institutionId = result.institutionId;

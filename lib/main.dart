@@ -15,6 +15,7 @@ import 'package:hyport/core/services/presence_heartbeat_listener.dart';
 import 'package:hyport/core/services/push_notification_listener.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/features/tickets/data/draft_ticket_repository.dart';
+import 'package:hyport/features/notifications/presentation/announcement_popup_listener.dart';
 import 'package:hyport/features/tickets/presentation/offline_sync_listener.dart';
 import 'package:hyport/firebase_options.dart';
 
@@ -70,12 +71,14 @@ class HyportApp extends ConsumerWidget {
       child: AppUpdateListener(
         child: PresenceHeartbeatListener(
           child: PushNotificationListener(
-            child: MaterialApp.router(
-              title: 'GBMS Support',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light,
-              scaffoldMessengerKey: scaffoldMessengerKey,
-              routerConfig: router,
+            child: AnnouncementPopupListener(
+              child: MaterialApp.router(
+                title: 'GBMS Support',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                routerConfig: router,
+              ),
             ),
           ),
         ),

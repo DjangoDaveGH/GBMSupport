@@ -86,12 +86,14 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
     setState(() {
       if (isFrom) {
         _createdAfter = picked;
-        if (_createdBefore != null && _createdBefore!.isBefore(picked))
+        if (_createdBefore != null && _createdBefore!.isBefore(picked)) {
           _createdBefore = picked;
+        }
       } else {
         _createdBefore = picked;
-        if (_createdAfter != null && _createdAfter!.isAfter(picked))
+        if (_createdAfter != null && _createdAfter!.isAfter(picked)) {
           _createdAfter = picked;
+        }
       }
     });
   }

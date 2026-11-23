@@ -74,8 +74,8 @@ class _DesktopTicketListScreenState
     final f = widget.initialFilter;
     if (f != null) {
       _system = f.system;
-      _systems = f.systems;
-      _statuses = f.statuses;
+      _systems = {...f.systems};
+      _statuses = {...f.statuses};
       _priority = f.priorities.firstOrNull;
       _category = f.category;
       _institutionId = f.institutionId;

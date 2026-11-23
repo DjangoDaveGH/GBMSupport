@@ -1230,7 +1230,10 @@ async function autoAssignTicket(ticketId, ticket) {
   const assignedByUs = await db.runTransaction(async (tx) => {
     const tRef = db.collection("tickets").doc(ticketId);
     const tSnap = await tx.get(tRef);
-    if (!tSnap.exists || tSnap.data().assignedTo) return false;
+    // Only a still-open ticket: one resolved/closed before this ran must
+    // not be flipped back to "assigned".
+    if (!tSnap.exists || tSnap.data().assignedTo ||
+        (tSnap.data().status || "open") !== "open") return false;
 
     const [openCounts, stateDocs] = await Promise.all([
       Promise.all(candidateIds.map(async (uid) => {

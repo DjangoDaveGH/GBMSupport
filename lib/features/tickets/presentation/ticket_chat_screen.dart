@@ -286,8 +286,9 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
           body: Center(child: Text('We could not load this ticket.')),
         ),
         data: (ticket) {
-          if (ticket == null || viewer == null)
+          if (ticket == null || viewer == null) {
             return const BrandedLoaderCenter();
+          }
           return _ChatBody(
             ticket: ticket,
             viewer: viewer,
@@ -378,11 +379,13 @@ class _ChatBody extends ConsumerWidget {
     ChatReceipt? partnerReceipt,
   ) {
     final readAt = partnerReceipt?.lastReadAt;
-    if (readAt != null && !readAt.isBefore(comment.timestamp))
+    if (readAt != null && !readAt.isBefore(comment.timestamp)) {
       return _MessageStatus.read;
+    }
     final deliveredAt = partnerReceipt?.lastDeliveredAt;
-    if (deliveredAt != null && !deliveredAt.isBefore(comment.timestamp))
+    if (deliveredAt != null && !deliveredAt.isBefore(comment.timestamp)) {
       return _MessageStatus.delivered;
+    }
     return _MessageStatus.sent;
   }
 

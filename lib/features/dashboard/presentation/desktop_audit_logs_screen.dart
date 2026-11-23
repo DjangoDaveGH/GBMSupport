@@ -161,20 +161,23 @@ class _DesktopAuditLogsScreenState
         };
 
         var filtered = entries.where((a) {
-          if (selectedSystem != null && !ticketsById.containsKey(a.ticketId))
+          if (selectedSystem != null && !ticketsById.containsKey(a.ticketId)) {
             return false;
+          }
           if (selectedSystem == null &&
               appUser.role == UserRole.supportCoordinator &&
-              !ticketsById.containsKey(a.ticketId))
+              !ticketsById.containsKey(a.ticketId)) {
             return false;
+          }
           if (_userFilter != null && a.actorId != _userFilter) return false;
           if (_actionFilter != null && a.action != _actionFilter) return false;
           if (_search.isNotEmpty) {
             final ticketRef = ticketsById[a.ticketId]?.ticketReference ?? '';
             final q = _search.toLowerCase();
             if (!ticketRef.toLowerCase().contains(q) &&
-                !(a.note ?? '').toLowerCase().contains(q))
+                !(a.note ?? '').toLowerCase().contains(q)) {
               return false;
+            }
           }
           return true;
         }).toList();

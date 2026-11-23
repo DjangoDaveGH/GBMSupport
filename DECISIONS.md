@@ -1776,3 +1776,29 @@ redundancy, not duplication to clean up: the client-side version exists so
 the UI never has to load and then hide data it isn't allowed to see, and the
 rules version is what actually stops a modified client. Keep both in sync if
 the access model changes — see Section 3.
+
+## Ticket list filters copy their starting sets
+
+Dashboard stat cards open the ticket list with a `TicketFilter` whose
+`statuses`/`systems` are const sets. The list screens used those sets as
+their own state and the status chips mutate it in place (`addAll`), which
+threw silently on a const set — so after arriving from "Total Tickets",
+clicking "Pending" changed nothing and closed/resolved tickets stayed on
+screen. Both list screens now copy the incoming sets (`{...f.statuses}`).
+
+## Auto-assign only touches still-open tickets
+
+`autoAssignTicket` runs just after a ticket is created and used to check
+only `assignedTo`. A ticket resolved or closed in that gap would be set back
+to "assigned". The transaction now also requires `status == "open"`.
+
+## Announcements pop up on opening the app
+
+`AnnouncementPopupListener` (above MaterialApp.router) shows each unread
+announcement notification, oldest first, once the user is past the splash
+and sign-in routes. Closing marks the notification read, reusing the
+existing `read` flag (already writable by its owner in firestore.rules), so
+no new field or rule was needed and the Notifications badge stays in step.
+Announcements already read in the Notifications screen don't pop up. Older
+broadcasts without an `announcementId` are excluded so existing users
+aren't flooded with history.

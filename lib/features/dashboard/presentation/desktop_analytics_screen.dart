@@ -583,11 +583,12 @@ class _CategoryDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (total == 0)
+    if (total == 0) {
       return const EmptyState(
         icon: Icons.pie_chart_outline_rounded,
         message: 'No ticket data yet.',
       );
+    }
     final entries = byCategory.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return Row(
@@ -730,8 +731,9 @@ class _ByDayBarChart extends StatelessWidget {
                     interval: 1,
                     getTitlesWidget: (v, m) {
                       final idx = v.toInt();
-                      if (idx < 0 || idx >= days.length)
+                      if (idx < 0 || idx >= days.length) {
                         return const SizedBox.shrink();
+                      }
                       return Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
@@ -812,8 +814,9 @@ class _ResolutionTrendChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (v, m) {
                 final idx = v.toInt();
-                if (idx < 0 || idx >= days.length)
+                if (idx < 0 || idx >= days.length) {
                   return const SizedBox.shrink();
+                }
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(

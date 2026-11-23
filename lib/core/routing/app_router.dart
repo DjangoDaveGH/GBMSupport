@@ -167,7 +167,7 @@ TicketFilter _coordinatorProductFilter(
   required Iterable<String> assignedSystems,
 }) => TicketFilter(
   system: filter?.system != null && supportSystemIds.contains(filter!.system)
-      ? filter!.system
+      ? filter.system
       : null,
   systems: filter?.system != null && supportSystemIds.contains(filter!.system)
       ? const {}
