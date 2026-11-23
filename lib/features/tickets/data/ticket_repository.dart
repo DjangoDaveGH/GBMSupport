@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hyport/core/models/enums.dart';
 import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
+import 'package:hyport/features/tickets/data/ticket_reference.dart';
 import 'package:hyport/features/tickets/domain/chat_receipt.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/domain/ticket_activity.dart';
@@ -202,7 +203,11 @@ class TicketRepository {
   }) async {
     final now = DateTime.now();
     final year = now.year;
-    final counterRef = _db.collection('counters').doc('tickets_$year');
+    // GHANEPS/GIFMIS share the PPA sequence with guest tickets
+    // (functions/index.js submitGuestTicket); GBMS keeps PFMSD.
+    final counterRef = _db
+        .collection('counters')
+        .doc(ticketCounterDocumentId(system, year));
     final ticketRef = _tickets.doc();
 
     late final Ticket ticket;
@@ -212,7 +217,11 @@ class TicketRepository {
           ((counterSnap.data()?['count'] as num?)?.toInt() ?? 0) + 1;
       tx.set(counterRef, {'count': nextSeq}, SetOptions(merge: true));
 
-      final ref = 'PFMSD-$year-${nextSeq.toString().padLeft(6, '0')}';
+      final ref = formatTicketReference(
+        system: system,
+        year: year,
+        sequence: nextSeq,
+      );
 
       // `now` here is only for the transient Ticket returned to the caller;
       // the authoritative createdAt/updatedAt are server-stamped below and

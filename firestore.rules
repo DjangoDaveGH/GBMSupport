@@ -344,9 +344,15 @@ service cloud.firestore {
             && ((resource.data.status != 'closed'
                  && onlyFieldsChanged(['assignedTo', 'status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
                  && request.resource.data.status == 'assigned')
-                || (resource.data.status == 'resolved'
+                // Resolve and Close any active ticket directly, as the
+                // admin buttons in admin_status_actions.dart do.
+                || (resource.data.status in ['open', 'assigned', 'in_progress', 'escalated', 'reopened']
+                    && onlyFieldsChanged(['status', 'updatedAt', 'resolvedAt', 'resolutionNotes'])
+                    && request.resource.data.status == 'resolved')
+                || (resource.data.status != 'closed'
                     && onlyFieldsChanged(['status', 'updatedAt', 'closedAt', 'closedBy'])
-                    && request.resource.data.status == 'closed')
+                    && request.resource.data.status == 'closed'
+                    && request.resource.data.closedBy == request.auth.uid)
                 || (resource.data.status in ['resolved', 'closed']
                     && onlyFieldsChanged(['status', 'updatedAt', 'resolvedAt', 'resolutionNotes', 'closedAt', 'closedBy'])
             && request.resource.data.status == 'reopened')))

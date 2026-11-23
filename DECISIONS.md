@@ -1811,3 +1811,22 @@ chip, the mobile ticket-list chip and the Filters screen. In Progress is
 always its own group: the home screen gained an "In Progress" card so its
 cards still cover every ticket, and the mobile "In Progress" chip no longer
 includes Escalated. test/core/pending_statuses_test.dart guards it.
+
+## GHANEPS/GIFMIS tickets share one PPA sequence
+
+Guest tickets (submitGuestTicket) already used `counters/tickets_ppa_{year}`,
+but the app's TicketRepository.createTicket always used the GBMS counter and
+a PFMSD reference, so a signed-in GHANEPS/GIFMIS ticket would have taken a
+GBMS number. createTicket now uses `ticketCounterDocumentId` and
+`formatTicketReference` (ticket_reference.dart), so guest and signed-in
+product tickets number PPA-YYYY-00001, 00002, … together. The PPA counter was
+reset to 0 on 2026-11-23 after the test PPA tickets were deleted.
+
+## Admin Resolve / Close / Reopen buttons
+
+PFM Management sees Resolve, Close Ticket and Reopen as their own buttons on
+the mobile and desktop ticket detail (admin_status_actions.dart), each with a
+confirmation, instead of Reopen/Close being buried in Actions. Admins can now
+resolve or close any active ticket directly, not just close resolved ones;
+firestore.rules' pfm_management branch allows exactly those transitions
+(close requires closedBy == the admin).

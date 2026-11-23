@@ -10,6 +10,7 @@ import 'package:hyport/features/auth/data/institution_providers.dart';
 import 'package:hyport/features/auth/data/user_providers.dart';
 import 'package:hyport/features/auth/domain/app_user.dart';
 import 'package:hyport/features/config/data/sla_providers.dart';
+import 'package:hyport/features/tickets/presentation/admin_status_actions.dart';
 import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:hyport/features/tickets/domain/ticket.dart';
 import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
@@ -409,16 +410,10 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
         },
       ));
     }
-    if (viewer.role == UserRole.pfmManagement &&
-        (ticket.status == TicketStatus.resolved ||
-            ticket.status == TicketStatus.closed)) {
-      overflow.add((
-        'Reopen Ticket',
-        Icons.replay_rounded,
-        () => _changeStatus(ref, TicketStatus.reopened),
-      ));
-    }
+    // PFM Management gets Resolve/Close/Reopen as their own buttons
+    // (admin_status_actions.dart), so it's left out of this menu entry.
     if (viewer.role.hasBackOfficeAccess &&
+        viewer.role != UserRole.pfmManagement &&
         ticket.status == TicketStatus.resolved) {
       overflow.add((
         'Close Ticket',
@@ -452,6 +447,12 @@ class _TicketDetailBodyState extends ConsumerState<_TicketDetailBody>
               icon: const Icon(Icons.arrow_upward_rounded, size: 18),
               label: const Text('Escalate'),
             ),
+          ...adminStatusButtons(
+            context: context,
+            ref: ref,
+            ticket: ticket,
+            viewer: viewer,
+          ),
           if (overflow.isNotEmpty)
             OutlinedButton.icon(
               onPressed: () => _showMoreSheet(context, overflow),
