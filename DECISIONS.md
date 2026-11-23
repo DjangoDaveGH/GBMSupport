@@ -1802,3 +1802,12 @@ no new field or rule was needed and the Notifications badge stays in step.
 Announcements already read in the Notifications screen don't pop up. Older
 broadcasts without an `announcementId` are excluded so existing users
 aren't flooded with history.
+
+## One definition of "Pending"
+
+`pendingTicketStatuses` in enums.dart (Assigned, Escalated, Reopened) is the
+only definition, used by the end-user home card, the desktop ticket-list
+chip, the mobile ticket-list chip and the Filters screen. In Progress is
+always its own group: the home screen gained an "In Progress" card so its
+cards still cover every ticket, and the mobile "In Progress" chip no longer
+includes Escalated. test/core/pending_statuses_test.dart guards it.

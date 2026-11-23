@@ -11,7 +11,7 @@ import 'package:hyport/features/tickets/data/ticket_providers.dart';
 import 'package:intl/intl.dart';
 
 /// Status checkbox groups shown on the mockup's Filters screen (screen 14):
-/// Open / In Progress / Pending User / Resolved / Closed. Together they
+/// Open / In Progress / Pending / Resolved / Closed. Together they
 /// cover every TicketStatus value with no gaps or overlaps, so nothing
 /// becomes unreachable through this screen.
 class _StatusGroup {
@@ -24,11 +24,7 @@ class _StatusGroup {
 const _statusGroups = [
   _StatusGroup('Open', {TicketStatus.open}),
   _StatusGroup('In Progress', {TicketStatus.inProgress}),
-  _StatusGroup('Pending User', {
-    TicketStatus.assigned,
-    TicketStatus.escalated,
-    TicketStatus.reopened,
-  }),
+  _StatusGroup('Pending', pendingTicketStatuses),
   _StatusGroup('Resolved', {TicketStatus.resolved}),
   _StatusGroup('Closed', {TicketStatus.closed}),
 ];
@@ -181,17 +177,15 @@ class _TicketFiltersScreenState extends ConsumerState<TicketFiltersScreen> {
                                     : 'All assigned systems',
                               ),
                               selected: _system == null,
-                              onSelected: (_) =>
-                                  setState(() => _system = null),
+                              onSelected: (_) => setState(() => _system = null),
                             ),
                           for (final system in supportSystemIds)
                             if (allowedSystems.contains(system))
                               ChoiceChip(
                                 label: Text(supportSystemLabel(system)),
                                 selected: _system == system,
-                                onSelected: (_) => setState(
-                                  () => _system = system,
-                                ),
+                                onSelected: (_) =>
+                                    setState(() => _system = system),
                               ),
                         ],
                       ),

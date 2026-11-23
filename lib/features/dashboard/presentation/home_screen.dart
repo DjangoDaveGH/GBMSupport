@@ -669,15 +669,11 @@ class _UserHome extends ConsumerWidget {
         final openCount = tickets
             .where((t) => t.status == TicketStatus.open)
             .length;
+        final inProgressCount = tickets
+            .where((t) => t.status == TicketStatus.inProgress)
+            .length;
         final pendingCount = tickets
-            .where(
-              (t) => {
-                TicketStatus.assigned,
-                TicketStatus.inProgress,
-                TicketStatus.escalated,
-                TicketStatus.reopened,
-              }.contains(t.status),
-            )
+            .where((t) => pendingTicketStatuses.contains(t.status))
             .length;
         final resolvedCount = tickets
             .where(
@@ -693,53 +689,70 @@ class _UserHome extends ConsumerWidget {
           children: [
             const _StatusBanner(),
             const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatNumberCard(
-                    value: '$openCount',
-                    label: 'Open Tickets',
-                    color: AppTheme.accentBlue,
-                    onTap: () => context.push(
-                      '/tickets',
-                      extra: const TicketFilter(statuses: {TicketStatus.open}),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatNumberCard(
-                    value: '$pendingCount',
-                    label: 'Pending',
-                    color: AppTheme.gold,
-                    onTap: () => context.push(
-                      '/tickets',
-                      extra: const TicketFilter(
-                        statuses: {
-                          TicketStatus.assigned,
-                          TicketStatus.inProgress,
-                          TicketStatus.escalated,
-                          TicketStatus.reopened,
-                        },
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _StatNumberCard(
+                      value: '$openCount',
+                      label: 'Open',
+                      color: AppTheme.accentBlue,
+                      onTap: () => context.push(
+                        '/tickets',
+                        extra: const TicketFilter(
+                          statuses: {TicketStatus.open},
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatNumberCard(
-                    value: '$resolvedCount',
-                    label: 'Resolved',
-                    color: AppTheme.success,
-                    onTap: () => context.push(
-                      '/tickets',
-                      extra: const TicketFilter(
-                        statuses: {TicketStatus.resolved, TicketStatus.closed},
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatNumberCard(
+                      value: '$inProgressCount',
+                      label: 'In Progress',
+                      color: AppTheme.navy,
+                      onTap: () => context.push(
+                        '/tickets',
+                        extra: const TicketFilter(
+                          statuses: {TicketStatus.inProgress},
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatNumberCard(
+                      value: '$pendingCount',
+                      label: 'Pending',
+                      color: AppTheme.gold,
+                      onTap: () => context.push(
+                        '/tickets',
+                        extra: const TicketFilter(
+                          statuses: pendingTicketStatuses,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatNumberCard(
+                      value: '$resolvedCount',
+                      label: 'Resolved',
+                      color: AppTheme.success,
+                      onTap: () => context.push(
+                        '/tickets',
+                        extra: const TicketFilter(
+                          statuses: {
+                            TicketStatus.resolved,
+                            TicketStatus.closed,
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(

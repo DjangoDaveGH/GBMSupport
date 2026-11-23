@@ -241,6 +241,15 @@ enum TicketStatus {
   bool get isPendingSlaAction => this != TicketStatus.closed && this != TicketStatus.resolved;
 }
 
+/// The one definition of a "Pending" ticket, used by every dashboard card,
+/// status chip and filter on desktop and mobile: picked up or sent back but
+/// not being actively worked. In Progress is its own group, never Pending.
+const pendingTicketStatuses = {
+  TicketStatus.assigned,
+  TicketStatus.escalated,
+  TicketStatus.reopened,
+};
+
 /// escalationLevel: 0 = none, 1 = functional/technical lead, 2 = vendor/specialist
 typedef EscalationLevel = int;
 

@@ -20,11 +20,7 @@ import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
     show categoryIcon;
 import 'package:intl/intl.dart';
 
-const _pendingStatuses = {
-  TicketStatus.assigned,
-  TicketStatus.escalated,
-  TicketStatus.reopened,
-};
+const _pendingStatuses = pendingTicketStatuses;
 
 /// Multi-select status groups — the same idea as the mobile Filters screen,
 /// so a laptop user can now narrow to several statuses at once (e.g. Open +

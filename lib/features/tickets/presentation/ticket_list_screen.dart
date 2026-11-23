@@ -20,18 +20,16 @@ import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/app_error_state.dart';
 
 /// Top chip presets (mockup screen 13: All/Open/In Progress/Resolved/
-/// Closed). "Closed" is handled separately — tapping it navigates to the
+/// Closed, plus Pending — see [pendingTicketStatuses]). "Closed" is handled separately — tapping it navigates to the
 /// dedicated Closed Tickets screen rather than filtering in place — so it
 /// isn't part of this preset map.
-enum StatusTab { all, open, inProgress, resolved }
+enum StatusTab { all, open, inProgress, pending, resolved }
 
 Set<TicketStatus> statusesForTab(StatusTab tab) => switch (tab) {
   StatusTab.all => const {},
   StatusTab.open => const {TicketStatus.open},
-  StatusTab.inProgress => const {
-    TicketStatus.inProgress,
-    TicketStatus.escalated,
-  },
+  StatusTab.inProgress => const {TicketStatus.inProgress},
+  StatusTab.pending => pendingTicketStatuses,
   StatusTab.resolved => const {TicketStatus.resolved},
 };
 
@@ -237,6 +235,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     StatusTab.all => 'All',
     StatusTab.open => 'Open',
     StatusTab.inProgress => 'In Progress',
+    StatusTab.pending => 'Pending',
     StatusTab.resolved => 'Resolved',
   };
 
