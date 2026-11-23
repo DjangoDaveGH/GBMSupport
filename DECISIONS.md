@@ -477,6 +477,21 @@ pending Storage got built for real rather than left disabled:
   subset and show blank icons for up to an hour after a deploy.
   `firebase.json` now serves `/assets/fonts/**` and `/assets/packages/**`
   as `no-cache` (header-only change, deployed with build 1.0.13+17).
+- **Announcements: create / list / edit / delete, with attachments.**
+  Announcements used to exist only as per-user notification copies, so
+  nothing could be edited or removed. `adminBroadcastNotification` now also
+  stores `announcements/{id}` (PFM Management read-only in firestore.rules;
+  writes only via callables) and stamps each notification copy with
+  `announcementId` + `attachmentUrls`. New callables
+  `adminUpdateAnnouncement` (rewrites every copy in 400-doc batches, no new
+  push, audience fixed, deletes dropped files) and `adminDeleteAnnouncement`
+  (removes copies, the `announcements/{id}/` Storage folder and the doc).
+  The client pre-generates the id and uploads files to
+  `announcements/{id}/` before sending (storage.rules: pfm_management write,
+  15 MB, any signed-in user reads); callables only accept download URLs
+  inside that same folder, max 10. `scanUploadedPdf` now also watches
+  `announcements/`. Message limit raised 500 → 2000 chars. Tested with an
+  in-memory fake of firebase-admin (no Java here for the emulators).
 - Doc comments and README that previously said "blocked on the Blaze
   billing plan" (`otp_repository.dart`, `otp_verify_screen.dart`,
   `audit_log_repository.dart`) were corrected: Blaze is active now, so

@@ -41,7 +41,11 @@
  *      than a client-side Firestore write because neither piece is safe to
  *      do from the client at this app's user count: a single WriteBatch
  *      caps at 500 writes (well under the active user total), and only the
- *      Admin SDK can send FCM.
+ *      Admin SDK can send FCM. Each announcement is also stored in
+ *      announcements/{id} (with optional file attachments uploaded to
+ *      Storage under announcements/{id}/) so adminUpdateAnnouncement and
+ *      adminDeleteAnnouncement can edit or remove it, along with every
+ *      recipient's notification copy.
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
@@ -710,7 +714,7 @@ exports.recoverPasswordByPhone = onCall(async (request) => {
  * admin-authored topic. Every other caller (ticket-lifecycle triggers)
  * omits it and keeps the fixed "Hyperion Support" title.
  */
-async function notifyUser({userId, type, message, ticketId, title = "Hyperion Support"}) {
+async function notifyUser({userId, type, message, ticketId, title = "Hyperion Support", announcementId, attachmentUrls}) {
   const db = admin.firestore();
 
   // Ticket-lifecycle triggers (onTicketCreated/onTicketUpdated/etc.) call
@@ -730,6 +734,9 @@ async function notifyUser({userId, type, message, ticketId, title = "Hyperion Su
     message,
     read: false,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    // Announcement notifications are copies of announcements/{id}; the id
+    // lets adminUpdateAnnouncement/adminDeleteAnnouncement find every copy.
+    ...(announcementId ? {announcementId, attachmentUrls: attachmentUrls || []} : {}),
   });
 
   // Unread total for this user — drives the app-icon badge (iOS via aps.badge,
@@ -873,49 +880,167 @@ function matchesBroadcastAudience(userData, audience) {
   return false;
 }
 
+const MAX_ANNOUNCEMENT_ATTACHMENTS = 10;
+
+function requireAnnouncementAdmin(request) {
+  if (!request.auth || request.auth.token.role !== "pfm_management") {
+    throw new HttpsError(
+        "permission-denied",
+        "Only the Head, Applications Systems Unit can manage announcements.",
+    );
+  }
+}
+
+/** Shared validation for create and edit. */
+function validateAnnouncementFields(data) {
+  const {type, message, topic} = data;
+  if (!BROADCAST_TYPES.includes(type)) {
+    throw new HttpsError("invalid-argument", `Unknown broadcast type: ${type}`);
+  }
+  const trimmedMessage = (typeof message === "string" ? message : "").trim();
+  if (!trimmedMessage) {
+    throw new HttpsError("invalid-argument", "Message is required.");
+  }
+  if (trimmedMessage.length > 2000) {
+    throw new HttpsError("invalid-argument", "Message must be 2000 characters or fewer.");
+  }
+  const trimmedTopic = (typeof topic === "string" ? topic : "").trim();
+  if (!trimmedTopic) {
+    throw new HttpsError("invalid-argument", "Topic is required.");
+  }
+  if (trimmedTopic.length > 120) {
+    throw new HttpsError("invalid-argument", "Topic must be 120 characters or fewer.");
+  }
+  return {type, message: trimmedMessage, topic: trimmedTopic};
+}
+
+/**
+ * Storage object path behind a Firebase download URL, or null when the URL
+ * is not one for this project's default bucket.
+ */
+function storagePathFromDownloadUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== "firebasestorage.googleapis.com") return null;
+    const match = u.pathname.match(/^\/v0\/b\/([^/]+)\/o\/(.+)$/);
+    if (!match || match[1] !== admin.storage().bucket().name) return null;
+    return decodeURIComponent(match[2]);
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Attachments must be files the admin uploaded under this announcement's
+ * own folder (announcements/{id}/...), so an announcement can't point
+ * recipients at arbitrary links or at another announcement's files.
+ */
+function validateAnnouncementAttachments(raw, announcementId) {
+  const list = raw === undefined ? [] : raw;
+  if (!Array.isArray(list) || list.length > MAX_ANNOUNCEMENT_ATTACHMENTS) {
+    throw new HttpsError(
+        "invalid-argument",
+        `Attach at most ${MAX_ANNOUNCEMENT_ATTACHMENTS} files.`,
+    );
+  }
+  const prefix = `announcements/${announcementId}/`;
+  for (const url of list) {
+    const path = typeof url === "string" ? storagePathFromDownloadUrl(url) : null;
+    if (!path || !path.startsWith(prefix)) {
+      throw new HttpsError("invalid-argument", "An attachment link is not valid. Please attach it again.");
+    }
+  }
+  return [...new Set(list)];
+}
+
+function validateAnnouncementId(id) {
+  if (typeof id !== "string" || !/^[A-Za-z0-9]{10,40}$/.test(id)) {
+    throw new HttpsError("invalid-argument", "Invalid announcement id.");
+  }
+  return id;
+}
+
+/** Applies [apply] to every notification copy of an announcement, in batches. */
+async function forEachAnnouncementNotification(db, announcementId, apply) {
+  let count = 0;
+  let cursor = null;
+  for (;;) {
+    let query = db.collection("notifications")
+        .where("announcementId", "==", announcementId)
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(400);
+    if (cursor) query = query.startAfter(cursor);
+    const snap = await query.get();
+    if (snap.empty) break;
+    const batch = db.batch();
+    for (const doc of snap.docs) apply(batch, doc.ref);
+    await batch.commit();
+    count += snap.size;
+    cursor = snap.docs[snap.docs.length - 1];
+    if (snap.size < 400) break;
+  }
+  return count;
+}
+
+async function deleteStorageObjects(paths) {
+  const bucket = admin.storage().bucket();
+  await Promise.all(paths.map((path) =>
+    bucket.file(path).delete().catch((error) => {
+      if (error.code !== 404) console.error(`Could not delete ${path}:`, error);
+    })));
+}
+
 /**
  * Sends a system-wide announcement to every active user matching [audience]
- * (see responsibility 7 in the file header). Fans out with bounded
- * concurrency rather than one user at a time — at ~1,600 active users,
- * doing this fully sequentially would risk running past the callable's own
- * timeout. Audience filtering happens in memory over a single
- * isActive-only query rather than as additional Firestore query clauses,
- * so this never needs a new composite index as roles/institution types
- * change.
+ * (see responsibility 7 in the file header), and stores it in
+ * announcements/{id} so it can later be edited or deleted. Fans out with
+ * bounded concurrency rather than one user at a time — at ~1,600 active
+ * users, doing this fully sequentially would risk running past the
+ * callable's own timeout. Audience filtering happens in memory over a
+ * single isActive-only query rather than as additional Firestore query
+ * clauses, so this never needs a new composite index as roles/institution
+ * types change.
  */
 exports.adminBroadcastNotification = onCall(
     {timeoutSeconds: 300},
     async (request) => {
-      if (!request.auth || request.auth.token.role !== "pfm_management") {
-        throw new HttpsError(
-            "permission-denied",
-            "Only the Head, Applications Systems Unit can send announcements.",
-        );
-      }
-
-      const {type, message, topic, audience} = request.data || {};
-      if (!BROADCAST_TYPES.includes(type)) {
-        throw new HttpsError("invalid-argument", `Unknown broadcast type: ${type}`);
-      }
+      requireAnnouncementAdmin(request);
+      const data = request.data || {};
+      const {type, message, topic} = validateAnnouncementFields(data);
+      const audience = data.audience;
       if (!BROADCAST_AUDIENCES.includes(audience)) {
         throw new HttpsError("invalid-argument", `Unknown audience: ${audience}`);
       }
-      const trimmedMessage = (message || "").trim();
-      if (!trimmedMessage) {
-        throw new HttpsError("invalid-argument", "Message is required.");
-      }
-      if (trimmedMessage.length > 500) {
-        throw new HttpsError("invalid-argument", "Message must be 500 characters or fewer.");
-      }
-      const trimmedTopic = (topic || "").trim();
-      if (!trimmedTopic) {
-        throw new HttpsError("invalid-argument", "Topic is required.");
-      }
-      if (trimmedTopic.length > 120) {
-        throw new HttpsError("invalid-argument", "Topic must be 120 characters or fewer.");
-      }
 
       const db = admin.firestore();
+      // Clients pre-generate the id so attachments can be uploaded into
+      // announcements/{id}/ first. Older cached clients send none.
+      const announcementRef = data.announcementId ?
+        db.collection("announcements").doc(validateAnnouncementId(data.announcementId)) :
+        db.collection("announcements").doc();
+      const attachmentUrls = validateAnnouncementAttachments(data.attachmentUrls, announcementRef.id);
+
+      try {
+        await announcementRef.create({
+          type,
+          topic,
+          message,
+          audience,
+          attachmentUrls,
+          createdBy: request.auth.uid,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: null,
+          updatedBy: null,
+          recipientCount: 0,
+          status: "sending",
+        });
+      } catch (error) {
+        if (error.code === 6) { // ALREADY_EXISTS
+          throw new HttpsError("already-exists", "This announcement was already sent.");
+        }
+        throw error;
+      }
+
       const snap = await db.collection("users").where("isActive", "==", true).get();
       const userIds = snap.docs
           .filter((d) => d.id !== request.auth.uid && matchesBroadcastAudience(d.data(), audience))
@@ -926,20 +1051,115 @@ exports.adminBroadcastNotification = onCall(
       for (let i = 0; i < userIds.length; i += CONCURRENCY) {
         const chunk = userIds.slice(i, i + CONCURRENCY);
         await Promise.all(chunk.map((userId) =>
-          notifyUser({userId, type, message: trimmedMessage, title: trimmedTopic})));
+          notifyUser({
+            userId, type, message, title: topic,
+            announcementId: announcementRef.id, attachmentUrls,
+          })));
         sent += chunk.length;
       }
 
+      await announcementRef.update({recipientCount: sent, status: "sent"});
       await db.collection("audit_logs").add({
         actorId: request.auth.uid,
         action: "announcement_sent",
         targetType: "announcement",
-        targetId: trimmedTopic,
-        metadata: {type, audience, topic: trimmedTopic, message: trimmedMessage, recipientCount: sent},
+        targetId: announcementRef.id,
+        metadata: {type, audience, topic, message, recipientCount: sent, attachmentCount: attachmentUrls.length},
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      return {sent};
+      return {sent, announcementId: announcementRef.id};
+    },
+);
+
+/**
+ * Edits a sent announcement in place: the stored copy and every
+ * recipient's notification. Doesn't push again (recipients already got
+ * it), and the audience can't change, since that would mean adding or
+ * removing recipients rather than editing. Files dropped from the
+ * attachment list are deleted from Storage.
+ */
+exports.adminUpdateAnnouncement = onCall(
+    {timeoutSeconds: 300},
+    async (request) => {
+      requireAnnouncementAdmin(request);
+      const data = request.data || {};
+      const announcementId = validateAnnouncementId(data.announcementId);
+      const {type, message, topic} = validateAnnouncementFields(data);
+      const attachmentUrls = validateAnnouncementAttachments(data.attachmentUrls, announcementId);
+
+      const db = admin.firestore();
+      const ref = db.collection("announcements").doc(announcementId);
+      const existing = await ref.get();
+      if (!existing.exists) {
+        throw new HttpsError("not-found", "This announcement no longer exists.");
+      }
+      const before = existing.data();
+
+      await ref.update({
+        type, topic, message, attachmentUrls,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: request.auth.uid,
+      });
+      const updated = await forEachAnnouncementNotification(db, announcementId, (batch, docRef) =>
+        batch.update(docRef, {type, title: topic, message, attachmentUrls, edited: true}));
+
+      const removed = (before.attachmentUrls || [])
+          .filter((url) => !attachmentUrls.includes(url))
+          .map(storagePathFromDownloadUrl)
+          .filter((path) => path && path.startsWith(`announcements/${announcementId}/`));
+      await deleteStorageObjects(removed);
+
+      await db.collection("audit_logs").add({
+        actorId: request.auth.uid,
+        action: "announcement_updated",
+        targetType: "announcement",
+        targetId: announcementId,
+        metadata: {
+          type, topic, message,
+          previousTopic: before.topic || null,
+          attachmentCount: attachmentUrls.length,
+          notificationsUpdated: updated,
+        },
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {updated};
+    },
+);
+
+/**
+ * Deletes an announcement: the stored copy, every recipient's
+ * notification, and its uploaded files.
+ */
+exports.adminDeleteAnnouncement = onCall(
+    {timeoutSeconds: 300},
+    async (request) => {
+      requireAnnouncementAdmin(request);
+      const announcementId = validateAnnouncementId((request.data || {}).announcementId);
+      const db = admin.firestore();
+      const ref = db.collection("announcements").doc(announcementId);
+      const existing = await ref.get();
+
+      const removed = await forEachAnnouncementNotification(db, announcementId, (batch, docRef) =>
+        batch.delete(docRef));
+      await admin.storage().bucket()
+          .deleteFiles({prefix: `announcements/${announcementId}/`})
+          .catch((error) => console.error(`Could not delete files for ${announcementId}:`, error));
+      if (existing.exists) await ref.delete();
+
+      await db.collection("audit_logs").add({
+        actorId: request.auth.uid,
+        action: "announcement_deleted",
+        targetType: "announcement",
+        targetId: announcementId,
+        metadata: {
+          topic: existing.data()?.topic || null,
+          type: existing.data()?.type || null,
+          notificationsRemoved: removed,
+        },
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {removed};
     },
 );
 

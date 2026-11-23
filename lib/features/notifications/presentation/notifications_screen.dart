@@ -9,6 +9,7 @@ import 'package:hyport/features/notifications/data/notification_providers.dart';
 import 'package:hyport/features/notifications/data/notification_repository.dart';
 import 'package:hyport/features/notifications/domain/app_notification.dart';
 import 'package:intl/intl.dart';
+import 'package:hyport/features/tickets/presentation/ticket_attachments_section.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 
 IconData _iconFor(NotificationType type) => switch (type) {
@@ -287,8 +288,17 @@ class _NotificationTile extends StatelessWidget {
                               fontWeight: read ? FontWeight.w400 : FontWeight.w700,
                             ),
                       ),
+                      if (notification.attachmentUrls.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        TicketAttachmentsSection(attachmentUrls: notification.attachmentUrls),
+                      ],
                       const SizedBox(height: 4),
-                      Text(DateFormat.jm().format(notification.createdAt), style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        notification.edited
+                            ? '${DateFormat.jm().format(notification.createdAt)} · Edited'
+                            : DateFormat.jm().format(notification.createdAt),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),

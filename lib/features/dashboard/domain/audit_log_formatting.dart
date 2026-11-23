@@ -10,6 +10,8 @@ String adminActionLabel(String action) => switch (action) {
   'user_deactivated' => 'User Deactivated',
   'user_updated' => 'User Updated',
   'announcement_sent' => 'Sent Announcement',
+  'announcement_updated' => 'Edited Announcement',
+  'announcement_deleted' => 'Deleted Announcement',
   'config_changed' => 'Settings Changed',
   'institution_created' => 'Institution Created',
   'institution_changed' => 'Institution Changed',
@@ -28,6 +30,9 @@ String adminTargetLabel(AuditLog a, {String? userName}) =>
     switch (a.targetType) {
       'config' => _configLabels[a.targetId] ?? a.targetId,
       'institution' => a.metadata['name']?.toString() ?? a.targetId,
+      // Older entries used the topic as targetId; newer ones use the
+      // announcement id and keep the topic in metadata.
+      'announcement' => a.metadata['topic']?.toString() ?? a.targetId,
       _ => userName ?? a.targetId,
     };
 

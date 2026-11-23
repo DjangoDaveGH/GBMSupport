@@ -440,6 +440,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ----- announcements -----
+    // Admin-sent announcements (announcements_screen.dart). Created, edited
+    // and deleted only by the adminBroadcastNotification /
+    // adminUpdateAnnouncement / adminDeleteAnnouncement callables (Admin
+    // SDK). Recipients never read this collection: each gets a copy in
+    // their own notifications docs, so only PFM Management lists it here.
+    match /announcements/{announcementId} {
+      allow read: if isInstitutionAdmin();
+      allow write: if false;
+    }
+
     // ----- knowledge base -----
     match /knowledge_articles/{articleId} {
       // Draft/in-review articles are editor-only — a requester who has,

@@ -1,7 +1,8 @@
 /**
  * Inspects user-uploaded PDFs in Storage and quarantines any that are not
  * valid PDFs or that contain active content. Covers ticket attachments
- * (attachments/) and chat attachments (chat/).
+ * (attachments/), chat attachments (chat/) and announcement attachments
+ * (announcements/), which go out to every user.
  *
  * This is a structural check, not an antivirus scan. It rejects files that
  * aren't PDFs and PDFs that use features able to run code or open programs
@@ -17,7 +18,7 @@ const {onObjectFinalized} = require("firebase-functions/v2/storage");
 const admin = require("firebase-admin");
 
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
-const WATCHED_PREFIXES = ["attachments/", "chat/"];
+const WATCHED_PREFIXES = ["attachments/", "chat/", "announcements/"];
 
 // Markers that let a PDF run script or start a program when opened.
 const ACTIVE_CONTENT_MARKERS = [

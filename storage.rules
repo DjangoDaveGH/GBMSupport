@@ -77,6 +77,20 @@ service firebase.storage {
       allow delete: if false;
     }
 
+    // Announcement attachments (announcements_screen.dart), uploaded by PFM
+    // Management before the announcement is sent; the callables only accept
+    // links into announcements/{id}/ for that same announcement. Every
+    // signed-in user may read them, since announcements go to all users.
+    // Admins may delete (removing a file before sending); the delete
+    // callable also clears the folder server-side.
+    match /announcements/{announcementId}/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.auth.token.role == 'pfm_management'
+        && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if isSignedIn() && request.auth.token.role == 'pfm_management';
+    }
+
     // Exported report PDFs, scoped strictly to the admin who generated
     // them — same owner-only boundary as report_views in firestore.rules,
     // which is what actually stores the resulting download URL.

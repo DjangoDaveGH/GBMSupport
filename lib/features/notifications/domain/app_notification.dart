@@ -15,6 +15,12 @@ class AppNotification {
   final bool read;
   final DateTime createdAt;
 
+  /// Set on admin announcements (links to announcements/{id}); the
+  /// announcement's files, and whether the admin edited it after sending.
+  final String? announcementId;
+  final List<String> attachmentUrls;
+  final bool edited;
+
   const AppNotification({
     required this.id,
     required this.userId,
@@ -24,6 +30,9 @@ class AppNotification {
     required this.createdAt,
     this.ticketId,
     this.title,
+    this.announcementId,
+    this.attachmentUrls = const [],
+    this.edited = false,
   });
 
   factory AppNotification.fromMap(String id, Map<String, dynamic> map) {
@@ -36,6 +45,11 @@ class AppNotification {
       message: map['message'] as String? ?? '',
       read: map['read'] as bool? ?? false,
       createdAt: _readCreatedAt(map['createdAt']),
+      announcementId: map['announcementId'] as String?,
+      attachmentUrls:
+          (map['attachmentUrls'] as List?)?.whereType<String>().toList() ??
+          const [],
+      edited: map['edited'] as bool? ?? false,
     );
   }
 
