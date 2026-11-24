@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyport/core/auth/auth_providers.dart';
 import 'package:hyport/core/models/enums.dart';
+import 'package:hyport/core/models/support_system.dart';
 import 'package:hyport/core/theme/app_theme.dart';
 import 'package:hyport/core/widgets/branded_loader.dart';
 import 'package:hyport/core/widgets/empty_state.dart';
@@ -21,6 +22,50 @@ import 'package:hyport/features/tickets/presentation/ticket_list_screen.dart'
 import 'package:intl/intl.dart';
 
 const _pendingStatuses = pendingTicketStatuses;
+
+/// Desktop Tickets search: matches anything shown or known about a ticket —
+/// reference, title, description, product, category, priority, status,
+/// assignee, requester (name, email, phone), institution, resolution notes
+/// and created date. Every word typed must match somewhere, in any order.
+bool ticketMatchesSearch(
+  Ticket t,
+  String query, {
+  AppUser? assignee,
+  AppUser? requester,
+  String? institutionName,
+}) {
+  final words = query.toLowerCase().split(RegExp(r'\s+'))
+    ..removeWhere((w) => w.isEmpty);
+  if (words.isEmpty) return true;
+  final haystack = [
+    t.ticketReference,
+    t.title,
+    t.description,
+    t.system,
+    supportSystemLabel(t.system),
+    t.categoryLabel,
+    t.category.label,
+    t.subCategory,
+    t.priority.label,
+    t.status.label,
+    t.impact.label,
+    assignee?.name,
+    t.assignedToName,
+    if (t.assignedTo == null) 'Unassigned',
+    requester?.name,
+    requester?.email,
+    requester?.phone,
+    t.requesterEmail,
+    t.requesterPhone,
+    t.requesterType,
+    institutionName,
+    t.resolutionNotes,
+    DateFormat.yMMMd().format(t.createdAt),
+    DateFormat.MMMd().add_jm().format(t.createdAt),
+    DateFormat('d/M/yyyy').format(t.createdAt),
+  ].whereType<String>().join(' \u0000 ').toLowerCase();
+  return words.every(haystack.contains);
+}
 
 /// Multi-select status groups — the same idea as the mobile Filters screen,
 /// so a laptop user can now narrow to several statuses at once (e.g. Open +
@@ -175,7 +220,6 @@ class _DesktopTicketListScreenState
         final usersById = <String, AppUser>{
           for (final u in usersAsync?.valueOrNull ?? const <AppUser>[]) u.id: u,
         };
-        final search = _search.toLowerCase();
         // Advanced (in-memory) filters first, so the tab counts reflect them.
         final allTickets = rawTickets
             .where(
@@ -186,11 +230,18 @@ class _DesktopTicketListScreenState
               ),
             )
             .toList();
-        final filtered = allTickets.where(_matchesTab).where((t) {
-          if (search.isEmpty) return true;
-          return t.title.toLowerCase().contains(search) ||
-              t.ticketReference.toLowerCase().contains(search);
-        }).toList();
+        final filtered = allTickets
+            .where(_matchesTab)
+            .where(
+              (t) => ticketMatchesSearch(
+                t,
+                _search,
+                assignee: usersById[t.assignedTo],
+                requester: usersById[t.createdBy],
+                institutionName: institutionNameById[t.institutionId],
+              ),
+            )
+            .toList();
 
         final totalPages = (filtered.length / _pageSize).ceil().clamp(
           1,
@@ -217,7 +268,8 @@ class _DesktopTicketListScreenState
                         _page = 0;
                       }),
                       decoration: const InputDecoration(
-                        hintText: 'Search tickets…',
+                        hintText:
+                            'Search anything: reference, title, requester, assignee, institution…',
                         prefixIcon: Icon(Icons.search_rounded, size: 20),
                       ),
                     ),

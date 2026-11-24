@@ -3,6 +3,18 @@
 Judgment calls made without stopping to ask, per the project brief's
 instruction to keep going and record reasoning here instead. Newest first.
 
+## Desktop Tickets search matches anything about a ticket
+
+Support Coordinators reported the desktop Tickets search "doesn't work". The
+filter itself was fine, but it only matched title and reference, so searching
+a requester's name, email, phone, the assignee or institution found nothing.
+`ticketMatchesSearch` (desktop_ticket_list_screen.dart) now matches reference,
+title, description, product, category, sub-category, priority, status,
+impact, assignee, requester name/email/phone, institution, resolution notes
+and created date. Every typed word must match somewhere, in any order, case
+insensitive. Applies to every back-office role on the desktop Tickets page;
+mobile search left unchanged as asked.
+
 ## 2FA/OTP removed entirely — user asked to remove it, not just re-disable it
 
 Phone MFA was already sitting behind the `twoFactorMandatory = false` flag
