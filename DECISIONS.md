@@ -3,6 +3,16 @@
 Judgment calls made without stopping to ask, per the project brief's
 instruction to keep going and record reasoning here instead. Newest first.
 
+## Desktop Tickets toolbar: buttons no longer force infinite width
+
+AppTheme's outlined button style uses `minimumSize: Size.fromHeight(46)`
+(infinite width). On the desktop Tickets page the Export button sat in a Row
+beside the search field, so layout failed and the search box never painted
+(reported as "search doesn't work"). The Export, Date range and per-row
+Actions buttons now set a finite minimumSize; the search box gets an explicit
+white fill, border, navy focus outline and a clear button. The theme itself
+was left alone because full-width buttons are intended on the mobile forms.
+
 ## Desktop Tickets search matches anything about a ticket
 
 Support Coordinators reported the desktop Tickets search "doesn't work". The

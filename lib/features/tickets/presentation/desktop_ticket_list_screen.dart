@@ -161,6 +161,58 @@ class _DesktopTicketListScreenState
     });
   }
 
+  /// White, outlined search box sized to match the Export button — the
+  /// theme's default fill (surfaceContainerLow) disappears into the hex
+  /// background on this page.
+  Widget _searchField(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: BorderSide(color: c, width: w),
+    );
+    return SizedBox(
+      height: 48,
+      child: TextField(
+        controller: _searchController,
+        maxLines: 1,
+        textAlignVertical: TextAlignVertical.center,
+        onChanged: (v) => setState(() {
+          _search = v;
+          _page = 0;
+        }),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          hintText:
+              'Search tickets by reference, title, requester, assignee, institution, status…',
+          hintMaxLines: 1,
+          hintStyle: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 20,
+            color: scheme.onSurfaceVariant,
+          ),
+          suffixIcon: _search.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Clear search',
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  onPressed: () => setState(() {
+                    _searchController.clear();
+                    _search = '';
+                    _page = 0;
+                  }),
+                ),
+          border: border(scheme.outlineVariant),
+          enabledBorder: border(scheme.outlineVariant),
+          focusedBorder: border(AppTheme.navy, 1.6),
+        ),
+      ),
+    );
+  }
+
   void _exportCsv(List<Ticket> tickets, Map<String, AppUser> usersById) {
     final buffer = StringBuffer(
       'Reference,Product,Title,Category,Priority,Assigned To,Status,Created\n',
@@ -260,27 +312,28 @@ class _DesktopTicketListScreenState
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (v) => setState(() {
-                        _search = v;
-                        _page = 0;
-                      }),
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Search anything: reference, title, requester, assignee, institution…',
-                        prefixIcon: Icon(Icons.search_rounded, size: 20),
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _searchField(context)),
                   const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: filtered.isEmpty
-                        ? null
-                        : () => _exportCsv(filtered, usersById),
-                    icon: const Icon(Icons.download_outlined, size: 18),
-                    label: const Text('Export'),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      // The theme's minimumSize is Size.fromHeight (infinite
+                      // width); inside a Row that fails layout and the
+                      // search field beside it never paints. Override it.
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      onPressed: filtered.isEmpty
+                          ? null
+                          : () => _exportCsv(filtered, usersById),
+                      icon: const Icon(Icons.download_outlined, size: 18),
+                      label: const Text('Export'),
+                    ),
                   ),
                 ],
               ),
@@ -333,6 +386,11 @@ class _DesktopTicketListScreenState
                     }),
                   ),
                   OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                    ),
                     onPressed: () async {
                       final now = DateTime.now();
                       final picked = await showDateRangePicker(
@@ -505,6 +563,15 @@ class _DesktopTicketListScreenState
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 OutlinedButton.icon(
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                        minimumSize:
+                                                            const Size(0, 36),
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 12,
+                                                            ),
+                                                      ),
                                                   onPressed: () => context.push(
                                                     '/tickets/${t.id}',
                                                   ),

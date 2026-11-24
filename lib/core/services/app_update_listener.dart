@@ -23,7 +23,7 @@ class _AppUpdateListenerState extends State<AppUpdateListener>
     with WidgetsBindingObserver {
   // Keep this in sync with pubspec.yaml's version. Each web deployment must
   // increment the build number so an already-running app can detect it.
-  static const _runningBuild = '1.0.18+22';
+  static const _runningBuild = '1.0.19+23';
   static const _checkInterval = Duration(minutes: 10);
 
   Timer? _timer;
